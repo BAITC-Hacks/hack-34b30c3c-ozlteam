@@ -9,6 +9,21 @@
   min-height: 60vh;
 }
 
+.room:has(.thread) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 150px);
+}
+
+.room:has(.thread) .thread {
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.room:has(.thread) .composer {
+  margin-top: auto;
+}
+
 .backgroundSwitch {
   padding: 0 var(--sp-2);
   border-radius: var(--r-s);
@@ -273,6 +288,10 @@
 }
 
 @media (max-width: 560px) {
+  .room:has(.thread) {
+    min-height: calc(100dvh - var(--mobile-bar-h) - 112px - env(safe-area-inset-bottom, 0px));
+  }
+
   .orbStage { min-height: 250px; }
   .prompts { grid-template-columns: minmax(0, 1fr); }
   .input { font-size: 16px; }

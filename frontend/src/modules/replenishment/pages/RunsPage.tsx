@@ -292,6 +292,7 @@ export function RunsPage() {
       setSelected(new Set());
       setCreatedOrders(orders);
       setRecommendationsRetry((current) => current + 1);
+      getOverview(warehouseId).then(setOverview).catch(() => undefined);
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 409) {
         setOrderError("Не удалось создать заказ: часть рекомендаций уже включена в заказ или данные изменились. Список обновляется; проверьте выбор.");

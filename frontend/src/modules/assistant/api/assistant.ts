@@ -19,7 +19,7 @@ export async function askAssistant(
 ): Promise<string> {
   const data = await apiRequest<AnswerResponse>("/v1/ai/chat", {
     method: "POST",
-    body: { question, history: history.slice(-20) },
+    body: { question, history: history.slice(-20).map((turn) => ({ ...turn, content: turn.content.slice(0, 4000) })) },
     signal,
   });
   return data.answer;

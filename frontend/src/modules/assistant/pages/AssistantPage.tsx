@@ -34,6 +34,7 @@ const PROMPTS = [
 ];
 
 const BACKGROUND_KEY = "assistant-background";
+const conversationCache = new Map<string, ChatTurn[]>();
 
 function greeting(hour: number): string {
   if (hour < 5) return "Доброй ночи";
@@ -44,7 +45,7 @@ function greeting(hour: number): string {
 
 export function AssistantPage() {
   const { data: user } = useCurrentUser();
-  const [turns, setTurns] = useState<ChatTurn[]>([]);
+  const [turns, setTurns] = useState<ChatTurn[]>(() => conversationCache.get(user?.id ?? "") ?? []);
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState("");
@@ -57,6 +58,10 @@ export function AssistantPage() {
   });
   const field = useRef<HTMLTextAreaElement>(null);
   const tail = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user?.id) setTurns(conversationCache.get(user.id) ?? []);
+  }, [user?.id]);
 
   useEffect(() => {
     tail.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -74,13 +79,17 @@ export function AssistantPage() {
     if (!value || asking) return;
 
     const history = turns;
-    setTurns([...history, { role: "user", content: value }]);
+    const nextTurns: ChatTurn[] = [...history, { role: "user", content: value }];
+    if (user?.id) conversationCache.set(user.id, nextTurns);
+    setTurns(nextTurns);
     setQuestion("");
     setError("");
     setAsking(true);
     try {
       const answer = await askAssistant(value, history);
-      setTurns((current) => [...current, { role: "assistant", content: answer }]);
+      const answeredTurns: ChatTurn[] = [...nextTurns, { role: "assistant", content: answer }];
+      if (user?.id) conversationCache.set(user.id, answeredTurns);
+      setTurns(answeredTurns);
     } catch (cause) {
       // Реплику пользователя не убираем: её видно, и вопрос можно повторить.
       setError(cause instanceof Error ? cause.message : "Не удалось получить ответ.");

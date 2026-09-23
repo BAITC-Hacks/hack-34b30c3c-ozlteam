@@ -179,6 +179,8 @@ export function DataSourcesPage() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    setBatches([]);
+    setImportsHasNext(false);
     Promise.all([listSources(controller.signal), listImports(PAGE_SIZE + 1, importPage * PAGE_SIZE, controller.signal)]).then(([nextSources, nextBatches]) => {
       setSources(nextSources);
       setBatches(nextBatches.slice(0, PAGE_SIZE));

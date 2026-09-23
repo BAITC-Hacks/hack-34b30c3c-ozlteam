@@ -88,7 +88,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     const next = new URLSearchParams(params);
     if (value && value !== "all") next.set(name, value);
     else next.delete(name);
-    if (name !== "offset") next.delete("offset");
+    if (name !== "offset" && name !== "q") next.delete("offset");
     setParams(next);
   }
 
