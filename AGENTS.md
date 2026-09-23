@@ -19,7 +19,8 @@ When creating or changing forms, detail pages, or Back buttons, read `.agents/sk
 Before any UI or visual design work read `.agents/skills/apple-design/SKILL.md` (vendored, see its `SOURCE.md`).
 Before bot changes read `.agents/skills/telegram-bot/SKILL.md`.
 Before touching the manifest, service worker, install prompts, push notifications or planning a mobile demo read `.agents/skills/pwa-delivery/SKILL.md`.
-Before publishing Git changes read `.agents/skills/git-publish/SKILL.md`; follow its single-commit and branch merge workflow.
+Before pulling or pushing Git changes read `.agents/skills/git-team-workflow/SKILL.md`.
+Before publishing Git changes also read `.agents/skills/git-publish/SKILL.md`; follow its single-commit and branch merge workflow.
 
 - Development starts with `make dev` (uses `.env.local` via `scripts/dev.sh`). Follow README.md for checks.
 - Preserve hot reload and source bind mounts. Dependency changes require updating lock files.
