@@ -21,6 +21,11 @@ Before bot changes read `.agents/skills/telegram-bot/SKILL.md`.
 Before touching the manifest, service worker, install prompts, push notifications or planning a mobile demo read `.agents/skills/pwa-delivery/SKILL.md`.
 Before publishing Git changes read `.agents/skills/git-publish/SKILL.md`; follow its single-commit and branch merge workflow.
 
+Team Git shorthand: a user message `ПУШ` means publish the current work to Git; `ПУЛЛ` means
+synchronize the current branch from Git. Before every push, fetch and integrate the latest remote
+changes, then resolve conflicts while preserving all three collaborators' work. Check Git status
+and remote changes regularly during shared work; never discard another collaborator's changes.
+
 - Development starts with `make dev` (uses `.env.local` via `scripts/dev.sh`). Follow README.md for checks.
 - Preserve hot reload and source bind mounts. Dependency changes require updating lock files.
 - Backend domain directory is exactly `backend/app/Domains/<Name>` (case sensitive).
