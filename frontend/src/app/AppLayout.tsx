@@ -60,6 +60,8 @@ function Section({
             className={`${styles.link} ${styles.disabled}`}
             role="link"
             aria-disabled="true"
+            aria-label={item.label}
+            title={item.label}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -70,6 +72,8 @@ function Section({
             to={item.to}
             end={item.to === "/" || item.to === "/data"}
             className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
+            aria-label={item.label}
+            title={item.label}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -105,20 +109,21 @@ export function AppLayout() {
 
   return (
     <div className={styles.app}>
-      <div className={styles.sidebarSlot} data-hidden={sidebarOpen ? undefined : ""}>
-        <aside className={styles.side} aria-hidden={sidebarOpen ? undefined : true}>
+      <div className={styles.sidebarSlot} data-collapsed={sidebarOpen ? undefined : ""}>
+        <aside className={styles.side}>
           <div className={styles.brand}>
             <span className={styles.mark} aria-hidden="true">
               <Container size={19} strokeWidth={1.8} />
             </span>
-            <span>Поток ИИ</span>
+            <span className={styles.brandName}>Поток ИИ</span>
             <Button
               className={styles.hideMenu}
               variant="ghost"
               size="sm"
-              aria-label="Скрыть меню"
-              icon={<PanelLeftClose size={15} strokeWidth={1.8} />}
-              onClick={() => setSidebarOpen(false)}
+              aria-label={sidebarOpen ? "Свернуть меню" : "Развернуть меню"}
+              title={sidebarOpen ? "Свернуть меню" : "Развернуть меню"}
+              icon={sidebarOpen ? <PanelLeftClose size={18} strokeWidth={1.8} /> : <PanelLeftOpen size={18} strokeWidth={1.8} />}
+              onClick={() => setSidebarOpen((open) => !open)}
             />
           </div>
 
@@ -158,18 +163,7 @@ export function AppLayout() {
         </aside>
       </div>
 
-      <Button
-        className={styles.showMenu}
-        variant="secondary"
-        aria-label="Показать меню"
-        aria-hidden={sidebarOpen ? true : undefined}
-        tabIndex={sidebarOpen ? -1 : undefined}
-        data-visible={sidebarOpen ? undefined : ""}
-        icon={<PanelLeftOpen size={17} strokeWidth={1.8} />}
-        onClick={() => setSidebarOpen(true)}
-      />
-
-      <main className={`${styles.main} ${sidebarOpen ? "" : styles.sidebarHidden}`}>
+      <main className={styles.main}>
         <Outlet />
       </main>
 

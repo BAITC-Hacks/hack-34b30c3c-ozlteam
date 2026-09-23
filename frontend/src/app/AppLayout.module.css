@@ -18,9 +18,9 @@
     width var(--t-panel);
 }
 
-.sidebarSlot[data-hidden] {
-  flex-basis: 0;
-  width: 0;
+.sidebarSlot[data-collapsed] {
+  flex-basis: calc(var(--touch) + var(--sp-3) + var(--sp-3) + var(--frame));
+  width: calc(var(--touch) + var(--sp-3) + var(--sp-3) + var(--frame));
 }
 
 .side {
@@ -38,22 +38,11 @@
   background: var(--panel);
   box-shadow: var(--sh-side);
   overflow: hidden;
-  transition:
-    transform var(--t-panel),
-    opacity var(--t-hover),
-    visibility 0s;
-  will-change: transform;
+  transition: width var(--t-panel);
 }
 
-.sidebarSlot[data-hidden] .side {
-  transform: translateX(calc(-100% - var(--frame)));
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    transform var(--t-panel),
-    opacity var(--t-hover),
-    visibility 0s linear var(--t-hover);
+.sidebarSlot[data-collapsed] .side {
+  width: calc(var(--touch) + var(--sp-3) + var(--sp-3));
 }
 
 .brand {
@@ -78,30 +67,44 @@
   color: var(--ink);
 }
 
-.showMenu {
-  position: fixed;
-  top: var(--frame);
-  left: var(--frame);
-  z-index: 40;
-  width: var(--ctl);
+.sidebarSlot[data-collapsed] .brand {
+  justify-content: center;
   padding: 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(calc(-1 * var(--sp-2)));
-  transition:
-    transform var(--t-panel),
-    opacity var(--t-hover),
-    visibility 0s linear var(--t-hover);
 }
 
-.showMenu[data-visible] {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-  transition:
-    transform var(--t-panel),
-    opacity var(--t-hover),
-    visibility 0s;
+.sidebarSlot[data-collapsed] .mark,
+.sidebarSlot[data-collapsed] .brandName,
+.sidebarSlot[data-collapsed] .group,
+.sidebarSlot[data-collapsed] .link > span,
+.sidebarSlot[data-collapsed] .count,
+.sidebarSlot[data-collapsed] .who {
+  display: none;
+}
+
+.sidebarSlot[data-collapsed] .hideMenu {
+  width: var(--touch);
+  min-height: var(--touch);
+  margin-left: 0;
+}
+
+.sidebarSlot[data-collapsed] .navigation {
+  padding-inline: 0;
+}
+
+.sidebarSlot[data-collapsed] .navSection + .navSection {
+  margin-top: var(--sp-5);
+}
+
+.sidebarSlot[data-collapsed] .link {
+  justify-content: center;
+  width: var(--touch);
+  padding: 0;
+}
+
+.sidebarSlot[data-collapsed] .me {
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
 }
 
 .mark {
@@ -305,11 +308,6 @@
   gap: var(--gap-blocks);
   align-content: start;
   max-width: var(--content-max);
-  transition: padding-left var(--t-panel);
-}
-
-.sidebarHidden {
-  padding-left: calc(var(--touch) + var(--sp-6));
 }
 
 @media (max-width: 900px) {
@@ -318,12 +316,7 @@
     display: none;
   }
 
-  .showMenu {
-    display: none;
-  }
-
-  .main,
-  .sidebarHidden {
+  .main {
     max-width: 100%;
     /* Нижний отступ = высота панели + домашний индикатор, иначе она накрывает последний блок. */
     padding: var(--sp-4) var(--sp-4)
@@ -334,7 +327,6 @@
 @media (prefers-reduced-motion: reduce) {
   .sidebarSlot,
   .side,
-  .showMenu,
   .main {
     transition-duration: 1ms;
   }
