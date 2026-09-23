@@ -61,8 +61,11 @@ async function request(path: string, init: RequestInit): Promise<Response> {
   const response = await fetch(`/api${path}`, { ...init, headers });
 
   if (response.status === 401) {
-    tokenStore.clear();
-    unauthorizedHandlers.forEach((handler) => handler());
+    // Старый запрос не должен завершить новую сессию после повторного входа.
+    if (token && tokenStore.get() === token) {
+      tokenStore.clear();
+      unauthorizedHandlers.forEach((handler) => handler());
+    }
     throw new ApiError(401, "Сессия истекла. Войдите заново.");
   }
   if (!response.ok) throw new ApiError(response.status, await readError(response));

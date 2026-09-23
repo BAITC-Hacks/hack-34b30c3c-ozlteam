@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
+import { tokenStore } from "../../../shared/api/client";
 import { Button, Field } from "../../../shared/ui";
 import { useCurrentUser, useLogin } from "../hooks/useAuth";
 import styles from "./LoginPage.module.css";
@@ -32,7 +33,7 @@ export function LoginPage() {
     },
   });
 
-  if (user) {
+  if (tokenStore.get() !== null && user) {
     const from = (location.state as { from?: string } | null)?.from ?? "/";
     return <Navigate to={from} replace />;
   }
