@@ -222,7 +222,7 @@ export function GeoMap({
         {trips.map((trip) => {
           const state = states[trip.id];
           if (state === undefined || trip.id === selectedId) return null;
-          if (trip.status !== "running") return null;
+          if (trip.status === "planned") return null;
           return (
             <path
               key={`${trip.id}-trace`}
@@ -315,7 +315,7 @@ export function GeoMap({
 
         {trips.map((trip) => {
           const state = states[trip.id];
-          if (state === undefined || trip.status !== "running") return null;
+          if (state === undefined || trip.status === "planned") return null;
           const at = projection.project(state.runtime.point);
           const idle = state.runtime.halted;
           const size = (trip.id === selectedId ? 8 : 6) * k;

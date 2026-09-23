@@ -3,9 +3,10 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.Domains.Catalogs.DTO.manual import FIELDS
 from app.Domains.Catalogs.repositories.catalog_repository import CatalogRepository
 from app.Domains.Catalogs.resources.catalog import RESOURCES, SupplierResource
-from app.Domains.DataImports.services.exchange_service import ExchangeService
+from app.Domains.DataImports.services.exchange_service import ExchangeService, digest
 
 
 async def get_suppliers(
@@ -105,3 +106,86 @@ class CatalogService:
                 )
         saved_id = await self.exchange_service.apply_catalog(command, user_id)
         return await self.get(kind, saved_id)
+
+    async def save_manual(self, kind, command, user_id, record_id=None):
+        values = command.model_dump(
+            exclude_unset=True, exclude={"expected_updated_at", "source_id"}
+        )
+        if not values or set(values) - FIELDS[kind]:
+            raise DomainError(
+                "Переданы пустые или неподходящие для справочника поля",
+                422,
+                "invalid_catalog_fields",
+            )
+        if "name" in values and len(values["name"]) > (500 if kind == "products" else 300):
+            raise DomainError("Название слишком длинное", 422, "invalid_catalog_name")
+        row = None
+        before = None
+        if record_id is not None:
+            current = await self.repository.get(kind, record_id)
+            if current is None:
+                raise DomainError("Объект справочника не найден", 404, "catalog_not_found")
+            source = await self.repository.lock_source(current.source_id)
+            row = await self.repository.lock_record(kind, record_id)
+            if row.updated_at != command.expected_updated_at:
+                raise DomainError(
+                    "Объект изменился. Обновите форму перед сохранением", 409, "stale_updated_at"
+                )
+            before = RESOURCES[kind].model_validate(row).model_dump(mode="json")
+        else:
+            if kind == "products" and not {"sku", "unit"} <= values.keys():
+                raise DomainError(
+                    "Для товара обязательны sku и unit", 422, "missing_product_fields"
+                )
+            source = (
+                await self.repository.lock_source(command.source_id)
+                if command.source_id
+                else await self.repository.manual_source()
+            )
+            if source is None:
+                raise DomainError("Источник не найден", 404, "source_not_found")
+        if kind == "products":
+            for field, target in (("category_id", "categories"), ("supplier_id", "suppliers")):
+                if field in values and values[field] is not None:
+                    reference = await self.repository.get(target, values[field])
+                    if reference is None or not reference.active:
+                        raise DomainError(
+                            "Связанный объект не найден или архивирован",
+                            422,
+                            "invalid_catalog_reference",
+                        )
+                    if reference.source_id != source.id:
+                        raise DomainError(
+                            "Связанный объект должен принадлежать тому же источнику",
+                            422,
+                            "catalog_reference_source_mismatch",
+                        )
+            # Only our own unknown-term flags may be cleared by supplying those terms.
+            # Never erase quality restrictions imported from 1C/package validation.
+            if row is None or row.data_quality.get("origin") == "manual_catalog":
+                unknown = set(
+                    row.data_quality.get("unknown_terms", [])
+                    if row
+                    else {"pack_size", "min_order_qty", "lead_time_days"}
+                )
+                for field in {"pack_size", "min_order_qty", "lead_time_days"} & values.keys():
+                    if values[field] is None:
+                        unknown.add(field)
+                    else:
+                        unknown.discard(field)
+                values["data_quality"] = {
+                    "origin": "manual_catalog",
+                    "unknown_terms": sorted(unknown),
+                    "status": "blocked" if unknown else "limited",
+                    "blocking_reasons": [f"unconfirmed_{field}" for field in sorted(unknown)],
+                    "warnings": ["manual_catalog_history_and_stock_not_verified"],
+                }
+        payload_hash = digest(command.model_dump(mode="json", exclude_unset=True))
+        if row is None:
+            row = await self.repository.add_manual(kind, source.id, values, payload_hash)
+        else:
+            for field, value in values.items():
+                setattr(row, field, value)
+        after = RESOURCES[kind].model_validate(row).model_dump(mode="json")
+        await self.repository.save_manual(source, row, user_id, kind, before, after, payload_hash)
+        return RESOURCES[kind].model_validate(row)

@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { Button, Card, Tile } from "../../../shared/ui";
@@ -28,6 +29,7 @@ import { useI18n } from "../../../shared/i18n/I18nContext";
  */
 export function RoutesPage() {
   const { t } = useI18n();
+  const location = useLocation();
   const sim = useFleetSim();
   const [focused, setFocused] = useState(true);
   const [picked, setPicked] = useState<TripEvent | undefined>(undefined);
@@ -81,6 +83,7 @@ export function RoutesPage() {
         title={t("Маршруты", "Бағыттар", "Routes")}
         subtitle={t("Где сейчас машины, что с ними происходит и что с этим делать.", "Көліктер қайда, не болып жатыр және не істеу керек.", "Where vehicles are, what is happening, and what to do.")}
         actions={
+          <><Link to="/routes/demo" state={{ from: location.pathname + location.search + location.hash }}>{t("Демо поставки с ИИ", "AI жеткізу демосы", "AI delivery demo")}</Link>
           <Button
             variant="dark"
             icon={<Plus size={15} strokeWidth={2} />}
@@ -91,6 +94,7 @@ export function RoutesPage() {
           >
             {t("Новый рейс", "Жаңа рейс", "New trip")}
           </Button>
+          </>
         }
       />
 

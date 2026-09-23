@@ -83,6 +83,7 @@ export { Tabs } from "./Tabs";
 export type { TabItem, TabsProps } from "./Tabs";
 
 export { Spinner } from "./Spinner/Spinner";
+export { Skeleton } from "./Skeleton/Skeleton";
 export type { SpinnerProps, SpinnerSize } from "./Spinner/Spinner";
 
 export { EmptyState } from "./EmptyState/EmptyState";

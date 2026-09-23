@@ -6,9 +6,11 @@ import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
 import { useI18n } from "../../../shared/i18n/I18nContext";
 import { Alert, Badge, Button, Card, EmptyState, ErrorState, Select, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
+import { useCurrentUser } from "../../auth";
 import { getCatalog, listCatalog } from "../api/catalogs";
 import type { AnyCatalogRecord, CatalogKind, CategoryRecord, ProductRecord, WarehouseRecord } from "../api/catalogs";
 import { dataQualityReason } from "../quality";
+import { CatalogArchiveDialog, CatalogEditor } from "../components/CatalogEditor";
 import styles from "./CatalogsPage.module.css";
 
 const PAGE_SIZE = 50;
@@ -100,6 +102,11 @@ function RecordFields({ record, kind, category, supplier }: { record: AnyCatalog
 
 export function CatalogsPage() {
   const { locale, t } = useI18n();
+  const { data: user } = useCurrentUser();
+  const canWrite = Boolean(user?.permissions.includes("catalogs.write"));
+  const [editor, setEditor] = useState<{ kind: CatalogKind; record?: AnyCatalogRecord } | null>(null);
+  const [archive, setArchive] = useState<{ kind: CatalogKind; record: AnyCatalogRecord } | null>(null);
+  const [savedNotice, setSavedNotice] = useState(false);
   const kinds: { id: CatalogKind; label: string }[] = [
     { id: "products", label: t("Товары", "Тауарлар", "Products") },
     { id: "categories", label: t("Категории", "Санаттар", "Categories") },
@@ -244,16 +251,25 @@ export function CatalogsPage() {
   const visibleRows = listKey === key ? rows.slice(0, PAGE_SIZE) : [];
   const hasNext = listKey === key && rows.length > PAGE_SIZE;
 
+  function saved(savedRecord: AnyCatalogRecord) {
+    const created = editor && !editor.record;
+    setEditor(null); setArchive(null); setSavedNotice(true);
+    setReload((value) => value + 1);
+    if (created) openDetail(savedRecord.id);
+  }
+
   return <div className={styles.page}>
-    <PageHeader title={id ? t("Запись справочника", "Анықтамалық жазбасы", "Catalog record") : t("Справочники", "Анықтамалықтар", "Catalogs")} subtitle={id ? t("Данные из последней загрузки 1С", "1С соңғы жүктемесіндегі деректер", "Data from the latest 1C import") : t("Товары, категории, поставщики и склады из 1С", "1С тауарлары, санаттары, жеткізушілері мен қоймалары", "Products, categories, suppliers and warehouses from 1C")} actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>{t("Обновить", "Жаңарту", "Refresh")}</Button>} />
+    <PageHeader title={id ? t("Запись справочника", "Анықтамалық жазбасы", "Catalog record") : t("Справочники", "Анықтамалықтар", "Catalogs")} subtitle={t("Импортированные и ручные товары, категории, поставщики и склады", "Импортталған және қолмен енгізілген тауарлар, санаттар, жеткізушілер мен қоймалар", "Imported and manual products, categories, suppliers and warehouses")} actions={<><Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>{t("Обновить", "Жаңарту", "Refresh")}</Button>{canWrite && !id ? <Button size="sm" onClick={() => setEditor({ kind })}>{t("Добавить запись", "Жазба қосу", "Add record")}</Button> : null}</>} />
+    {savedNotice ? <Alert tone="success" onDismiss={() => setSavedNotice(false)} title={t("Сохранено", "Сақталды", "Saved")}>{t("Справочник обновлён.", "Анықтамалық жаңартылды.", "The catalog has been updated.")}</Alert> : null}
     {id ? <Card title={record?.name ?? t("Карточка справочника", "Анықтамалық карточкасы", "Catalog record")} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={closeDetail}>{recommendationReturn(params.get("from")) ? t("К рекомендации", "Ұсынымға", "To recommendation") : t("К списку", "Тізімге", "To list")}</Button>}>
       {detailError ? <ErrorState title={t("Не удалось открыть запись", "Жазбаны ашу мүмкін болмады", "Could not open record")} text={detailError} onRetry={() => setReload((value) => value + 1)} /> : detailLoading || !record ? <CatalogSkeleton detail /> : <div className={styles.detail}>
+        {canWrite ? <div className={styles.related}><Button variant="secondary" size="sm" onClick={() => setEditor({ kind, record })}>{t("Изменить", "Өзгерту", "Edit")}</Button><Button variant="secondary" size="sm" onClick={() => setArchive({ kind, record })}>{record.active ? t("В архив", "Мұрағатқа", "Archive") : t("Восстановить", "Қалпына келтіру", "Restore")}</Button></div> : null}
         {kind === "products" ? <ProductQuality product={record as ProductRecord} /> : null}
         <RecordFields record={record} kind={kind} category={category} supplier={supplier} />
         {kind === "suppliers" ? <nav className={styles.related} aria-label={t("Данные поставщика", "Жеткізуші деректері", "Supplier data")}><Link to={catalogLink({ tab: "products", supplier_id: record.id, source_id: record.source_id }, currentPath)}>{t("Товары поставщика", "Жеткізушінің тауарлары", "Supplier products")}</Link><Link to={`/orders?${new URLSearchParams({ supplier_id: record.id, from: currentPath })}`}>{t("Заказы поставщику", "Жеткізушіге тапсырыстар", "Supplier orders")}</Link></nav> : null}
         {kind === "products" && (record as ProductRecord).supplier_id ? <nav className={styles.related} aria-label={t("Связанные данные товара", "Тауарға қатысты деректер", "Related product data")}><Link to={catalogLink({ tab: "suppliers", id: (record as ProductRecord).supplier_id! }, currentPath)}>{t("Поставщик", "Жеткізуші", "Supplier")}: {supplier?.name ?? t("открыть карточку", "карточканы ашу", "open record")}</Link><Link to={`/orders?${new URLSearchParams({ supplier_id: (record as ProductRecord).supplier_id!, from: currentPath })}`}>{t("Заказы поставщику", "Жеткізушіге тапсырыстар", "Supplier orders")}</Link></nav> : null}
       </div>}
-    </Card> : <Card title={t("Данные 1С", "1С деректері", "1C data")} subtitle={t("Поиск по названию, для товаров также по артикулу", "Атауы бойынша іздеу, тауарлар үшін артикул бойынша да", "Search by name, or by SKU for products")}>
+    </Card> : <Card title={t("Записи справочников", "Анықтамалық жазбалары", "Catalog records")} subtitle={t("Поиск по названию, для товаров также по артикулу", "Атауы бойынша іздеу, тауарлар үшін артикул бойынша да", "Search by name, or by SKU for products")}>
       <Tabs items={kinds} value={kind} onValueChange={(value) => updateParam("tab", value)} ariaLabel={t("Справочник", "Анықтамалық", "Catalog")} />
       {supplierId ? <div className={styles.filterNotice}><span>{t("Товары поставщика", "Жеткізушінің тауарлары", "Supplier products")}: <strong>{filterSupplier?.name ?? supplierId}</strong></span><Link to={catalogLink({ tab: "suppliers", id: supplierId }, currentPath)}>{t("Карточка поставщика", "Жеткізуші карточкасы", "Supplier record")}</Link><Button variant="ghost" size="sm" onClick={() => updateParam("supplier_id", "")}>{t("Все поставщики", "Барлық жеткізушілер", "All suppliers")}</Button></div> : null}
       <div className={styles.filters}>
@@ -270,5 +286,7 @@ export function CatalogsPage() {
         <div className={styles.pager}><span>{visibleRows.length ? `${t("Записи", "Жазбалар", "Records")} ${offset + 1}–${offset + visibleRows.length}` : `${t("Записи с", "Жазбалар", "Records from")} ${offset + 1}`}{loading ? ` · ${t("обновляем", "жаңартылуда", "updating")}` : ""}</span><div><Button variant="secondary" size="sm" disabled={loading || offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - PAGE_SIZE)))}>{t("Назад", "Артқа", "Previous")}</Button><Button variant="secondary" size="sm" disabled={loading || !hasNext} onClick={() => updateParam("offset", String(offset + PAGE_SIZE))}>{t("Далее", "Келесі", "Next")}</Button></div></div>
       </div>}
     </Card>}
+    {editor && canWrite ? <CatalogEditor kind={editor.kind} record={editor.record} onClose={() => setEditor(null)} onSaved={saved} /> : null}
+    {archive && canWrite ? <CatalogArchiveDialog kind={archive.kind} record={archive.record} onClose={() => setArchive(null)} onSaved={saved} /> : null}
   </div>;
 }

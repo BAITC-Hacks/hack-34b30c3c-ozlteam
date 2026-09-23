@@ -62,3 +62,34 @@ export function listCatalog(
 export function getCatalog(kind: CatalogKind, id: string, signal?: AbortSignal): Promise<AnyCatalogRecord> {
   return apiRequest(`/v1/catalogs/${kind}/${encodeURIComponent(id)}`, { signal });
 }
+
+export type ManualCatalogFields = {
+  name?: string;
+  active?: boolean;
+  sku?: string;
+  code?: string | null;
+  unit?: string;
+  category_id?: string | null;
+  supplier_id?: string | null;
+  pack_size?: string;
+  min_order_qty?: string;
+  lead_time_days?: number | null;
+  review_days?: number;
+  safety_days?: number;
+};
+
+export interface CatalogSource { id: string; name: string; system: string }
+
+export function listCatalogSources(signal?: AbortSignal): Promise<CatalogSource[]> {
+  return apiRequest("/v1/integrations/1c/sources", { signal });
+}
+
+export function createCatalog(kind: CatalogKind, fields: ManualCatalogFields & { source_id?: string }): Promise<AnyCatalogRecord> {
+  return apiRequest(`/v1/catalogs/${kind}/manual`, { method: "POST", body: fields });
+}
+
+export function updateCatalog(kind: CatalogKind, record: AnyCatalogRecord, fields: ManualCatalogFields): Promise<AnyCatalogRecord> {
+  return apiRequest(`/v1/catalogs/${kind}/${encodeURIComponent(record.id)}/manual`, {
+    method: "PATCH", body: { ...fields, expected_updated_at: record.updated_at },
+  });
+}

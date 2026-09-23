@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.access import require_permission
 from app.core.database import get_session
 from app.core.errors import ERROR_RESPONSES
+from app.Domains.Catalogs.DTO.manual import ManualCreate, ManualPatch
 from app.Domains.Catalogs.repositories.catalog_repository import CatalogRepository
 from app.Domains.Catalogs.resources.catalog import CatalogOutput
 from app.Domains.Catalogs.services.catalog_service import CatalogService
@@ -95,3 +96,45 @@ async def update_catalog(
     user=Depends(require_permission("catalogs.write")),
 ):
     return await service.save(kind, command, user.id, record_id)
+
+
+@router.post(
+    "/{kind}/manual",
+    response_model=CatalogOutput,
+    status_code=201,
+    summary="Создать объект справочника вручную",
+    description="name обязательно; для products также sku и unit. Остальные поля соответствуют "
+    "виду справочника. source_id выбирает существующий источник; без него используется ручной. "
+    "Сервер создаёт внешний ID. Связи товара должны быть из того же источника. "
+    "Никакой отправки в 1С.",
+    responses={422: ERROR_RESPONSES[422]},
+)
+async def create_manual_catalog(
+    kind: Kind,
+    command: ManualCreate,
+    service: Service,
+    user=Depends(require_permission("catalogs.write")),
+):
+    return await service.save_manual(kind, command, user.id)
+
+
+@router.patch(
+    "/{kind}/{record_id}/manual",
+    response_model=CatalogOutput,
+    summary="Изменить, архивировать или восстановить объект вручную",
+    description="Частичный PATCH с expected_updated_at из GET. active=false архивирует "
+    "без удаления "
+    "истории; active=true восстанавливает. Изменение локальное: UUID, внешняя идентичность, версия "
+    "и хеш последнего импорта сохранены. Повтор той же версии импорта пропускается; более новая "
+    "версия 1С может перезаписать локальные поля. Архивирование не каскадное и не меняет заказы. "
+    "Все локальные изменения записываются в аудит пакетов с автором, before/after.",
+    responses={422: ERROR_RESPONSES[422]},
+)
+async def update_manual_catalog(
+    kind: Kind,
+    record_id: UUID,
+    command: ManualPatch,
+    service: Service,
+    user=Depends(require_permission("catalogs.write")),
+):
+    return await service.save_manual(kind, command, user.id, record_id)
