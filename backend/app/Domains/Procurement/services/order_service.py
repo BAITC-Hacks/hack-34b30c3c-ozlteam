@@ -346,26 +346,24 @@ class OrderService:
             raise conflict("Only approved orders can be exported", "approval_required")
         rows = [
             [
-                "order_id",
-                "revision",
-                "supplier_id",
-                "warehouse_id",
-                "sku",
-                "name",
-                "unit",
-                "quantity",
+                "Поставщик",
+                "Склад",
+                "Артикул",
+                "Наименование товара",
+                "Ед. изм.",
+                "Количество",
+                "Редакция",
             ]
         ]
         rows.extend(
             [
-                str(order.id),
-                str(order.revision),
-                str(order.supplier_id),
-                str(order.warehouse_id),
+                order.supplier_name,
+                order.external_references.warehouse.name,
                 line.sku,
                 line.name,
                 line.unit,
                 format_quantity(line.quantity),
+                str(order.revision),
             ]
             for line in order.lines
         )

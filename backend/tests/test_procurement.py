@@ -262,13 +262,38 @@ async def test_exports_equal_snapshot_quantities_and_no_formula_execution(contex
     )
     csv_data = await context.service.export(order.id, "csv")
     rows = list(csv.DictReader(StringIO(csv_data.decode("utf-8-sig"))))
-    assert rows[0]["quantity"] == str(approved.lines[0].quantity)
-    assert rows[0]["sku"] == "'=SUM(1,2)"
+    assert list(rows[0]) == [
+        "Поставщик",
+        "Склад",
+        "Артикул",
+        "Наименование товара",
+        "Ед. изм.",
+        "Количество",
+        "Редакция",
+    ]
+    assert rows[0]["Количество"] == str(approved.lines[0].quantity)
+    assert rows[0]["Артикул"] == "'=SUM(1,2)"
+    assert rows[0]["Поставщик"] == "Поставщик"
+    assert rows[0]["Склад"] == "External name"
+    assert str(order.id) not in csv_data.decode("utf-8-sig")
+    assert str(order.supplier_id) not in csv_data.decode("utf-8-sig")
+    assert str(order.warehouse_id) not in csv_data.decode("utf-8-sig")
     xlsx_data = await context.service.export(order.id, "xlsx")
     workbook = load_workbook(BytesIO(xlsx_data))
-    assert workbook.active["E2"].value == "=SUM(1,2)"
-    assert workbook.active["E2"].data_type == "s"
-    assert workbook.active["H2"].value == rows[0]["quantity"]
+    assert [cell.value for cell in workbook.active[1]] == [
+        "Поставщик",
+        "Склад",
+        "Артикул",
+        "Наименование товара",
+        "Ед. изм.",
+        "Количество",
+        "Редакция",
+    ]
+    assert workbook.active["C2"].value == "=SUM(1,2)"
+    assert workbook.active["C2"].data_type == "s"
+    assert workbook.active["F2"].value == rows[0]["Количество"]
+    assert workbook.active["A2"].value == "Поставщик"
+    assert workbook.active["B2"].value == "External name"
     workbook.close()
     handoff = await context.service.handoff(order.id)
     assert handoff.order == approved
