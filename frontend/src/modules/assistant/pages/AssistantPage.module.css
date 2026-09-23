@@ -67,7 +67,7 @@
   gap: var(--sp-4);
   align-content: start;
   justify-items: center;
-  padding: calc(var(--sp-6) + var(--sp-4) + var(--sp-4)) 0 0;
+  padding: clamp(64px, 9dvh, 108px) 0 0;
 }
 
 .orbStage {
@@ -75,7 +75,7 @@
   place-items: center;
   width: min(100%, 600px);
   min-height: min(38dvh, 300px);
-  margin-bottom: var(--sp-6);
+  margin-bottom: clamp(40px, 5dvh, 64px);
   overflow: visible;
   transform: translateX(calc((var(--assistant-side-width) + var(--sp-6)) / -2));
 }
@@ -320,14 +320,20 @@
 }
 
 @media (max-width: 560px) {
-  .welcome { padding-top: var(--sp-2); }
-  .orbStage { min-height: min(22dvh, 170px); margin-bottom: 0; transform: none; }
+  .welcome { padding-top: clamp(16px, 3dvh, 28px); }
+  .orbStage { min-height: min(22dvh, 170px); margin-bottom: clamp(12px, 2dvh, 24px); transform: none; }
   .orbStage > span { width: min(22dvh, 170px); }
   .prompts { grid-template-columns: minmax(0, 1fr); }
   .input { font-size: 16px; }
 }
 
 @media (min-width: 561px) and (max-width: 900px) {
-  .welcome { padding-top: var(--sp-2); }
-  .orbStage { margin-bottom: 0; transform: none; }
+  .welcome { padding-top: clamp(24px, 5dvh, 48px); }
+  .orbStage { margin-bottom: clamp(20px, 3dvh, 36px); transform: none; }
+}
+
+@media (min-width: 901px) and (max-height: 760px) {
+  .welcome { padding-top: clamp(24px, 5dvh, 48px); }
+  .orbStage { min-height: min(30dvh, 240px); margin-bottom: clamp(16px, 3dvh, 28px); }
+  .orbStage > span { width: min(30dvh, 240px); }
 }
