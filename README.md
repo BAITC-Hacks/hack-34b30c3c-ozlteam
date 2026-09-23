@@ -212,18 +212,18 @@ make dev
 `make dev` вызывает `scripts/dev.sh`: он выбирает `.env.local` явным `--env-file`, поэтому корневой `.env` не подставляется случайно. Эквивалент после создания `.env.local`:
 
 ```sh
-docker compose --env-file .env.local -f compose.yaml up --build -d
+docker compose --env-file .env.local -f compose.yaml up -d
 ```
 
-**Windows:** `.\scripts\dev.ps1 up --build -d` — тот же скрипт на PowerShell, так же сам создаёт `.env.local`. Make не нужен.
+**Windows:** `.\scripts\dev.ps1 up -d` — тот же скрипт на PowerShell, так же сам создаёт `.env.local`. Make не нужен.
 
 Без Make и без скриптов работает и прямой вызов, одинаковый на всех системах:
 
 ```sh
-docker compose --env-file .env.local up --build -d
+docker compose --env-file .env.local up -d
 ```
 
-Без Make используйте `./scripts/dev.sh up --build -d`. Скрипт работает и при вызове по абсолютному пути из другого каталога. Экспортированные переменные оболочки имеют стандартный приоритет Compose над env-файлом; уберите одноимённые переменные из оболочки, если они перекрывают локальные настройки.
+Без Make используйте `./scripts/dev.sh up -d`. При первом запуске отсутствующие образы будут собраны; повторный запуск использует существующие. Скрипт работает и при вызове по абсолютному пути из другого каталога. Экспортированные переменные оболочки имеют стандартный приоритет Compose над env-файлом; уберите одноимённые переменные из оболочки, если они перекрывают локальные настройки.
 
 **`.env.production` задаёт только переменные.** Текущий `compose.yaml` остаётся окружением разработки с Vite и reload; production Compose и публичное развёртывание готовятся отдельно. Не запускайте его с production-секретами.
 
@@ -282,14 +282,34 @@ make seed-excel # тестовые выгрузки IEK и Systeme Electric из
 
 ## Разработка без пересборки
 
-Исходники backend, frontend и bot примонтированы в контейнеры. Vite HMR обновляет React, Uvicorn перезапускает API, watchfiles — бота. Polling включён для Docker Desktop. Python окружение находится в `/opt/venv`, отдельно от исходников; `node_modules` — в отдельном Docker volume.
+Исходники backend, frontend и bot примонтированы в контейнеры (`./backend:/app`,
+`./frontend:/app`, `./bot:/app`). Vite HMR обновляет React, Uvicorn перезапускает API,
+watchfiles — worker и бота. Polling включён для Docker Desktop. Python окружение
+находится в `/opt/venv`, отдельно от исходников; `node_modules` — в отдельном Docker volume.
+
+```sh
+make dev          # обычный запуск: использовать существующие образы
+make dev-env      # после изменения .env.local: применить настройки без сборки
+make dev-env-bot  # то же, включая включённый профиль бота
+make dev-build    # явная пересборка после изменения Dockerfile/Python-зависимостей
+```
+
+Для кода команды не нужны: изменения файлов сразу видны в контейнерах. Новые
+миграции применяйте отдельно через `./scripts/dev.sh exec api alembic upgrade head`.
+Файл `.env.local` читает Compose; переменные уже запущенного процесса сами не
+изменяются. `make dev-env` выполняет `up -d --no-build` и пересоздаёт только сервисы
+с изменившейся конфигурацией, сохраняя образы и данные в volumes. Обычный `restart`
+env не обновляет ([Docker Compose](https://docs.docker.com/reference/cli/docker/compose/restart/)).
+На Windows эквивалент — `.\scripts\dev.ps1 up -d --no-build`; без Make —
+`./scripts/dev.sh up -d --no-build`. На чистом checkout сначала выполните `make dev`.
+Серверные секреты из `.env.local` во frontend не монтируются.
 
 Изменение исходников не требует `./scripts/dev.sh build`. Изменение зависимостей требует обновить lock-файл и переустановить зависимости:
 
 ```sh
 # После редактирования backend/pyproject.toml:
 ./scripts/dev.sh run --rm --no-deps api uv lock
-./scripts/dev.sh up --build -d api migrate
+./scripts/dev.sh up --build -d api worker migrate
 
 # Добавление frontend-зависимости с фиксацией версии:
 ./scripts/dev.sh exec frontend npm install --save-exact PACKAGE@VERSION
@@ -387,7 +407,7 @@ HS256; сессия, её срок и связь с пользователем �
 Для включения входа задайте `SECURITY_JWT_SECRET` в `.env.local`: случайный секрет
 минимум 32 байта (например, сгенерируйте `python3 -c 'import secrets; print(secrets.token_urlsafe(48))'`).
 Секрет остаётся только на сервере. `SECURITY_TOKEN_TTL_SECONDS=3600` задаёт срок сессии.
-После изменения настроек выполните `./scripts/dev.sh up --build -d api migrate`.
+После изменения настроек выполните `make dev-env` (или `./scripts/dev.sh up -d --no-build`).
 Без настроенного секрета auth возвращает 503; небезопасного значения по умолчанию нет.
 
 - `POST /api/v1/auth/login` — JSON `email`, `password`; ответ `access_token`, `token_type`, `expires_in`.

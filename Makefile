@@ -1,10 +1,22 @@
-.PHONY: dev dev-bot dev-down dev-logs dev-ps seed seed-excel mock mock-reset worker-logs test lint
+.PHONY: dev dev-build dev-env dev-env-bot dev-bot dev-down dev-logs dev-ps seed seed-excel mock mock-reset worker-logs test lint
 
+# Повторный запуск использует готовые образы; код подключён через bind mounts.
 dev:
+	./scripts/dev.sh up -d
+
+# Только после изменения Dockerfile или зависимостей Python.
+dev-build:
 	./scripts/dev.sh up --build -d
 
+# Перечитать .env.local и пересоздать изменившиеся сервисы без сборки образов.
+dev-env:
+	./scripts/dev.sh up -d --no-build
+
+dev-env-bot:
+	./scripts/dev.sh --profile bot up -d --no-build
+
 dev-bot:
-	./scripts/dev.sh --profile bot up --build -d
+	./scripts/dev.sh --profile bot up -d
 
 dev-down:
 	./scripts/dev.sh --profile bot down

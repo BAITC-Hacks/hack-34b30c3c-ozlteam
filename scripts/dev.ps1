@@ -1,6 +1,7 @@
 # Запуск проекта в Docker на Windows (PowerShell).
 # Эквивалент scripts/dev.sh: всегда выбирает локальный .env.local репозитория.
-#   .\scripts\dev.ps1 up --build -d
+#   .\scripts\dev.ps1 up -d
+#   .\scripts\dev.ps1 up -d --no-build  # применить env без сборки
 #   .\scripts\dev.ps1 logs -f
 $ErrorActionPreference = 'Stop'
 
