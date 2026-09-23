@@ -1,5 +1,7 @@
 .page { display: grid; gap: var(--gap-blocks); min-width: 0; }
 .controls { display: flex; align-items: end; flex-wrap: wrap; gap: var(--sp-3); }
+.overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
+.overviewNote { grid-column: 1 / -1; margin-top: calc(var(--sp-2) * -1); color: var(--mut); font-size: var(--fs-xs); }
 .controls label, .listControls label { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
 .selectControl { min-width: 160px; }
 .selectControl > span:first-child { color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
@@ -38,6 +40,6 @@
 .skeletonCard i:first-child { width: 35%; }
 .skeletonCard i:last-child { width: 85%; }
 @keyframes shimmer { to { background-position-x: -200%; } }
-@media (max-width: 800px) { .breakdown { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .overview, .breakdown { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .controls label, .controls select, .controls input, .controls button, .listControls label, .listControls select, .listControls button { width: 100%; } .breakdown { grid-template-columns: 1fr 1fr; } .runItem { flex: 1 1 100%; } .detailHead { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .skeletonCard i { animation: none; background: var(--sunken); } }

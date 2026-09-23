@@ -3,10 +3,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
-import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
+import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tile, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
-import { createOrders, createRun, getCatalog, getJob, getRecommendation, getRecommendations, getRun, getRuns } from "../api/runs";
-import type { CatalogOption, JobStatus, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
+import { createOrders, createRun, getCatalog, getJob, getOverview, getRecommendation, getRecommendations, getRun, getRuns } from "../api/runs";
+import type { CatalogOption, JobStatus, ReplenishmentOverview, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
 import styles from "./RunsPage.module.css";
 
 const urgency = {
@@ -62,6 +62,7 @@ export function RunsPage() {
   const [runError, setRunError] = useState<string | null>(null);
   const [runRetry, setRunRetry] = useState(0);
   const [job, setJob] = useState<JobStatus | null>(null);
+  const [overview, setOverview] = useState<ReplenishmentOverview | null>(null);
   const [page, setPage] = useState<SavedRecommendationPage | null>(null);
   const [pageLoadedKey, setPageLoadedKey] = useState("");
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
@@ -125,6 +126,14 @@ export function RunsPage() {
       .finally(() => { if (!controller.signal.aborted) setCatalogLoading(false); });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getOverview(warehouseId, controller.signal)
+      .then(setOverview)
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); });
+    return () => controller.abort();
+  }, [warehouseId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -261,6 +270,14 @@ export function RunsPage() {
         </div>
         {!warehouses.length ? <p className={styles.note}>Склады пока не загружены. Для работы с реальными данными сначала примените источник 1С; демонстрационный расчёт доступен отдельно.</p> : null}
       </Card>
+
+      {overview ? <section className={styles.overview} aria-label="Состояние закупок">
+        <Tile label="Срочно заказать" value={overview.deficit_count} hint="позиции в последнем расчёте" tone={overview.deficit_count ? "up" : "good"} />
+        <Tile label="Избыток" value={overview.excess_count} hint="позиции без потребности" />
+        <Tile label="Нужна проверка" value={overview.blocked_count} hint="позиции с неполными данными" tone={overview.blocked_count ? "warn" : "good"} />
+        <Tile label="Черновики" value={overview.draft_order_count} hint="заказы ждут решения" tone={overview.draft_order_count ? "warn" : "default"} />
+        <p className={styles.overviewNote}>{overview.latest_run ? `Срез от ${overview.latest_run.as_of}; источников в срезе: ${overview.source_versions.length}.` : "Нет завершённого расчёта для выбранного склада."}</p>
+      </section> : null}
 
       {runsTotal || historyOffset || runsLoadedOffset !== historyOffset ? <Card title="История расчётов" subtitle="Выберите сохранённый результат">
         {runsLoadedOffset !== historyOffset && !historyError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем историю"><i /><i /><i /></div> : null}

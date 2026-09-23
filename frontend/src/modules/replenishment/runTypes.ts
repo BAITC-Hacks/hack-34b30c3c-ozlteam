@@ -33,6 +33,17 @@ export interface RunPage {
   offset: number;
 }
 
+/** Сводка относится к одному последнему успешному срезу, а не к сумме расчётов. */
+export interface ReplenishmentOverview {
+  latest_run: Pick<Run, "id" | "warehouse_id" | "as_of" | "completed_at" | "algorithm_version"> | null;
+  deficit_count: number;
+  excess_count: number;
+  blocked_count: number;
+  draft_order_count: number;
+  source_versions: SourceVersion[];
+  warnings: string[];
+}
+
 export interface SavedRecommendation {
   id: string;
   run_id: string;

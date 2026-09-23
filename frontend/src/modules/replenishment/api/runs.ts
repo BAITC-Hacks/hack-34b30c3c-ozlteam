@@ -3,6 +3,7 @@ import type {
   CatalogOption,
   CreatedOrder,
   JobStatus,
+  ReplenishmentOverview,
   Run,
   RunPage,
   SavedRecommendationDetail,
@@ -39,6 +40,13 @@ export function getRecommendation(id: string, signal?: AbortSignal): Promise<Sav
 
 export function getJob(id: string, signal?: AbortSignal): Promise<JobStatus> {
   return apiRequest(`${base}/jobs/${id}`, { signal });
+}
+
+export function getOverview(warehouseId: string, signal?: AbortSignal): Promise<ReplenishmentOverview> {
+  const params = new URLSearchParams();
+  if (warehouseId) params.set("warehouse_id", warehouseId);
+  const query = params.size ? `?${params}` : "";
+  return apiRequest(`${base}/overview${query}`, { signal });
 }
 
 export function createOrders(recommendationIds: string[], idempotencyKey: string): Promise<CreatedOrder[]> {

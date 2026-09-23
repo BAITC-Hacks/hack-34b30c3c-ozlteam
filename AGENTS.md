@@ -1,16 +1,22 @@
 # Hackalem team starter
 
 Read `CONTEXT.md` first: what the product is, who it serves, what is decided and what is still open.
-The industry changed on 21.09.2026 — the team is now on track 05, Logistics, and the construction
-material in the prototype no longer applies. The selected case is now supplier replenishment
-for Электрокомплект (23.09.2026); read `docs/hackathon/tracklogic.md` before domain work.
-It records the supplied case, real workbook schemas, data gaps and 1C/UUIDv7 requirements.
-Read `docs/TEAM_HANDOFF.md` and `docs/replenishment-case.md` for the team's demo flow.
-The old `TrackLogic/hackalem_ai_context.txt` is historical construction brainstorming,
-not current requirements or official hackathon rules. The shell, roles, mock
-data and the assistant prompt are already adapted to logistics; the scaffold, design system and UI
-kit carry over unchanged. Subject-matter background lives in `docs/logistic`, including a registry
-of trade documents and which of them have a legally prescribed form.
+Then read `PROJECT_DIRECTION.md` and apply `.agents/skills/project-alignment/SKILL.md`
+for every project task: planning, implementation, review, documentation and status.
+Reuse already-read current context; refresh it after relevant Git or user changes.
+The selected case is supplier replenishment for Электрокомплект (23.09.2026).
+Электрокомплект is the company using this service; IEK/Systeme are initial suppliers/brands,
+not separate ERP customers. Demand is the company's own shipments to its clients from its 1C.
+There is no retail POS or downstream store-management integration in scope.
+Code matching and internal UUIDv7 identities live in our adapter/database, not in stores.
+Support arbitrary suppliers; do not hard-code a two-supplier limit.
+
+Read `docs/hackathon/tracklogic.md` before domain/data work. It records workbook schemas,
+data gaps and 1C requirements. `docs/TEAM_HANDOFF.md` is the teammate entry point;
+`docs/replenishment-case.md` documents acceptance and the separate demo contract.
+`CONTEXT_HISTORY.md`, `TrackLogic/hackalem_ai_context.txt`, old retail diagrams and
+construction/telematics examples are historical, not current requirements or a roadmap.
+The scaffold and design system carry over; product behavior follows the current direction.
 
 Before substantial work read `.agents/skills/task-delegation/SKILL.md`. Proactively delegate useful independent subtasks, with a clear plan and file ownership; the main agent integrates and verifies the result. No additional permission is needed for delegation.
 
