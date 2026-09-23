@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1280" viewBox="0 0 1440 1280" role="img" aria-labelledby="title description">
+  <title id="title">Какие данные используются и как они сопоставляются</title>
+  <desc id="description">План адаптера отчётов IEK и Systeme Electric: детальные продажи питают прогноз, месячные продажи служат сверкой, остатки и ожидаемые поставки уменьшают потребность, MOQ и кратность задают округление. Код товара в пределах базы 1С сопоставляется с внешним ID, затем с внутренним UUIDv7. Факты связываются с товаром, складом и датой. Перед расчётом предлагается показывать готовность данных. Адаптер исходных отчётов и этот экран ещё требуют реализации.</desc>
+  <!-- Standalone companion to replenishment-process.svg; palette from design/tokens.css. -->
+  <defs>
+    <g id="file" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H5v20h14V7l-5-5Zm0 0v5h5M8 12h8M8 16h8"/></g>
+    <g id="link" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10 13 4-4m-5 8-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m0 8a4 4 0 0 0 6 0l5-5a4 4 0 0 0-6-6l-2 2"/></g>
+    <g id="database" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 4 18 4 18 0V5M3 12c0 4 18 4 18 0"/></g>
+    <g id="check" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></g>
+  </defs>
+  <rect width="1440" height="1280" rx="16" fill="#f7f6f4"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif" fill="#14151a">
+    <text x="64" y="69" font-size="32" font-weight="600" letter-spacing="-.6">От файлов партнёра к расчёту</text>
+    <text x="64" y="105" font-size="17" fill="#6b6f76">IEK и Systeme Electric · что берём, где используем, как связываем</text>
+    <rect x="1032" y="45" width="344" height="42" rx="10" fill="#e8f3ff"/>
+    <text x="1204" y="72" text-anchor="middle" font-size="15" fill="#0b5fc4">План адаптера к готовому backend</text>
+
+    <g font-size="14" fill="#6b6f76"><text x="88" y="157">Источник</text><text x="496" y="157">Где используется</text><text x="950" y="157">Правило обработки</text></g>
+    <g fill="#fff"><rect x="64" y="174" width="1312" height="96" rx="16"/><rect x="64" y="282" width="1312" height="96" rx="16"/><rect x="64" y="390" width="1312" height="96" rx="16"/><rect x="64" y="498" width="1312" height="96" rx="16"/><rect x="64" y="606" width="1312" height="96" rx="16"/></g>
+    <g fill="#24262b"><rect x="88" y="198" width="40" height="40" rx="10"/><rect x="88" y="306" width="40" height="40" rx="10"/><rect x="88" y="414" width="40" height="40" rx="10"/><rect x="88" y="522" width="40" height="40" rx="10"/><rect x="88" y="630" width="40" height="40" rx="10"/></g>
+    <g color="#fff"><use href="#file" transform="translate(96 206)"/><use href="#file" transform="translate(96 314)"/><use href="#file" transform="translate(96 422)"/><use href="#file" transform="translate(96 530)"/><use href="#file" transform="translate(96 638)"/></g>
+    <g font-size="18" font-weight="600">
+      <text x="144" y="210">Динамика продаж</text><text x="144" y="318">Месячные продажи</text><text x="144" y="426">Остатки и резерв</text><text x="144" y="534">Товары в пути</text><text x="144" y="642">MOQ и кратность</text>
+    </g>
+    <g font-size="15" fill="#6b6f76">
+      <text x="144" y="239">Дата, документ, код, склад, количество</text><text x="144" y="347">И отчёты «Сезонность»</text><text x="144" y="455">Месячные снимки / текущий срез</text><text x="144" y="563">«Путь ИЭК» / «Товар в пути СЭ»</text><text x="144" y="671">Условия заказа из файлов поставщиков</text>
+    </g>
+    <g stroke="#1b84ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M445 222h28m-7-5 7 5-7 5M445 330h28m-7-5 7 5-7 5M445 438h28m-7-5 7 5-7 5M445 546h28m-7-5 7 5-7 5M445 654h28m-7-5 7 5-7 5"/></g>
+    <g font-size="17" font-weight="600">
+      <text x="496" y="210">Регулярный спрос, выбросы, тренд</text><text x="496" y="318">Сверка истории и сезонного профиля</text><text x="496" y="426">Доступный запас на дату расчёта</text><text x="496" y="534">Будущие поступления и риск дефицита</text><text x="496" y="642">Округление итоговой потребности</text>
+    </g>
+    <g font-size="15" fill="#6b6f76">
+      <text x="496" y="239">Основная история для расчётного ядра</text><text x="496" y="347">Сезонность ядро получает из истории продаж</text><text x="496" y="455">История снимков — для проверки доступности</text><text x="496" y="563">Учитываем дату прихода и склад назначения</text><text x="496" y="671">MOQ — минимум, кратность — шаг упаковки</text>
+      <text x="950" y="210">Знак зависит от вида операции.</text><text x="950" y="237">Без клиента — выбросы только по дням.</text>
+      <text x="950" y="318">Не прибавляем к детальным продажам.</text><text x="950" y="345">Единицы сводных отчётов уточняем.</text>
+      <text x="950" y="426">Не складываем остатки за месяцы.</text><text x="950" y="453">Нулевой снимок ≠ месяц отсутствия.</text>
+      <text x="950" y="534">Разворачиваем колонки в поставки.</text><text x="950" y="561">Поздний приход не закрывает ранний дефицит.</text>
+      <text x="950" y="642">Пустое поле ≠ подтверждённые 0 или 1.</text><text x="950" y="669">Метры и бухты требуют пересчёта.</text>
+    </g>
+
+    <text x="64" y="753" font-size="21" font-weight="600">Как одна позиция связывает разные файлы</text>
+    <g fill="#fff"><rect x="64" y="779" width="292" height="202" rx="16"/><rect x="404" y="779" width="292" height="202" rx="16"/><rect x="744" y="779" width="292" height="202" rx="16"/><rect x="1084" y="779" width="292" height="202" rx="16"/></g>
+    <g fill="#e8f3ff"><rect x="86" y="801" width="40" height="40" rx="10"/><rect x="426" y="801" width="40" height="40" rx="10"/><rect x="766" y="801" width="40" height="40" rx="10"/><rect x="1106" y="801" width="40" height="40" rx="10"/></g>
+    <g color="#0b5fc4"><use href="#file" transform="translate(94 809)"/><use href="#link" transform="translate(434 809)"/><use href="#database" transform="translate(774 809)"/><use href="#check" transform="translate(1114 809)"/></g>
+    <g font-size="18" font-weight="600"><text x="140" y="827">Код из файла</text><text x="480" y="827">Сопоставление</text><text x="820" y="827">Товар в сервисе</text><text x="1160" y="827">Факты расчёта</text></g>
+    <g font-size="15" fill="#6b6f76">
+      <text x="86" y="875">Код / Код 1с / Номенклатура.Код</text><text x="86" y="903">Храним точную строку:</text><text x="86" y="928">нули, буквы и суффиксы</text><text x="86" y="961" font-size="13">Имя и артикул — для проверки</text>
+      <text x="426" y="875">База 1С + код + характеристика*</text><text x="426" y="903">→ стабильный внешний ID</text><text x="426" y="928">Нет совпадения → разбор</text><text x="426" y="961" font-size="13">* Если есть варианты номенклатуры</text>
+      <text x="766" y="875">source_id + external_id</text><text x="766" y="903">→ product_id (UUIDv7)</text><text x="766" y="928">Повторный импорт: тот же UUID</text><text x="766" y="961" font-size="13">Внутренний ID не заменяет ID 1С</text>
+      <text x="1106" y="875">product_id + warehouse_id</text><text x="1106" y="903">Дата / документ / строка / ETA</text><text x="1106" y="928">Количество в базовой единице</text><text x="1106" y="961" font-size="13">Снимок данных и версия источника</text>
+    </g>
+    <g stroke="#1b84ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M365 877h30m-7-5 7 5-7 5M705 877h30m-7-5 7 5-7 5M1045 877h30m-7-5 7 5-7 5"/></g>
+
+    <text x="64" y="1032" font-size="21" font-weight="600">Предлагаемый экран «Готовность данных» перед расчётом</text>
+    <g fill="#fff"><rect x="64" y="1056" width="416" height="136" rx="16"/><rect x="512" y="1056" width="416" height="136" rx="16"/><rect x="960" y="1056" width="416" height="136" rx="16"/></g>
+    <g font-size="17" font-weight="600"><text x="88" y="1089">Готово к расчёту</text><text x="536" y="1089">Расчёт с ограничениями</text><text x="984" y="1089">Нужно исправить</text></g>
+    <g font-size="15" fill="#6b6f76">
+      <text x="88" y="1120">Товар и склад сопоставлены, единицы</text><text x="88" y="1144">согласованы, остаток актуален,</text><text x="88" y="1168">условия поставщика подтверждены.</text>
+      <text x="536" y="1120">Нет ID клиента или точного stockout:</text><text x="536" y="1144">показываем доступный метод</text><text x="536" y="1168">и ограничения рекомендации.</text>
+      <text x="984" y="1120">Неоднозначный код, неизвестный склад,</text><text x="984" y="1144">знак, единица или условия поставки:</text><text x="984" y="1168">позиция не готова к заказу.</text>
+    </g>
+    <text x="64" y="1226" font-size="14" fill="#0b5fc4">Категория и прогноз прироста → параметры расчёта. Срок поставки → горизонт заказа. Недостающие поля запрашиваем отдельно.</text>
+    <text x="64" y="1254" font-size="13" fill="#6b6f76">Backend для нормализованных данных реализован. Адаптер этих отчётов, реестр кодов и общий экран готовности — следующая работа.</text>
+  </g>
+</svg>
