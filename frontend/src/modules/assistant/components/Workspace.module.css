@@ -32,6 +32,7 @@
 .permission input { flex: none; margin-top: var(--sp-1); }
 .messages { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: var(--sp-4); min-width: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
 .emptyMessages { overflow: visible; }
+.chat:has(> .statusNotice) .emptyMessages { overflow-y: auto; padding-bottom: var(--sp-3); }
 .workspace:not(.compact) .messages { width: min(760px, 100%); align-self: center; }
 .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
 .workspace:not(.compact) .emptyMessages > div > :first-child { transform: none; }

@@ -84,11 +84,11 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
         <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} title="Открыть помощника" aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
       </span> : null}
     </div>
-    <div className={styles.contextBar}>
-      <span>{state.allowData ? "Учётные сводки разрешены" : "Без учётных сводок"}</span>
+    {state.allowData || Object.keys(state.context).length || state.assistantId !== "auto" ? <div className={styles.contextBar}>
+      {state.allowData ? <span>Учётные сводки разрешены</span> : null}
       {Object.keys(state.context).map((key) => <button type="button" key={key} onClick={() => setContextOpen(true)}>{contextName(key as ContextKey)}</button>)}
       {state.assistantId !== "auto" ? <button type="button" onClick={() => setContextOpen(true)}>{assistant?.title ?? "Выбрана тема"}</button> : null}
-    </div>
+    </div> : null}
     <Modal id={`${modalId}-history`} title="История диалогов" open={historyOpen} onOpenChange={setHistoryOpen} bodyScroll size="sm">
     {conversations.isPending ? <Loading label="Загружаем диалоги" /> : null}
     <div className={styles.historyList}>
