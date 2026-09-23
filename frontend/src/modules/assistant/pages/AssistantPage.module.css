@@ -287,11 +287,17 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 900px) {
   .room:has(.thread) {
     min-height: calc(100dvh - var(--mobile-bar-h) - 42px - env(safe-area-inset-bottom, 0px));
   }
 
+  .note {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
   .orbStage { min-height: 250px; }
   .prompts { grid-template-columns: minmax(0, 1fr); }
   .input { font-size: 16px; }
