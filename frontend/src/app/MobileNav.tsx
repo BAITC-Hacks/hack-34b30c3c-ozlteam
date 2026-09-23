@@ -10,6 +10,8 @@ export interface MobileNavItem {
   to: string;
   label: string;
   icon: ReactNode;
+  mobileLabel?: string;
+  disabled?: boolean;
 }
 
 interface Props {
@@ -39,7 +41,9 @@ export function MobileNav({
   const moreButton = useRef<HTMLButtonElement>(null);
 
   // Раздел из листа активен — подсвечиваем «Ещё», иначе переход выглядит как промах.
-  const restIsActive = rest.some((item) => location.pathname === item.to);
+  const availableRest = rest.filter((item) => !item.disabled);
+  const disabledRest = rest.filter((item) => item.disabled);
+  const restIsActive = availableRest.some((item) => location.pathname === item.to);
 
   useEffect(() => {
     setOpen(false);
@@ -79,7 +83,7 @@ export function MobileNav({
       >
         <div className={styles.grab} aria-hidden="true" />
         <nav className={styles.sheetNav} aria-label="Остальные разделы">
-          {rest.map((item) => (
+          {availableRest.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -91,6 +95,18 @@ export function MobileNav({
               {item.icon}
               <span>{item.label}</span>
             </NavLink>
+          ))}
+          {disabledRest.length > 0 ? <div className={styles.disabledGroup}>Недоступно</div> : null}
+          {disabledRest.map((item) => (
+            <span
+              key={item.to}
+              className={`${styles.sheetLink} ${styles.disabledLink}`}
+              role="link"
+              aria-disabled="true"
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </span>
           ))}
         </nav>
 
@@ -126,7 +142,7 @@ export function MobileNav({
             }
           >
             {item.icon}
-            <span>{item.label}</span>
+            <span>{item.mobileLabel ?? item.label}</span>
           </NavLink>
         ))}
         <button

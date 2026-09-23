@@ -1,15 +1,18 @@
 import {
+  BookOpen,
   Boxes,
+  ClipboardList,
   Container,
   Building2,
+  Database,
   FileText,
   LayoutGrid,
   LogOut,
   PackageCheck,
-  ShoppingCart,
   PanelLeftClose,
   PanelLeftOpen,
   Route,
+  ShoppingCart,
   Sparkles,
   StickyNote,
   Truck,
@@ -28,36 +31,36 @@ interface NavItem {
   to: string;
   label: string;
   icon: ReactNode;
+  mobileLabel?: string;
   count?: number;
 }
 
 const WORK: NavItem[] = [
-  { to: "/", label: "Пополнение", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
+  { to: "/recommendations", label: "Рекомендации", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
+  { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
+  { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
 ];
 
-const REFERENCE_WORK: NavItem[] = [
-  { to: "/dashboard", label: "Сводка прототипа", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
+const DATA: NavItem[] = [
+  { to: "/data", label: "Источники данных", icon: <Database size={17} strokeWidth={1.8} /> },
+  { to: "/data/catalogs", label: "Справочники", icon: <BookOpen size={17} strokeWidth={1.8} /> },
+];
+
+const INACTIVE: NavItem[] = [
   { to: "/shipments", label: "Отправления", icon: <Truck size={17} strokeWidth={1.8} /> },
   { to: "/documents", label: "Документы", icon: <FileText size={17} strokeWidth={1.8} /> },
   { to: "/receiving", label: "Приёмка", icon: <PackageCheck size={17} strokeWidth={1.8} /> },
-  { to: "/warehouse", label: "Склад", icon: <Boxes size={17} strokeWidth={1.8} /> },
   { to: "/routes", label: "Маршруты", icon: <Route size={17} strokeWidth={1.8} /> },
-];
-
-const ASSISTANT: NavItem[] = [
   { to: "/assistant", label: "Логист ИИ", icon: <Sparkles size={17} strokeWidth={1.8} /> },
-];
-
-const REFERENCE: NavItem[] = [
   { to: "/notes", label: "Заметки", icon: <StickyNote size={17} strokeWidth={1.8} /> },
   { to: "/clients", label: "Клиенты", icon: <Users size={17} strokeWidth={1.8} /> },
   { to: "/carriers", label: "Перевозчики", icon: <Building2 size={17} strokeWidth={1.8} /> },
   { to: "/ui-kit", label: "Компоненты", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
 ];
 
-// Пятая ячейка нижней панели занята кнопкой «Ещё», поэтому в ней ровно четыре раздела.
-const MOBILE_PRIMARY = [...WORK, ...REFERENCE_WORK.slice(0, 3)];
-const MOBILE_REST = [...REFERENCE_WORK.slice(3), ...ASSISTANT, ...REFERENCE];
+// Нижняя панель показывает только доступные разделы; остальные находятся в «Ещё».
+const MOBILE_PRIMARY = WORK;
+const MOBILE_REST = [...DATA, ...INACTIVE.map((item) => ({ ...item, disabled: true }))];
 
 function initials(fullName: string): string {
   return fullName
@@ -68,22 +71,42 @@ function initials(fullName: string): string {
     .join("");
 }
 
-function Section({ title, items }: { title: string; items: NavItem[] }) {
+function Section({
+  title,
+  items,
+  disabled = false,
+}: {
+  title: string;
+  items: NavItem[];
+  disabled?: boolean;
+}) {
   return (
     <section className={styles.navSection} aria-label={title}>
       <div className={styles.group}>{title}</div>
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === "/"}
-          className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
-        >
-          {item.icon}
-          <span>{item.label}</span>
-          {item.count !== undefined ? <b className={styles.count}>{item.count}</b> : null}
-        </NavLink>
-      ))}
+      {items.map((item) =>
+        disabled ? (
+          <span
+            key={item.to}
+            className={`${styles.link} ${styles.disabled}`}
+            role="link"
+            aria-disabled="true"
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </span>
+        ) : (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+            {item.count !== undefined ? <b className={styles.count}>{item.count}</b> : null}
+          </NavLink>
+        ),
+      )}
     </section>
   );
 }
@@ -141,9 +164,8 @@ export function AppLayout() {
               onScroll={updateNavigationFade}
             >
               <Section title="Работа" items={WORK} />
-              <Section title="Разделы прототипа" items={REFERENCE_WORK} />
-              <Section title="Помощник" items={ASSISTANT} />
-              <Section title="Справочники" items={REFERENCE} />
+              <Section title="Данные" items={DATA} />
+              <Section title="Недоступно" items={INACTIVE} disabled />
             </nav>
           </div>
 
