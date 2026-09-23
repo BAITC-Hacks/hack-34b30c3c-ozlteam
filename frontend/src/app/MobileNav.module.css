@@ -65,10 +65,10 @@
 
   .assistantOrb {
     position: absolute;
-    bottom: 5px;
+    bottom: 17px;
     left: 50%;
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     transform: translateX(-50%);
     display: grid;
     place-items: center;

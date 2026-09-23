@@ -155,7 +155,7 @@ export function MobileNav({
           aria-label="Помощник по закупкам"
         >
           <span className={styles.assistantOrb} aria-hidden="true">
-            <NovaOrb variant="mini" size={80} />
+            <NovaOrb variant="mini" size={64} />
           </span>
           <span className={styles.assistantLabel}>Помощник</span>
         </NavLink>
