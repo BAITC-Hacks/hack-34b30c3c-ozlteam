@@ -196,6 +196,10 @@
     color: var(--faint);
   }
 
+  .language {
+    margin: var(--sp-2) var(--sp-3);
+  }
+
   .me {
     display: flex;
     align-items: center;

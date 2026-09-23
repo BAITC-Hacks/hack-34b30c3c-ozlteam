@@ -4,16 +4,13 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { tokenStore } from "../../../shared/api/client";
+import { LanguageSwitcher } from "../../../shared/i18n/LanguageSwitcher";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import { Button, Field } from "../../../shared/ui";
 import { useCurrentUser, useLogin } from "../hooks/useAuth";
 import styles from "./LoginPage.module.css";
 
-const schema = z.object({
-  email: z.email({ message: "Введите корректную почту" }),
-  password: z.string().min(8, "Пароль не короче 8 символов"),
-});
-
-type FormValues = z.infer<typeof schema>;
+type FormValues = { email: string; password: string };
 
 function returnPath(state: unknown): string {
   const from = state && typeof state === "object" && "from" in state ? state.from : null;
@@ -28,6 +25,11 @@ function returnPath(state: unknown): string {
 }
 
 export function LoginPage() {
+  const { t } = useI18n();
+  const schema = z.object({
+    email: z.email({ message: t("Введите корректную почту", "Жарамды электрондық поштаны енгізіңіз", "Enter a valid email address") }),
+    password: z.string().min(8, t("Пароль не короче 8 символов", "Құпиясөз кемінде 8 таңбадан тұруы керек", "Password must be at least 8 characters") ),
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const from = returnPath(location.state);
@@ -58,26 +60,27 @@ export function LoginPage() {
   return (
     <div className={styles.screen}>
       <div className={styles.card}>
+        <LanguageSwitcher />
         <span className={styles.brand}>
           <img className={styles.mark} src="/icon.svg" alt="" />
-          Центр закупок
+          {t("Центр закупок", "Сатып алу орталығы", "Procurement center")}
         </span>
 
         <div>
-          <h1 className={styles.title}>Вход</h1>
-          <p className={styles.hint}>Войдите рабочей почтой, выданной администратором.</p>
+          <h1 className={styles.title}>{t("Вход", "Кіру", "Sign in")}</h1>
+          <p className={styles.hint}>{t("Войдите рабочей почтой, выданной администратором.", "Әкімші берген жұмыс электрондық поштасымен кіріңіз.", "Sign in with the work email provided by your administrator.")}</p>
         </div>
 
         <form className={styles.form} onSubmit={onSubmit} noValidate>
           <Field
-            label="Почта"
+            label={t("Почта", "Электрондық пошта", "Email")}
             type="email"
             autoComplete="username"
             error={errors.email?.message}
             {...register("email")}
           />
           <Field
-            label="Пароль"
+            label={t("Пароль", "Құпиясөз", "Password")}
             type="password"
             autoComplete="current-password"
             error={errors.password?.message}
@@ -86,12 +89,12 @@ export function LoginPage() {
 
           {login.isError ? (
             <p className={styles.error} role="alert">
-              Не удалось войти. Проверьте почту и пароль.
+              {t("Не удалось войти. Проверьте почту и пароль.", "Кіру мүмкін болмады. Электрондық пошта мен құпиясөзді тексеріңіз.", "Could not sign in. Check your email and password.")}
             </p>
           ) : null}
 
           <Button type="submit" loading={login.isPending}>
-            Войти
+            {t("Войти", "Кіру", "Sign in")}
           </Button>
         </form>
       </div>

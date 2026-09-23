@@ -81,6 +81,10 @@
   display: none;
 }
 
+.sidebarSlot[data-collapsed] .language {
+  display: none;
+}
+
 .sidebarSlot[data-collapsed] .hideMenu {
   width: var(--touch);
   min-height: var(--touch);
@@ -235,6 +239,10 @@
 
 .active .count {
   background: rgba(255, 255, 255, 0.6);
+}
+
+.language {
+  margin: var(--sp-2) var(--sp-2) var(--sp-3);
 }
 
 .me {
