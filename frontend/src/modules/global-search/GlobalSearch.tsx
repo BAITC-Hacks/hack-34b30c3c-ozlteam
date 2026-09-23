@@ -25,6 +25,7 @@ interface Result {
   key: string;
   title: string;
   detail: string;
+  match?: string;
   searchText: string;
   href: string;
   kind: "order" | "run";
@@ -50,6 +51,10 @@ async function loadRuns(signal: AbortSignal): Promise<Run[]> {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Не удалось получить данные.";
+}
+
+function normalizeSearch(value: string): string {
+  return value.toLocaleLowerCase("ru-RU").replaceAll("ё", "е");
 }
 
 export function GlobalSearch() {
@@ -97,28 +102,34 @@ export function GlobalSearch() {
     return () => controller.abort();
   }, [open, refresh]);
 
+  const terms = useMemo(() => normalizeSearch(query.trim()).split(/\s+/).filter(Boolean), [query]);
   const results = useMemo<Result[]>(() => [
-    ...orders.map((order) => ({
-      key: `order-${order.id}`,
-      title: order.supplier_name,
-      detail: `Заказ · ${order.status === "approved" ? "утверждён" : "черновик"} · ${order.lines.length} поз.`,
-      searchText: `${order.id} ${order.supplier_name} ${order.lines.map((line) => `${line.sku} ${line.name}`).join(" ")}`,
-      href: `/orders?id=${encodeURIComponent(order.id)}`,
-      kind: "order" as const,
-    })),
+    ...orders.map((order) => {
+      const matchedLine = terms.length
+        ? order.lines.find((line) => terms.some((term) => normalizeSearch(`${line.sku} ${line.name}`).includes(term)))
+        : undefined;
+      return {
+        key: `order-${order.id}`,
+        title: order.supplier_name,
+        detail: `Заказ № ${order.id.slice(-8)} · ${order.status === "approved" ? "утверждён" : "черновик"} · ${order.lines.length} поз.`,
+        match: matchedLine ? `${matchedLine.name} · ${matchedLine.sku}` : undefined,
+        searchText: `${order.id} ${order.supplier_name} ${order.lines.map((line) => `${line.sku} ${line.name}`).join(" ")}`,
+        href: `/orders?id=${encodeURIComponent(order.id)}`,
+        kind: "order" as const,
+      };
+    }),
     ...runs.map((run) => ({
       key: `run-${run.id}`,
       title: `Расчёт от ${new Intl.DateTimeFormat("ru-RU").format(new Date(`${run.as_of}T00:00:00`))}`,
-      detail: `Расчёт · ${run.status === "done" ? "готов" : run.status === "failed" ? "ошибка" : "в работе"}`,
+      detail: `Расчёт № ${run.id.slice(-8)} · ${run.status === "done" ? "готов" : run.status === "failed" ? "ошибка" : "в работе"}`,
       searchText: `${run.id} ${run.as_of} расчёт пополнение`,
       href: `/recommendations?run=${encodeURIComponent(run.id)}`,
       kind: "run" as const,
     })),
-  ], [orders, runs]);
+  ], [orders, runs, terms]);
   const visible = useMemo(() => {
-    const terms = query.trim().toLocaleLowerCase("ru").split(/\s+/).filter(Boolean);
-    return results.filter((item) => terms.every((term) => item.searchText.toLocaleLowerCase("ru").includes(term))).slice(0, 50);
-  }, [query, results]);
+    return results.filter((item) => terms.every((term) => normalizeSearch(item.searchText).includes(term))).slice(0, 50);
+  }, [terms, results]);
 
   function choose(result: Result) {
     setOpen(false);
@@ -170,7 +181,7 @@ export function GlobalSearch() {
             onClick={() => choose(item)}
           >
             {item.kind === "order" ? <ShoppingCart size={18} aria-hidden="true" /> : <ClipboardList size={18} aria-hidden="true" />}
-            <span><strong>{item.title}</strong><small>{item.detail}</small></span>
+            <span><strong>{item.title}</strong><small>{item.detail}</small>{item.match ? <small className={styles.match}>Товар: {item.match}</small> : null}</span>
             <ArrowRight size={16} aria-hidden="true" />
           </button>)}
           {!visible.length ? <p className={styles.empty}>{errors.length === 2 ? "Данные недоступны. Повторите загрузку." : query.trim() ? "Совпадений нет. Попробуйте другое название, артикул или номер." : "Заказов и расчётов пока нет."}</p> : null}
