@@ -14,7 +14,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Domains.Notes.models.note import Note
 from app.Domains.Users.models import Permission, Role, User
-from app.seed.runner import created, done, removed, run, section, session_scope, skipped, warning
+from app.seed.runner import (
+    created,
+    done,
+    removed,
+    run,
+    section,
+    session_scope,
+    skipped,
+    updated,
+    warning,
+)
 from app.seed.seed import find_user, hash_password, resolve_password
 
 
@@ -39,6 +49,12 @@ MOCK_USERS: tuple[MockUser, ...] = (
         phone="+77011234501",
         position="Руководитель направления",
         role="manager",
+        permissions=(
+            "replenishment.run",
+            "orders.write",
+            "orders.approve",
+            "orders.export",
+        ),
     ),
     MockUser(
         email="s.kovalev@hackalem.local",
@@ -105,13 +121,20 @@ async def load_permissions(session: AsyncSession) -> dict[str, Permission]:
 
 
 async def ensure_users(session: AsyncSession) -> None:
-    """Создать демонстрационных пользователей; существующие не изменяются."""
+    """Создать демо-пользователей и добавить недостающие личные права."""
     roles = await load_roles(session)
     permissions = await load_permissions(session)
     password, is_default = resolve_password("SEED_MOCK_PASSWORD")
     for person in MOCK_USERS:
-        if await find_user(session, person.email) is not None:
-            skipped(f"{person.position}: {person.email}")
+        existing = await find_user(session, person.email)
+        if existing is not None:
+            granted = {permission.code for permission in existing.permissions}
+            missing = [code for code in person.permissions if code not in granted]
+            if missing:
+                existing.permissions.extend(permissions[code] for code in missing)
+                updated(f"{person.position}: {person.email} — добавлены права {', '.join(missing)}")
+            else:
+                skipped(f"{person.position}: {person.email}")
             continue
         session.add(
             User(

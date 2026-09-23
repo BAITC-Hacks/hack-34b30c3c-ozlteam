@@ -4,7 +4,8 @@ import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
 import { RoutesPage } from "../modules/fleet";
 import { NotesPage } from "../modules/notes";
-import { ReplenishmentPage } from "../modules/replenishment";
+import { OrdersPage } from "../modules/orders";
+import { ReplenishmentPage, RunsPage } from "../modules/replenishment";
 import { UiKitPage } from "../modules/ui-kit";
 import { AppLayout } from "./AppLayout";
 import { PageHeader } from "./PageHeader";
@@ -31,11 +32,12 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/recommendations" replace /> },
       {
         path: "recommendations",
-        element: <ReplenishmentPage />,
+        element: <RunsPage />,
       },
+      { path: "recommendations/demo", element: <ReplenishmentPage /> },
       {
         path: "orders",
-        element: <Placeholder title="Заказы поставщикам" description="Здесь будут черновики заказов для проверки, утверждения и экспорта." />,
+        element: <OrdersPage />,
       },
       {
         path: "inventory",
