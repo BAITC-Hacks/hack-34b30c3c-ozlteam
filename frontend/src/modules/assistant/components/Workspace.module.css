@@ -1,5 +1,13 @@
-.workspace { display: grid; gap: var(--sp-4); min-width: 0; width: min(100%, 960px); margin: 0 auto; }
-.toolbar { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.workspace { --assistant-side-width: clamp(270px, 25vw, 360px); position: relative; display: grid; grid-template-columns: var(--assistant-side-width) minmax(0, 1fr); gap: var(--sp-6); min-width: 0; min-height: 0; height: 100%; width: 100%; }
+.sidebar { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; overflow-y: auto; padding: var(--sp-1) var(--sp-2) var(--sp-3) var(--sp-1); }
+.chat { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; padding-bottom: 120px; }
+.workspace:not(.compact) .chat > .composer { position: absolute; z-index: 1; bottom: 30px; left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
+.workspace:not(.compact) .chat > .note { position: absolute; bottom: 0; left: 50%; width: min(760px, 100%); margin: 0; transform: translateX(-50%); text-align: center; }
+.workspace:not(.compact) .chat:has(> .historyNotice) { padding-bottom: 180px; }
+.historyNotice { padding: var(--sp-2) var(--sp-3); align-items: center; background: color-mix(in srgb, var(--wr-soft) 55%, var(--panel)); box-shadow: var(--sh-1); }
+.retryHistory { border: 0; padding: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.workspace:not(.compact) .chat > .historyNotice { position: absolute; z-index: 1; bottom: calc(30px + var(--touch) + var(--sp-6) + var(--sp-2)); left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
+.toolbar { display: flex; align-items: end; gap: var(--sp-3); flex-wrap: wrap; }
 .chatTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--mut); }
 .contextBar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); color: var(--mut); font-size: var(--fs-cap); }
 .contextBar button { border: 0; border-radius: var(--r-xs); background: var(--sunken); color: var(--ac-ink); font: inherit; padding: var(--sp-1) var(--sp-2); cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
@@ -20,7 +28,9 @@
 .contextItem button, .note button { color: var(--ac-ink); background: none; border: 0; cursor: pointer; font: inherit; }
 .permission { display: flex; align-items: start; gap: var(--sp-2); font-size: var(--fs-sm); line-height: var(--lh-body); }
 .permission input { flex: none; margin-top: var(--sp-1); }
-.messages { position: relative; isolation: isolate; display: grid; align-content: start; gap: var(--sp-4); min-width: 0; min-height: 180px; }
+.messages { position: relative; isolation: isolate; display: grid; align-content: start; gap: var(--sp-4); min-width: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+.emptyMessages { overflow: visible; }
+.workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: translateX(calc((var(--assistant-side-width) + var(--sp-6)) / -2)); }
 .mine, .theirs { min-width: 0; max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
 .mine { justify-self: end; background: var(--ac-soft); color: var(--ink); }
 .theirs { justify-self: start; background: var(--panel); box-shadow: var(--sh-1); }
@@ -47,14 +57,25 @@
 .empty h2 { font-size: var(--fs-h2); margin: 0; }
 .empty p { color: var(--mut); font-size: var(--fs-sm); }
 .smallOrb { width: 84px; height: 84px; }
-.heroOrb { width: min(100%, calc(var(--touch) * 6)); aspect-ratio: 1; }
-.compact { gap: var(--sp-3); max-height: 60dvh; overflow-y: auto; padding: var(--sp-3); }
+.compact { display: block; width: min(100%, 960px); height: auto; max-height: 60dvh; overflow-y: auto; padding: var(--sp-3); }
+.compact .sidebar, .compact .chat { display: grid; gap: var(--sp-3); overflow: visible; padding: 0; }
+.compact .chat { margin-top: var(--sp-3); padding-bottom: 0; }
 .compact .messages { max-height: 48dvh; overflow-y: auto; padding: var(--sp-1); }
 .compact .toolbar { align-items: center; }
-.compact .composer { align-items: center; bottom: 0; }
+.compact .composer { align-items: center; }
 .compact .chatTitle { display: none; }
 .compact .composer textarea { resize: none; }
-.compact .toolbar a { font-size: var(--fs-cap); }
+.iconAction { position: relative; flex: none; }
+.iconActionButton { display: grid; place-items: center; width: var(--ctl); height: var(--ctl); padding: 0; border: 0; border-radius: var(--r-s); background: var(--panel); box-shadow: var(--sh-1); color: var(--mut); cursor: pointer; text-decoration: none; transition: background-color var(--t-hover), transform var(--t-press); }
+.iconActionButton:active:not(:disabled) { transform: scale(.98); }
+.iconActionButton:disabled { opacity: .48; box-shadow: none; cursor: not-allowed; }
+.actionTooltip { position: absolute; z-index: 5; top: calc(100% + var(--sp-1)); right: 0; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); background: var(--ink); color: var(--panel); font-size: var(--fs-cap); line-height: 1.3; white-space: nowrap; opacity: 0; visibility: hidden; pointer-events: none; }
+.iconAction:focus-within .actionTooltip { opacity: 1; visibility: visible; }
+@media (hover: hover) and (pointer: fine) {
+  .iconAction:hover .actionTooltip { opacity: 1; visibility: visible; }
+  .iconActionButton:hover:not(:disabled) { background: var(--sunken); transition-duration: 0s; }
+}
+@media (pointer: coarse) { .iconActionButton { width: var(--touch); height: var(--touch); } }
 .compact .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
 .skeleton { display: grid; gap: var(--sp-3); padding: var(--sp-4); background: var(--panel); border-radius: var(--r); min-height: 100px; }
 .skeleton i { display: block; height: var(--sp-4); border-radius: var(--r-xs); background: linear-gradient(90deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.8s linear infinite; }
@@ -62,7 +83,16 @@
 .skeleton i:nth-child(3) { width: 55%; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
-@media (max-width: 900px) { .composer { bottom: calc(var(--mobile-bar-h) + env(safe-area-inset-bottom) + var(--sp-2)); } }
-@media (pointer: coarse) { .toolbar button, .contextBar button, .contextItem button { min-height: var(--touch); } }
-@media (max-width: 560px) { .chatTitle { display: none; } }
+@media (pointer: coarse) { .contextBar button, .contextItem button { min-height: var(--touch); } }
 @media (max-width: 560px) { .toolbar { gap: var(--sp-2); } .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); } .composer textarea { font-size: 16px; } .contextItem button { min-height: var(--touch); } }
+@media (max-width: 900px) {
+  .workspace:not(.compact) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--sp-3); }
+  .workspace:not(.compact) .sidebar { max-height: 36dvh; }
+  .workspace:not(.compact) .chat { padding-bottom: 80px; }
+  .workspace:not(.compact) .chat:has(> .historyNotice) { padding-bottom: 140px; }
+  .workspace:not(.compact) .chat > .composer { bottom: 0; }
+  .workspace:not(.compact) .chat > .historyNotice { bottom: calc(var(--touch) + var(--sp-6) + var(--sp-3)); }
+  .workspace:not(.compact) .chat > .note { display: none; }
+  .workspace:not(.compact) .emptyMessages { overflow-y: auto; }
+  .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
+}

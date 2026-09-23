@@ -91,6 +91,7 @@ export function FloatingAssistant() {
   // The full-page chat already provides the assistant; do not duplicate its launcher.
   if (onAssistantPage) return null;
 
+
   return (
     <div className={styles.root} ref={root}>
       <div className={styles.nudge} data-visible={nudgeIndex >= 0 && !isOpen && pathname !== "/assistant" ? "" : undefined} aria-hidden={nudgeIndex < 0 || isOpen || pathname === "/assistant"}>
@@ -114,7 +115,7 @@ export function FloatingAssistant() {
             <X size={18} strokeWidth={1.8} />
           </button>
         </header>
-        <AssistantPanel />
+        <AssistantPanel onOpenFull={() => setIsOpen(false)} />
       </aside>
 
       <button

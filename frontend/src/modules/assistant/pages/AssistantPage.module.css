@@ -1,4 +1,35 @@
-/* Экран ассистента: пустое состояние по центру, диалог лентой, ввод внизу. */
+/* Экран ассистента: настройки сбоку, прокрутка внутри чата. */
+
+.page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--gap-blocks);
+  min-height: 0;
+  height: 100%;
+}
+
+@media (min-width: 901px) {
+  .page {
+    position: relative;
+    display: block;
+  }
+
+  .page > :first-child {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+  }
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 .room {
   position: relative;
@@ -31,45 +62,26 @@
   box-shadow: var(--sh-1);
 }
 
-.roomDecorated::before,
-.roomDecorated::after {
-  position: absolute;
-  inset: calc(-1 * var(--sp-4));
-  z-index: -1;
-  pointer-events: none;
-  content: "";
-}
-
-.roomDecorated::before {
-  background:
-    radial-gradient(ellipse 43% 37% at 50% 24%, color-mix(in srgb, var(--ac) 14%, transparent), transparent 76%),
-    radial-gradient(ellipse 28% 32% at 7% 74%, color-mix(in srgb, var(--ac) 8%, transparent), transparent 85%),
-    radial-gradient(ellipse 32% 30% at 94% 86%, color-mix(in srgb, var(--ac) 9%, transparent), transparent 85%);
-}
-
-.roomDecorated::after {
-  background: repeating-radial-gradient(
-    circle at 50% 170px,
-    transparent 0 132px,
-    color-mix(in srgb, var(--ac) 10%, transparent) 133px 134px,
-    transparent 135px 178px
-  );
-  mask-image: linear-gradient(to bottom, transparent, black 15%, black 70%, transparent);
-}
-
 .welcome {
   display: grid;
   gap: var(--sp-4);
+  align-content: start;
   justify-items: center;
-  padding: var(--sp-3) 0 0;
+  padding: calc(var(--sp-6) + var(--sp-4) + var(--sp-4)) 0 0;
 }
 
 .orbStage {
   display: grid;
   place-items: center;
-  width: min(100%, 760px);
-  min-height: 330px;
+  width: min(100%, 600px);
+  min-height: min(38dvh, 300px);
+  margin-bottom: var(--sp-6);
   overflow: visible;
+  transform: translateX(calc((var(--assistant-side-width) + var(--sp-6)) / -2));
+}
+
+.orbStage > span {
+  width: min(38dvh, 320px);
 }
 
 .hello {
@@ -308,7 +320,14 @@
 }
 
 @media (max-width: 560px) {
-  .orbStage { min-height: 250px; }
+  .welcome { padding-top: var(--sp-2); }
+  .orbStage { min-height: min(22dvh, 170px); margin-bottom: 0; transform: none; }
+  .orbStage > span { width: min(22dvh, 170px); }
   .prompts { grid-template-columns: minmax(0, 1fr); }
   .input { font-size: 16px; }
+}
+
+@media (min-width: 561px) and (max-width: 900px) {
+  .welcome { padding-top: var(--sp-2); }
+  .orbStage { margin-bottom: 0; transform: none; }
 }

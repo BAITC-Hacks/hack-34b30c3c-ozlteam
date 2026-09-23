@@ -1,4 +1,4 @@
-import { ArrowUp, History, Plus, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { ArrowUp, History, Maximize2, Plus, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -23,8 +23,9 @@ function incomingContext(pathname: string, search: string): AssistantContext {
 }
 function Loading({ label }: { label: string }) { return <div className={styles.skeleton} role="status" aria-label={label} aria-busy="true"><i /><i /><i /></div>; }
 
-export function AssistantWorkspace({ compact = false, decorated = true }: { compact?: boolean; decorated?: boolean }) {
+export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: boolean; onOpenFull?: () => void }) {
   const [offset, setOffset] = useState(0);
+  const [dismissedHistoryErrorAt, setDismissedHistoryErrorAt] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const modalId = useId();
@@ -44,12 +45,12 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     if (Object.keys(context).length) update({ context, allowData: false });
   }, [workspace.userId, location.pathname, location.search, state.busy]);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
-  const pending = state.pendingMessage?.conversationId === state.activeId ? state.pendingMessage : null;
-  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id]);
+  useEffect(() => { if (latestMessageId) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId]);
   const chat = conversation.data;
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
   const initialLoading = !!state.activeId && conversation.isPending;
-  const empty = !initialLoading && !chat?.messages.length && !pending;
+  const empty = !initialLoading && !chat?.messages.length;
+  const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
   async function send(text: string) {
     await workspace.send(text);
   }
@@ -60,12 +61,29 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     return `${contextLabels[key]} из открытого раздела`;
   }
   return <div className={`${styles.workspace} ${compact ? styles.compact : ""}`}>
+    <aside className={styles.sidebar} aria-label="Настройки диалога">
     <div className={styles.toolbar}>
-      <Button variant="ghost" size="sm" icon={<History size={16} />} aria-haspopup="dialog" aria-expanded={historyOpen} onClick={(event) => { event.currentTarget.focus(); setHistoryOpen(true); }}>История</Button>
+      <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="История диалогов" aria-haspopup="dialog" aria-expanded={historyOpen} onClick={() => setHistoryOpen(true)}><History size={18} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">История диалогов</span>
+      </span>
       <span className={styles.chatTitle}>{chat?.title ?? "Новый диалог"}</span>
-      <Button variant="ghost" size="sm" icon={<SlidersHorizontal size={16} />} aria-haspopup="dialog" aria-expanded={contextOpen} onClick={(event) => { event.currentTarget.focus(); setContextOpen(true); }}>Контекст</Button>
-      <Button variant="secondary" size="sm" icon={<Plus size={16} />} disabled={state.busy} onClick={() => void workspace.newConversation()}>Новый чат</Button>
-      {compact ? <Link to="/assistant">Открыть помощника</Link> : null}
+      <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="Контекст вопроса" aria-haspopup="dialog" aria-expanded={contextOpen} onClick={() => setContextOpen(true)}><SlidersHorizontal size={18} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">Контекст вопроса</span>
+      </span>
+      {compact ? <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="Новый диалог" disabled={state.busy} onClick={() => void workspace.newConversation()}><Plus size={18} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">Новый диалог</span>
+      </span> : <Button variant="secondary" icon={<Plus size={16} />} disabled={state.busy} onClick={() => void workspace.newConversation()}>Новый</Button>}
+      {state.activeId ? compact ? <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="Обновить диалог" disabled={state.busy} onClick={() => void conversation.refetch()}><RefreshCw size={17} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">Обновить диалог</span>
+      </span> : <Button variant="ghost" icon={<RefreshCw size={15} />} disabled={state.busy} onClick={() => void conversation.refetch()}>Обновить</Button> : null}
+      {compact ? <span className={styles.iconAction}>
+        <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
+        <span className={styles.actionTooltip} role="tooltip">Открыть помощника</span>
+      </span> : null}
     </div>
     <div className={styles.contextBar}>
       <span>{state.allowData ? "Учётные сводки разрешены" : "Без учётных сводок"}</span>
@@ -73,7 +91,7 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
       {state.assistantId !== "auto" ? <button type="button" onClick={() => setContextOpen(true)}>{assistant?.title ?? "Выбрана тема"}</button> : null}
     </div>
     <Modal id={`${modalId}-history`} title="История диалогов" open={historyOpen} onOpenChange={setHistoryOpen} bodyScroll size="sm">
-    {conversations.isPending ? <Loading label="Загружаем диалоги" /> : conversations.isError ? <Alert tone="warning" action={<Button variant="ghost" size="sm" onClick={() => void conversations.refetch()}>Повторить</Button>}>История недоступна: {conversations.error.message}</Alert> : null}
+    {conversations.isPending ? <Loading label="Загружаем диалоги" /> : null}
     <div className={styles.historyList}>
       <button type="button" disabled={state.busy} aria-current={!state.activeId ? "true" : undefined} onClick={() => { workspace.select(""); setHistoryOpen(false); }}>Новый диалог · черновик</button>
       {conversations.data?.map((item) => <button type="button" key={item.id} disabled={state.busy} aria-current={state.activeId === item.id ? "true" : undefined} onClick={() => { workspace.select(item.id); setHistoryOpen(false); }}>{item.title}</button>)}
@@ -102,8 +120,10 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
         </details>
       </div>
     </Modal>
-    <div className={`${styles.messages} ${empty && !compact && decorated ? hero.roomDecorated : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
-      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={styles.empty}><div className={compact ? styles.smallOrb : styles.heroOrb}><NovaOrb variant={compact ? "mini" : "hero"} size="100%" /></div><h2>Чем помочь с закупками?</h2><p>Разберём данные, расчёт или заказ.</p><Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
+    </aside>
+    <section className={styles.chat} aria-label="Чат помощника">
+    <div className={`${styles.messages} ${empty && !compact ? styles.emptyMessages : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
+      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
         {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
           {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{tool.name}</b> · {tool.status}<p>{tool.summary}</p></li>)}</ul></details> : null}
@@ -111,15 +131,16 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
         </article>)}
       </>}
       {chat?.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} busy={state.busy} onDecision={(item, decision) => void workspace.decide(item, decision)} />)}
-      {pending && !chat?.messages.some((message) => message.id === pending.existingMessageId) ? <article className={styles.mine} aria-label="Отправленный вопрос"><small>Вы</small><p>{pending.content}</p></article> : null}
-      {state.busy ? <p className={styles.note} role="status">{pending ? "Помощник готовит ответ…" : "Запрос выполняется. Результат ещё не подтверждён сервером."}</p> : null}
+      {state.busy ? <p className={styles.note} role="status">Запрос выполняется. Результат ещё не подтверждён сервером.</p> : null}
       <div ref={tail} />
     </div>
+    {historyErrorVisible ? <Alert className={styles.historyNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.retryHistory} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : null}
     {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
       <textarea value={question} onChange={(event) => workspace.setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>
     </form>
-    <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p>
+    {!compact ? <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p> : null}
+    </section>
   </div>;
 }
