@@ -1,0 +1,76 @@
+.page { display: grid; gap: var(--gap-blocks); min-width: 0; }
+.sourceCard { min-width: 0; }
+.sourceBody { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; }
+.sourceFacts { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); color: var(--mut); font-size: var(--fs-sm); }
+.sourceFacts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sourceActions, .approvalActions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.fileInput { display: none; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
+.sectionHead { display: flex; align-items: end; justify-content: space-between; gap: var(--sp-4); }
+.sectionHead h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2); font-weight: 600; }
+.sectionHead p, .sectionHead > span { color: var(--mut); font-size: var(--fs-sm); }
+.sectionHead p { margin-top: var(--sp-1); }
+.groups { display: grid; gap: var(--gap-cards); }
+.supplierCard { min-width: 0; }
+.recommendations { display: grid; }
+.recommendation { padding: var(--sp-4) 0; }
+.recommendation + .recommendation { border-top: 1px solid var(--hair); }
+.recommendation:first-child { padding-top: 0; }
+.recommendation:last-child { padding-bottom: 0; }
+.rowTop { display: flex; align-items: start; justify-content: space-between; gap: var(--sp-3); }
+.product { min-width: 0; }
+.productTitle { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.productTitle strong { font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 600; }
+.sku { color: var(--faint); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; user-select: text; }
+.product p { margin-top: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
+.rowBody { display: grid; grid-template-columns: minmax(0, 1fr) 130px; align-items: start; gap: var(--sp-6); margin-top: var(--sp-3); }
+.reason { min-width: 0; color: var(--ink); font-size: var(--fs-sm); }
+.reason > p { max-width: 84ch; line-height: var(--lh-body); user-select: text; }
+.details { margin-top: var(--sp-2); }
+.details summary { width: max-content; color: var(--ac-ink); font-size: var(--fs-sm); cursor: pointer; }
+.details summary:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; border-radius: var(--r-xs); }
+.metricGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); margin-top: var(--sp-3); padding: var(--sp-3); border-radius: var(--r-s); background: var(--sunken); }
+.metricGrid > div { min-width: 0; }
+.metricGrid dt { color: var(--mut); font-size: var(--fs-cap); }
+.metricGrid dd { margin-top: var(--sp-1); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.quantityLabel { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
+.quantityInput { width: 100%; height: var(--ctl); padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.quantityInput:focus-visible { background: var(--panel); outline: 2px solid var(--ac); outline-offset: 0; }
+.quantityLabel small { font-size: var(--fs-cap); color: var(--wr-ink); }
+.approvalCard { display: grid; gap: var(--sp-4); }
+.approvalBody { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.approvalBody p { color: var(--mut); font-size: var(--fs-sm); }
+.loadingRegion { display: grid; gap: var(--gap-blocks); }
+.skeletonStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
+.skeletonTile, .skeletonCard { background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
+.skeletonTile { min-height: 112px; padding: var(--pad-card); display: grid; align-content: center; gap: var(--sp-3); }
+.skeletonTile i, .skeletonCard i { display: block; height: var(--sp-3); border-radius: var(--r-xs); background: linear-gradient(100deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+.skeletonTile i:first-child { width: 48%; }
+.skeletonTile i:nth-child(2) { width: 64%; height: var(--fs-num); }
+.skeletonTile i:last-child { width: 72%; }
+.skeletonCard { min-height: 280px; padding: var(--pad-card); display: grid; align-content: start; gap: var(--sp-3); }
+.skeletonTitle { width: 28%; }
+.skeletonSubtitle { width: 46%; }
+.skeletonRow { display: grid; grid-template-columns: 2fr 1fr 110px; gap: var(--sp-4); padding: var(--sp-4) 0; border-top: 1px solid var(--hair); }
+.skeletonRow i:first-child { width: 82%; }
+.skeletonRow i:nth-child(2) { width: 70%; }
+.skeletonRow i:last-child { width: 100%; height: var(--ctl); }
+@keyframes shimmer { to { background-position-x: -200%; } }
+@media (max-width: 1100px) { .stats, .skeletonStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .rowBody { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+  .quantityLabel { width: 150px; }
+  .metricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sectionHead { align-items: start; flex-direction: column; gap: var(--sp-1); }
+}
+@media (max-width: 560px) {
+  .stats, .skeletonStats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .sourceActions, .approvalActions { width: 100%; }
+  .sourceActions > button, .approvalActions > button { min-height: var(--touch); }
+  .sourceActions > button:nth-of-type(1), .sourceActions > button:nth-of-type(2), .approvalActions > button { flex: 1 1 auto; }
+  .metricGrid { grid-template-columns: minmax(0, 1fr); }
+  .skeletonRow { grid-template-columns: minmax(0, 1fr) 70px; }
+  .skeletonRow i:nth-child(2) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .skeletonTile i, .skeletonCard i { animation: none; background: var(--sunken); } }
+@media (prefers-contrast: more) { .skeletonTile, .skeletonCard { box-shadow: inset 0 0 0 1px var(--ink); } }

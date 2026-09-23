@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   LogOut,
   PackageCheck,
+  ShoppingCart,
   PanelLeftClose,
   PanelLeftOpen,
   Route,
@@ -31,7 +32,11 @@ interface NavItem {
 }
 
 const WORK: NavItem[] = [
-  { to: "/", label: "Сводка", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
+  { to: "/", label: "Пополнение", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
+];
+
+const REFERENCE_WORK: NavItem[] = [
+  { to: "/dashboard", label: "Сводка прототипа", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
   { to: "/shipments", label: "Отправления", icon: <Truck size={17} strokeWidth={1.8} /> },
   { to: "/documents", label: "Документы", icon: <FileText size={17} strokeWidth={1.8} /> },
   { to: "/receiving", label: "Приёмка", icon: <PackageCheck size={17} strokeWidth={1.8} /> },
@@ -51,8 +56,8 @@ const REFERENCE: NavItem[] = [
 ];
 
 // Пятая ячейка нижней панели занята кнопкой «Ещё», поэтому в ней ровно четыре раздела.
-const MOBILE_PRIMARY = WORK.slice(0, 4);
-const MOBILE_REST = [...WORK.slice(4), ...ASSISTANT, ...REFERENCE];
+const MOBILE_PRIMARY = [...WORK, ...REFERENCE_WORK.slice(0, 3)];
+const MOBILE_REST = [...REFERENCE_WORK.slice(3), ...ASSISTANT, ...REFERENCE];
 
 function initials(fullName: string): string {
   return fullName
@@ -136,6 +141,7 @@ export function AppLayout() {
               onScroll={updateNavigationFade}
             >
               <Section title="Работа" items={WORK} />
+              <Section title="Разделы прототипа" items={REFERENCE_WORK} />
               <Section title="Помощник" items={ASSISTANT} />
               <Section title="Справочники" items={REFERENCE} />
             </nav>

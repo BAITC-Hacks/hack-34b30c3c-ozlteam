@@ -5,6 +5,7 @@ import { LoginPage } from "../modules/auth";
 import { DashboardPage } from "../modules/dashboard";
 import { RoutesPage } from "../modules/fleet";
 import { NotesPage } from "../modules/notes";
+import { ReplenishmentPage } from "../modules/replenishment";
 import { UiKitPage } from "../modules/ui-kit";
 import { AppLayout } from "./AppLayout";
 import { RequireAuth } from "./RequireAuth";
@@ -33,7 +34,8 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <ReplenishmentPage /> },
+      { path: "dashboard", element: <DashboardPage /> },
       { path: "notes", element: <NotesPage /> },
       { path: "assistant", element: <AssistantPage /> },
       { path: "shipments", element: <Placeholder title="Отправления" /> },
