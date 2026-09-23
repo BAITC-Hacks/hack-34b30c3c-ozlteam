@@ -1,0 +1,47 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 230px;
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--r-s);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  color: var(--mut);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-hover), color var(--t-hover), transform var(--t-press);
+}
+
+.trigger:hover { background: var(--sunken); color: var(--ink); transition-duration: 0s; }
+.trigger:active { transform: scale(.98); }
+.trigger:focus-visible, .result:focus-visible, .error button:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.trigger kbd { margin-left: auto; font: inherit; font-size: var(--fs-micro); color: var(--mut); }
+
+.label { display: block; margin-bottom: var(--sp-2); font-size: var(--fs-sm); color: var(--mut); }
+.inputWrap { display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--sp-3); border-radius: var(--r-s); background: var(--sunken); color: var(--mut); }
+.inputWrap:focus-within { box-shadow: inset 0 0 0 2px var(--ac); }
+.inputWrap input { width: 100%; min-width: 0; height: var(--touch); border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--fs-body); }
+.results { max-height: min(50vh, 420px); overflow-y: auto; margin-top: var(--sp-3); }
+.result { display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: var(--touch); padding: var(--sp-2) var(--sp-3); border: 0; border-radius: var(--r-s); background: transparent; color: var(--mut); font: inherit; text-align: left; cursor: pointer; }
+.result:hover, .result[aria-selected="true"] { background: var(--ac-soft); color: var(--ac-ink); }
+.result > span { display: grid; gap: var(--sp-1); flex: 1; min-width: 0; }
+.result strong { overflow: hidden; color: var(--ink); font-size: var(--fs-sm); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.result small { color: var(--mut); font-size: var(--fs-xs); }
+.empty { margin: var(--sp-5) var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
+.error { margin-top: var(--sp-3); padding: var(--sp-3); border-radius: var(--r-s); background: var(--er-soft); color: var(--er-ink); font-size: var(--fs-sm); }
+.error p { margin: 0 0 var(--sp-1); }
+.error button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.loading { display: grid; gap: var(--sp-2); padding: var(--sp-4) 0; }
+.loading i { height: var(--touch); border-radius: var(--r-s); background: var(--sunken); animation: pulse 1.4s ease-in-out infinite; }
+.loading i:nth-child(2) { animation-delay: .2s; }
+.loading i:nth-child(3) { animation-delay: .4s; }
+.hint { margin: var(--sp-3) 0 0; color: var(--mut); font-size: var(--fs-xs); }
+
+@keyframes pulse { 50% { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .loading i { animation: none; } .trigger { transition: none; } }
+@media (max-width: 900px) { .trigger { width: var(--touch); height: var(--touch); justify-content: center; } .trigger span, .trigger kbd { display: none; } }

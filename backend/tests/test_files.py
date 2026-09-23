@@ -39,6 +39,9 @@ class MemoryFileRepository:
     async def get(self, file_id: UUID) -> File | None:
         return self.files.get(file_id)
 
+    async def list_recent(self, limit: int, offset: int) -> list[File]:
+        return list(self.files.values())[::-1][offset : offset + limit]
+
     async def delete(self, file: File) -> None:
         self.files.pop(file.id, None)
 
@@ -112,6 +115,27 @@ async def test_upload_png_returns_resource_and_stores_content(tmp_path):
         assert download.status_code == 200
         assert download.content == content
         assert download.headers["content-type"] == "image/png"
+
+
+async def test_list_files_paginates_and_requires_read_permission(tmp_path):
+    repository = MemoryFileRepository()
+    api = build_app(build_service(tmp_path, repository))
+    async with AsyncClient(transport=ASGITransport(app=api), base_url="http://test") as client:
+        assert (await client.get("/api/v1/files")).json() == []
+        for index in range(3):
+            response = await client.post(
+                "/api/v1/files",
+                files={"file": (f"поставка-{index}.csv", b"sku,qty\n1,2", "text/csv")},
+            )
+            assert response.status_code == 201, response.text
+        page = await client.get("/api/v1/files", params={"limit": 2, "offset": 1})
+        assert page.status_code == 200
+        assert [item["filename"] for item in page.json()] == ["поставка-1.csv", "поставка-0.csv"]
+        assert (await client.get("/api/v1/files", params={"limit": 101})).status_code == 422
+        api.dependency_overrides[get_current_user] = lambda: User(
+            id=uuid4(), first_name="Тест", roles=[], permissions=[]
+        )
+        assert (await client.get("/api/v1/files")).status_code == 403
 
 
 async def test_upload_strips_client_supplied_path(tmp_path):

@@ -1,4 +1,4 @@
-import { ArrowUp, Boxes, ClipboardCheck, FileText, Truck } from "lucide-react";
+import { ArrowUp, Boxes, ClipboardCheck, FileText, ShoppingCart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
@@ -12,23 +12,23 @@ import styles from "./AssistantPage.module.css";
 const PROMPTS = [
   {
     icon: <FileText size={17} strokeWidth={1.8} />,
-    title: "Разобрать документ",
-    text: "Что проверить в товарно-транспортной накладной перед отправкой?",
+    title: "Проверить данные",
+    text: "Какие данные нужны для расчёта пополнения склада и что проверить перед запуском?",
   },
   {
     icon: <ClipboardCheck size={17} strokeWidth={1.8} />,
-    title: "Приёмка с расхождением",
-    text: "Пришло 18 паллет вместо 20. Как правильно оформить недостачу?",
+    title: "Понять рекомендацию",
+    text: "Как сезонность, рост спроса и отсутствие товара влияют на рекомендацию к заказу?",
   },
   {
-    icon: <Truck size={17} strokeWidth={1.8} />,
-    title: "Груз опаздывает",
-    text: "Фура стоит на границе вторые сутки. Что сказать клиенту и что делать?",
+    icon: <ShoppingCart size={17} strokeWidth={1.8} />,
+    title: "Проверить заказ",
+    text: "Что менеджеру закупок проверить перед утверждением черновика заказа поставщику?",
   },
   {
     icon: <Boxes size={17} strokeWidth={1.8} />,
-    title: "Собрать отправку",
-    text: "Как распределить 12 тонн сборного груза по двум машинам?",
+    title: "Учесть товар в пути",
+    text: "Как учесть товар в пути при расчёте потребности склада?",
   },
 ];
 
@@ -84,7 +84,7 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Логист ИИ" subtitle="Ассистент по логистике: спрашивайте своими словами." />
+      <PageHeader title="Логист ИИ" subtitle="Ассистент по пополнению склада: спрашивайте своими словами." />
 
       <div className={styles.room}>
         {empty ? (

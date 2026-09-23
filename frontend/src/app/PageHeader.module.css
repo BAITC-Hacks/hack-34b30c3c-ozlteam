@@ -34,26 +34,6 @@
   flex: none;
 }
 
-.search {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  width: 230px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: var(--r-s);
-  background: var(--panel);
-  box-shadow: inset 0 0 0 1px var(--hair);
-  color: var(--deco);
-  font-size: var(--fs-sm);
-}
-
-.kbd {
-  margin-left: auto;
-  font-size: var(--fs-micro);
-  color: var(--deco);
-}
-
 .iconBtn {
   width: 34px;
   height: 34px;
@@ -78,9 +58,8 @@
   outline-offset: 2px;
 }
 
-/* На телефоне поиск и колокольчик уступают место заголовку. */
+/* На телефоне колокольчик уступает место заголовку. */
 @media (max-width: 900px) {
-  .search,
   .iconBtn {
     display: none;
   }

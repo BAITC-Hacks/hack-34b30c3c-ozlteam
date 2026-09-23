@@ -1,6 +1,6 @@
-import { Search } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { GlobalSearch } from "../modules/global-search";
 import { RightRail } from "./RightRail";
 import styles from "./PageHeader.module.css";
 
@@ -25,11 +25,7 @@ export function PageHeader({ title, subtitle, actions }: Props) {
 
       <div className={styles.tools}>
         {actions}
-        <div className={styles.search} aria-hidden="true">
-          <Search size={15} strokeWidth={1.8} />
-          Поиск
-          <span className={styles.kbd}>⌘K</span>
-        </div>
+        <GlobalSearch />
         <RightRail />
       </div>
     </header>

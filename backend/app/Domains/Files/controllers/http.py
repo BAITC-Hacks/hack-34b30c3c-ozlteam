@@ -3,7 +3,7 @@ from typing import Annotated
 from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.core.access import require_permission
@@ -50,6 +50,21 @@ def _http_error(error: FilesError) -> HTTPException:
 async def _chunks(upload: UploadFile) -> AsyncIterator[bytes]:
     while chunk := await upload.read(READ_CHUNK_SIZE):
         yield chunk
+
+
+@router.get(
+    "",
+    response_model=list[FileResource],
+    summary="Список загруженных файлов",
+    description="Последние загруженные файлы в общем рабочем пространстве. Требуется files.read.",
+)
+async def list_files(
+    service: Service,
+    user: Reader,
+    limit: Annotated[int, Query(ge=1, le=100, description="Число файлов на странице")] = 20,
+    offset: Annotated[int, Query(ge=0, description="Число пропущенных файлов")] = 0,
+):
+    return await service.list_recent(limit, offset)
 
 
 @router.post("", response_model=FileResource, status_code=201)

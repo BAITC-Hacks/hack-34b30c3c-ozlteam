@@ -90,6 +90,9 @@ class FileService:
     async def get(self, file_id: UUID) -> FileResource:
         return self._resource(await self._require(file_id))
 
+    async def list_recent(self, limit: int, offset: int) -> list[FileResource]:
+        return [self._resource(file) for file in await self.repository.list_recent(limit, offset)]
+
     async def download(self, file_id: UUID) -> FileDownload:
         file = await self._require(file_id)
         return FileDownload(
