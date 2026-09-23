@@ -43,7 +43,7 @@ export function LoginPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      password: import.meta.env.DEV ? "demo-local-12345" : "",
+      password: "",
     },
   });
 
