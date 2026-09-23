@@ -1,4 +1,4 @@
-from arq import cron
+from arq import cron, func
 from arq.connections import RedisSettings
 
 import app.models  # noqa: F401 - регистрирует таблицы для междоменных внешних ключей
@@ -20,7 +20,7 @@ class WorkerSettings:
         parse_document,
         calculate_replenishment,
         parse_import_package,
-        apply_import_package,
+        func(apply_import_package, timeout=1800),
     ]
     cron_jobs = [cron(dispatch_pending, second={0, 10, 20, 30, 40, 50})]
     on_startup = dispatch_pending
