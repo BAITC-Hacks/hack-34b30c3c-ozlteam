@@ -1,10 +1,10 @@
 import { ArrowUp, Boxes, ClipboardCheck, FileText, ShoppingCart } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { useCurrentUser } from "../../auth";
-import { Insight, Spinner } from "../../../shared/ui";
+import { Insight, Spinner, Switch } from "../../../shared/ui";
 import { askAssistant } from "../api/assistant";
 import type { ChatTurn } from "../api/assistant";
 import { NovaOrb } from "../components/NovaOrb";
@@ -33,6 +33,8 @@ const PROMPTS = [
   },
 ];
 
+const BACKGROUND_KEY = "assistant-background";
+
 function greeting(hour: number): string {
   if (hour < 5) return "Доброй ночи";
   if (hour < 12) return "Доброе утро";
@@ -46,12 +48,26 @@ export function AssistantPage() {
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState("");
+  const [showBackground, setShowBackground] = useState(() => {
+    try {
+      return localStorage.getItem(BACKGROUND_KEY) !== "off";
+    } catch {
+      return true;
+    }
+  });
   const field = useRef<HTMLTextAreaElement>(null);
   const tail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     tail.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [turns, asking]);
+
+  useLayoutEffect(() => {
+    const input = field.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+  }, [question]);
 
   async function send(text: string) {
     const value = text.trim();
@@ -85,9 +101,29 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Помощник" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
+      <PageHeader
+        title="Помощник"
+        subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами."
+        actions={
+          <Switch
+            label="Фон"
+            aria-label="Показывать фон помощника"
+            checked={showBackground}
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              setShowBackground(enabled);
+              try {
+                localStorage.setItem(BACKGROUND_KEY, enabled ? "on" : "off");
+              } catch {
+                // Выбор работает и без доступного хранилища браузера.
+              }
+            }}
+            className={styles.backgroundSwitch}
+          />
+        }
+      />
 
-      <div className={styles.room}>
+      <div className={`${styles.room} ${showBackground ? styles.roomDecorated : ""}`}>
         {empty ? (
           <div className={styles.welcome}>
             <div className={styles.orbStage} aria-label="Визуализация ИИ-помощника">
@@ -139,7 +175,7 @@ export function AssistantPage() {
               }
             }}
             placeholder="Спросите помощника"
-            rows={1}
+            rows={2}
             maxLength={4000}
             aria-label="Вопрос ассистенту"
           />
