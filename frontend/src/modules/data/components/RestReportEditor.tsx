@@ -30,16 +30,17 @@ import { RestReportPreview } from "./RestReportPreview";
 import styles from "./RestReports.module.css";
 import skeleton from "../pages/DataSourcesPage.module.css";
 import editor from "./RestReportEditor.module.css";
+import { useI18n, translate, type Locale } from "../../../shared/i18n/I18nContext";
 
-export function reportError(error: unknown): string {
+export function reportError(error: unknown, locale: Locale = "ru"): string {
   if (error instanceof ApiError) {
-    if (error.status === 403) return "У вашей роли нет права на это действие.";
+    if (error.status === 403) return translate(locale, "У вашей роли нет права на это действие.", "Сіздің рөліңізге бұл әрекетке рұқсат жоқ.", "Your role cannot perform this action.");
     if (error.status === 409)
-      return "Версия источника изменилась или запись конфликтует с существующей. Получите отчёт заново и проверьте версии записей.";
+      return translate(locale, "Версия источника изменилась или запись конфликтует с существующей. Получите отчёт заново и проверьте версии записей.", "Дереккөз нұсқасы өзгерді немесе жазба басқа жазбамен қайшы келеді. Есепті қайта алып, жазбалардың нұсқасын тексеріңіз.", "The source version changed or a record conflicts with an existing one. Fetch the report again and check record versions.");
   }
   return error instanceof Error
     ? error.message
-    : "Не удалось выполнить действие. Попробуйте ещё раз.";
+    : translate(locale, "Не удалось выполнить действие. Попробуйте ещё раз.", "Әрекетті орындау мүмкін болмады. Қайталап көріңіз.", "Could not complete the action. Please try again.");
 }
 
 function initialMapping(
@@ -71,20 +72,21 @@ function MappingFields({
   disabled: boolean;
   onChange: (name: string, value: string) => void;
 }) {
+  const { locale, t } = useI18n();
   return (
     <div className={editor.mapping}>
       {fields.map((field) => (
         <div className={editor.mappingRow} key={field.name}>
           <div className={editor.mappingLabel}>
-            <strong>{reportFieldLabel(field.name)}</strong>
+            <strong>{reportFieldLabel(field.name, locale)}</strong>
             <code>
               {field.name}
-              {field.required ? " · обязательно" : ""}
+              {field.required ? ` · ${t("обязательно", "міндетті", "required")}` : ""}
             </code>
           </div>
           <Field
-            label="Название поля в 1С"
-            aria-label={`Поле 1С для «${reportFieldLabel(field.name)}»`}
+            label={t("Название поля в 1С", "1С жүйесіндегі өріс атауы", "Field name in 1C")}
+            aria-label={`${t("Поле 1С для", "1С өрісі", "1C field for")} «${reportFieldLabel(field.name, locale)}»`}
             value={mapping[field.name] ?? ""}
             placeholder={field.name}
             disabled={disabled}
@@ -119,12 +121,13 @@ export function RestReportEditor({
   onApplied: () => void;
   onBusy: (busy: boolean) => void;
 }) {
+  const { locale, t } = useI18n();
   const firstKind =
     kinds.find((item) => item.kind === (profile?.kind ?? defaultKind)) ??
     kinds[0];
   const [form, setForm] = useState<ReportInput>(
     profile ?? {
-      name: reportKindTitle(firstKind.kind),
+      name: reportKindTitle(firstKind.kind, locale),
       kind: firstKind.kind,
       url: "",
       items_path: "value",
@@ -169,8 +172,8 @@ export function RestReportEditor({
     change({
       kind: nextKind.kind,
       name:
-        form.name === reportKindTitle(form.kind)
-          ? reportKindTitle(nextKind.kind)
+        form.name === reportKindTitle(form.kind, locale)
+          ? reportKindTitle(nextKind.kind, locale)
           : form.name,
       quantity_multiplier: 1,
     });
@@ -218,7 +221,7 @@ export function RestReportEditor({
       setStep(2);
       onSaved(saved);
     } catch (caught) {
-      if (mounted.current) setError(reportError(caught));
+      if (mounted.current) setError(reportError(caught, locale));
     } finally {
       if (mounted.current) pending(null);
     }
@@ -232,7 +235,7 @@ export function RestReportEditor({
       const result = await previewReport(profile.id);
       if (mounted.current) setDetail(result);
     } catch (caught) {
-      if (mounted.current) setError(reportError(caught));
+      if (mounted.current) setError(reportError(caught, locale));
     } finally {
       if (mounted.current) pending(null);
     }
@@ -249,7 +252,7 @@ export function RestReportEditor({
         onApplied();
       }
     } catch (caught) {
-      if (mounted.current) setError(reportError(caught));
+      if (mounted.current) setError(reportError(caught, locale));
     } finally {
       if (mounted.current) pending(null);
     }
@@ -260,23 +263,23 @@ export function RestReportEditor({
       <Card
         title={
           step === 0
-            ? "Какие данные загрузим?"
+            ? t("Какие данные загрузим?", "Қандай деректерді жүктейміз?", "Which data should we load?")
             : step === 1
-              ? "Подключение отчёта"
+              ? t("Подключение отчёта", "Есепті қосу", "Connect report")
               : form.name
         }
         subtitle={
           step === 0
-            ? "Выберите, что хотите получать из 1С."
+            ? t("Выберите, что хотите получать из 1С.", "1С жүйесінен қандай деректерді алатыныңызды таңдаңыз.", "Choose what to receive from 1C.")
             : step === 1
-              ? "Сохраните ссылку один раз — затем отчёт можно будет обновлять одной кнопкой."
-              : reportKindTitle(form.kind)
+              ? t("Сохраните ссылку один раз — затем отчёт можно будет обновлять одной кнопкой.", "Сілтемені бір рет сақтаңыз — содан кейін есепті бір батырмамен жаңарта аласыз.", "Save the link once, then refresh the report with one button.")
+              : reportKindTitle(form.kind, locale)
         }
       >
         <div className={styles.stack}>
           <ProgressSteps
-            label="Подключение отчёта"
-            steps={["Данные", "Подключение", "Проверка"]}
+            label={t("Подключение отчёта", "Есепті қосу", "Connect report")}
+            steps={[t("Данные", "Деректер", "Data"), t("Подключение", "Қосу", "Connection"), t("Проверка", "Тексеру", "Review")]}
             current={step}
           />
           {displayError ? (
@@ -284,7 +287,7 @@ export function RestReportEditor({
               {displayError.message}
               {displayError.technical ? (
                 <details className={styles.optional}>
-                  <summary>Подробности для специалиста</summary>
+                  <summary>{t("Подробности для специалиста", "Маманға арналған мәліметтер", "Details for a specialist")}</summary>
                   <p className={editor.technical}>{displayError.technical}</p>
                 </details>
               ) : null}
@@ -293,7 +296,7 @@ export function RestReportEditor({
           {step === 0 ? (
             <>
               <fieldset className={editor.kindChoices} disabled={disabled}>
-                <legend className={editor.legend}>Вид данных</legend>
+                <legend className={editor.legend}>{t("Вид данных", "Дерек түрі", "Data type")}</legend>
                 {kinds.map((item) => (
                   <label className={editor.kindChoice} key={item.kind}>
                     <input
@@ -304,8 +307,8 @@ export function RestReportEditor({
                       onChange={() => chooseKind(item)}
                     />
                     <span>
-                      <strong>{reportKindTitle(item.kind)}</strong>
-                      <small>{reportKindDescription(item.kind)}</small>
+                      <strong>{reportKindTitle(item.kind, locale)}</strong>
+                      <small>{reportKindDescription(item.kind, locale)}</small>
                     </span>
                   </label>
                 ))}
@@ -317,7 +320,7 @@ export function RestReportEditor({
                   onClick={() => setStep(1)}
                   icon={<ArrowRight size={16} strokeWidth={1.8} />}
                 >
-                  Продолжить
+                  {t("Продолжить", "Жалғастыру", "Continue")}
                 </Button>
               </div>
             </>
@@ -334,9 +337,9 @@ export function RestReportEditor({
             >
               <div className={editor.chosenKind}>
                 <div>
-                  <strong>{reportKindTitle(form.kind)}</strong>
+                  <strong>{reportKindTitle(form.kind, locale)}</strong>
                   <p className={styles.hint}>
-                    {reportKindDescription(form.kind)}
+                    {reportKindDescription(form.kind, locale)}
                   </p>
                 </div>
                 <Button
@@ -345,20 +348,20 @@ export function RestReportEditor({
                   disabled={disabled}
                   onClick={() => setStep(0)}
                 >
-                  Изменить
+                  {t("Изменить", "Өзгерту", "Change")}
                 </Button>
               </div>
               <Field
-                label="Название отчёта"
+                label={t("Название отчёта", "Есеп атауы", "Report name")}
                 value={form.name}
                 maxLength={200}
                 required
                 disabled={disabled}
-                placeholder="Например, отгрузки за сентябрь"
+                placeholder={t("Например, отгрузки за сентябрь", "Мысалы, қыркүйектегі жөнелтілімдер", "For example, September shipments")}
                 onChange={(event) => change({ name: event.target.value })}
               />
               <Field
-                label="Ссылка на отчёт в 1С"
+                label={t("Ссылка на отчёт в 1С", "1С есебінің сілтемесі", "Link to report in 1C")}
                 type="url"
                 pattern="https?://.*"
                 value={form.url}
@@ -366,7 +369,7 @@ export function RestReportEditor({
                 maxLength={2048}
                 disabled={disabled}
                 placeholder="https://1c.example.kz/base/hs/reports/sales"
-                hint="Попросите специалиста 1С дать ссылку для получения этого отчёта и настроить доступ. Пароль в ссылку добавлять не нужно."
+                hint={t("Попросите специалиста 1С дать ссылку для получения этого отчёта и настроить доступ. Пароль в ссылку добавлять не нужно.", "1С маманынан осы есепке сілтеме мен қолжетімділікті орнатуды сұраңыз. Құпиясөзді сілтемеге қоспаңыз.", "Ask your 1C specialist for the report link and access setup. Do not include a password in the link.")}
                 onChange={(event) => change({ url: event.target.value })}
               />
               <details
@@ -374,33 +377,31 @@ export function RestReportEditor({
                 open={advanced}
                 onToggle={(event) => setAdvanced(event.currentTarget.open)}
               >
-                <summary>Дополнительные настройки</summary>
+                <summary>{t("Дополнительные настройки", "Қосымша баптаулар", "Advanced settings")}</summary>
                 <div className={styles.stack}>
                   <p className={styles.hint}>
-                    Если формат отчёта отличается, настройте его со специалистом
-                    1С. Для сопоставления понадобится пример ответа со списком
-                    полей.
+                    {t("Если формат отчёта отличается, настройте его со специалистом 1С. Для сопоставления понадобится пример ответа со списком полей.", "Есеп пішімі өзгеше болса, оны 1С маманымен баптаңыз. Сәйкестендіру үшін өрістер тізімі бар жауап үлгісі қажет.", "If the report format differs, configure it with your 1C specialist. You will need a sample response with a list of fields for mapping.")}
                   </p>
                   <div className={styles.formGrid}>
                     <Field
-                      label="Где находится список строк"
+                      label={t("Где находится список строк", "Жолдар тізімі қайда орналасқан", "Where the row list is located")}
                       maxLength={200}
                       value={form.items_path}
                       disabled={disabled}
                       placeholder="value"
-                      hint="Путь в ответе JSON: например value или data.rows. Оставьте пустым, если ответ сразу содержит список."
+                      hint={t("Путь в ответе JSON: например value или data.rows. Оставьте пустым, если ответ сразу содержит список.", "JSON жауабындағы жол: мысалы, value немесе data.rows. Жауап бірден тізім болса, бос қалдырыңыз.", "Path in the JSON response, such as value or data.rows. Leave blank if the response is already a list.")}
                       onChange={(event) =>
                         change({ items_path: event.target.value })
                       }
                     />
                     <Field
-                      label="Настройка доступа на сервере"
+                      label={t("Настройка доступа на сервере", "Сервердегі қолжетімділік баптауы", "Server access setting")}
                       maxLength={100}
                       value={form.auth_env ?? ""}
                       disabled={disabled}
                       placeholder="ONEC_AUTH_MAIN"
                       pattern="ONEC_AUTH_[A-Z0-9_]+"
-                      hint="Необязательно. Администратор сообщит имя настройки. Сам пароль или токен сюда не вводится."
+                      hint={t("Необязательно. Администратор сообщит имя настройки. Сам пароль или токен сюда не вводится.", "Міндетті емес. Баптау атауын әкімші береді. Құпиясөзді немесе токенді мұнда енгізбеңіз.", "Optional. Your administrator will provide the setting name. Do not enter the password or token here.")}
                       onChange={(event) =>
                         change({ auth_env: event.target.value })
                       }
@@ -408,17 +409,15 @@ export function RestReportEditor({
                   </div>
                   <div className={styles.mappingHead}>
                     <div>
-                      <h4>Соответствие полей</h4>
+                      <h4>{t("Соответствие полей", "Өрістерді сәйкестендіру", "Field mapping")}</h4>
                       <p>
-                        Для каждого значения укажите название поля из ответа 1С.
-                        Например, «Название» может приходить в поле
-                        Наименование.
+                        {t("Для каждого значения укажите название поля из ответа 1С. Например, «Название» может приходить в поле Наименование.", "Әр мән үшін 1С жауабындағы өріс атауын көрсетіңіз. Мысалы, «Атауы» Наименование өрісінде болуы мүмкін.", "For each value, enter the field name from the 1C response. For example, Name may come from the Наименование field.")}
                       </p>
                     </div>
                   </div>
                   <Checkbox
-                    label="Названия полей уже совпадают"
-                    description="Использовать ответ без переименования. При проверке покажем недостающие и лишние поля."
+                    label={t("Названия полей уже совпадают", "Өріс атаулары әлдеқашан сәйкес", "Field names already match")}
+                    description={t("Использовать ответ без переименования. При проверке покажем недостающие и лишние поля.", "Жауапты өріс атауларын өзгертпей пайдалану. Тексергенде жетіспейтін және артық өрістер көрсетіледі.", "Use the response without renaming fields. Review will show missing and extra fields.")}
                     checked={passthrough}
                     disabled={disabled}
                     onChange={(event) => {
@@ -437,14 +436,11 @@ export function RestReportEditor({
                       {optional.length > 0 ? (
                         <details className={styles.optional}>
                           <summary>
-                            Дополнительные поля ({optional.length})
+                            {t("Дополнительные поля", "Қосымша өрістер", "Optional fields")} ({optional.length})
                           </summary>
                           <div className={styles.stack}>
                             <p className={styles.hint}>
-                              Пустое поле не загружается. Если название указано,
-                              значение должно быть в каждой строке. Для
-                              вложенного поля используйте точку: например
-                              Номенклатура.Код.
+                              {t("Пустое поле не загружается. Если название указано, значение должно быть в каждой строке. Для вложенного поля используйте точку: например Номенклатура.Код.", "Бос өріс жүктелмейді. Атауы көрсетілсе, мән әр жолда болуы керек. Кірістірілген өріс үшін нүкте қолданыңыз: мысалы, Номенклатура.Код.", "An empty field is not imported. If named, a value must be present in every row. Use a dot for nested fields, such as Номенклатура.Код.")}
                             </p>
                             <MappingFields
                               fields={optional}
@@ -458,33 +454,26 @@ export function RestReportEditor({
                     </>
                   ) : (
                     <p className={styles.hint}>
-                      Обязательные поля:{" "}
+                      {t("Обязательные поля", "Міндетті өрістер", "Required fields")}:{" "}
                       {required.map((field) => field.name).join(", ")}.
                     </p>
                   )}
                   <p className={styles.hint}>
-                    Идентификаторы и версии записей берём из 1С. Код и артикул
-                    не заменяют идентификатор. Ссылки на товары и склады должны
-                    совпадать с ранее загруженными справочниками.
+                    {t("Идентификаторы и версии записей берём из 1С. Код и артикул не заменяют идентификатор. Ссылки на товары и склады должны совпадать с ранее загруженными справочниками.", "Жазба идентификаторлары мен нұсқаларын 1С жүйесінен аламыз. Код пен артикул идентификатордың орнын баспайды. Тауар мен қойма сілтемелері бұрын жүктелген анықтамалықтарға сәйкес болуы керек.", "Record IDs and versions come from 1C. Code and SKU do not replace an ID. Product and warehouse references must match previously imported directories.")}
                   </p>
                   {form.kind === "growth" ? (
                     <p className={styles.hint}>
-                      В дополнительных полях укажите либо товар
-                      (product_external_id), либо категорию
-                      (category_external_id). Значение rate = 0.1 означает рост
-                      на 10%.
+                      {t("В дополнительных полях укажите либо товар (product_external_id), либо категорию (category_external_id). Значение rate = 0.1 означает рост на 10%.", "Қосымша өрістерде тауарды (product_external_id) немесе санатты (category_external_id) көрсетіңіз. rate = 0.1 мәні 10% өсімді білдіреді.", "In optional fields, specify either a product (product_external_id) or category (category_external_id). rate = 0.1 means 10% growth.")}
                     </p>
                   ) : null}
                   {form.kind === "products" ? (
                     <p className={styles.hint}>
-                      Минимум заказа (min_order_qty) и кратность (pack_size) —
-                      разные условия. Заполняйте их только подтверждёнными
-                      значениями.
+                      {t("Минимум заказа (min_order_qty) и кратность (pack_size) — разные условия. Заполняйте их только подтверждёнными значениями.", "Ең аз тапсырыс (min_order_qty) пен қаптама еселігі (pack_size) — бөлек шарттар. Оларды тек расталған мәндермен толтырыңыз.", "Minimum order quantity (min_order_qty) and pack size (pack_size) are separate terms. Enter only confirmed values.")}
                     </p>
                   ) : null}
                   {form.kind === "sales" ? (
                     <Select
-                      label="Как записано количество отгрузки в 1С"
+                      label={t("Как записано количество отгрузки в 1С", "1С жүйесінде жөнелтілім саны қалай жазылған", "How shipment quantity is recorded in 1C")}
                       value={form.quantity_multiplier}
                       disabled={disabled}
                       onChange={(event) =>
@@ -495,26 +484,26 @@ export function RestReportEditor({
                       }
                     >
                       <option value="1">
-                        Положительным числом — оставить как есть
+                        {t("Положительным числом — оставить как есть", "Оң санмен — өзгеріссіз қалдыру", "Positive number — keep as is")}
                       </option>
                       <option value="-1">
-                        Отрицательным числом — поменять знак
+                        {t("Отрицательным числом — поменять знак", "Теріс санмен — таңбасын өзгерту", "Negative number — reverse sign")}
                       </option>
                     </Select>
                   ) : null}
                 </div>
               </details>
               {!passthrough && (missing.length > 0 || duplicatePaths) ? (
-                <Alert tone="warning" title="Нужно уточнить соответствие полей">
+                <Alert tone="warning" title={t("Нужно уточнить соответствие полей", "Өрістер сәйкестігін нақтылау керек", "Field mapping needs review")}>
                   {duplicatePaths
-                    ? "Одно поле 1С указано несколько раз. Выберите разные поля в дополнительных настройках."
-                    : `В дополнительных настройках заполните: ${missing.map((field) => reportFieldLabel(field.name)).join(", ")}.`}
+                    ? t("Одно поле 1С указано несколько раз. Выберите разные поля в дополнительных настройках.", "Бір 1С өрісі бірнеше рет көрсетілген. Қосымша баптауларда әртүрлі өрістерді таңдаңыз.", "The same 1C field is used more than once. Choose different fields in advanced settings.")
+                    : `${t("В дополнительных настройках заполните", "Қосымша баптауларда толтырыңыз", "Complete in advanced settings")}: ${missing.map((field) => reportFieldLabel(field.name, locale)).join(", ")}.`}
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setAdvanced(true)}
                   >
-                    Открыть настройки
+                    {t("Открыть настройки", "Баптауларды ашу", "Open settings")}
                   </Button>
                 </Alert>
               ) : null}
@@ -531,11 +520,11 @@ export function RestReportEditor({
                       (!passthrough && (missing.length > 0 || duplicatePaths))
                     }
                   >
-                    {dirty ? "Сохранить и продолжить" : "Перейти к загрузке"}
+                    {dirty ? t("Сохранить и продолжить", "Сақтап, жалғастыру", "Save and continue") : t("Перейти к загрузке", "Жүктеуге өту", "Continue to upload")}
                   </Button>
                 ) : (
                   <Button variant="secondary" onClick={() => setStep(2)}>
-                    Вернуться к отчёту
+                    {t("Вернуться к отчёту", "Есепке оралу", "Back to report")}
                   </Button>
                 )}
                 <Button
@@ -544,12 +533,11 @@ export function RestReportEditor({
                   icon={<ArrowLeft size={16} strokeWidth={1.8} />}
                   onClick={() => setStep(profile && !dirty ? 2 : 0)}
                 >
-                  Назад
+                  {t("Назад", "Артқа", "Back")}
                 </Button>
               </div>
               <p className={styles.hint}>
-                На следующем шаге загрузим отчёт и покажем, что получилось.
-                Данные попадут в сервис после вашего подтверждения.
+                {t("На следующем шаге загрузим отчёт и покажем, что получилось. Данные попадут в сервис после вашего подтверждения.", "Келесі қадамда есепті жүктеп, нәтижесін көрсетеміз. Деректер сервиске тек сіз растағаннан кейін қосылады.", "Next, we will load the report and show the result. Data enters the service only after you confirm.")}
               </p>
             </form>
           ) : null}
@@ -557,10 +545,9 @@ export function RestReportEditor({
             <>
               {!detail && busy !== "preview" ? (
                 <div className={editor.ready}>
-                  <strong>Подключение сохранено</strong>
+                  <strong>{t("Подключение сохранено", "Қосылым сақталды", "Connection saved")}</strong>
                   <p className={styles.hint}>
-                    Загрузите отчёт, чтобы проверить доступ и данные. Перед
-                    добавлением в сервис вы увидите результат.
+                    {t("Загрузите отчёт, чтобы проверить доступ и данные. Перед добавлением в сервис вы увидите результат.", "Қолжетімділік пен деректерді тексеру үшін есепті жүктеңіз. Сервиске қоспас бұрын нәтижесін көресіз.", "Load the report to check access and data. You will see the result before adding it to the service.")}
                   </p>
                 </div>
               ) : null}
@@ -572,7 +559,7 @@ export function RestReportEditor({
                   disabled={!profile || dirty || busy !== null || !canPreview}
                   onClick={() => void preview()}
                 >
-                  {detail ? "Загрузить заново" : "Загрузить и проверить"}
+                  {detail ? t("Загрузить заново", "Қайта жүктеу", "Reload") : t("Загрузить и проверить", "Жүктеп, тексеру", "Load and review")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -580,12 +567,12 @@ export function RestReportEditor({
                   disabled={busy !== null}
                   onClick={() => setStep(1)}
                 >
-                  {canWrite ? "Настроить" : "Посмотреть настройки"}
+                  {canWrite ? t("Настроить", "Баптау", "Configure") : t("Посмотреть настройки", "Баптауларды қарау", "View settings")}
                 </Button>
               </div>
               {!canPreview ? (
                 <p className={styles.hint}>
-                  Для загрузки отчёта нужны права на импорт данных.
+                  {t("Для загрузки отчёта нужны права на импорт данных.", "Есепті жүктеу үшін деректерді импорттау құқығы қажет.", "Data import permission is required to load the report.")}
                 </p>
               ) : null}
             </>
@@ -593,14 +580,14 @@ export function RestReportEditor({
         </div>
       </Card>
       {busy === "preview" && !detail ? (
-        <Card title="Загружаем отчёт из 1С" aria-busy="true">
+        <Card title={t("Загружаем отчёт из 1С", "1С есебі жүктелуде", "Loading report from 1C")} aria-busy="true">
           <div
             className={styles.stack}
             role="status"
-            aria-label="Проверяем данные"
+            aria-label={t("Проверяем данные", "Деректер тексерілуде", "Checking data")}
           >
             <p className={styles.hint}>
-              Проверяем строки и соответствие полей.
+              {t("Проверяем строки и соответствие полей.", "Жолдар мен өрістер сәйкестігін тексеріп жатырмыз.", "Checking rows and field mapping.")}
             </p>
             <div className={skeleton.skeletonRow} aria-hidden="true" />
             <div className={skeleton.skeletonRow} aria-hidden="true" />

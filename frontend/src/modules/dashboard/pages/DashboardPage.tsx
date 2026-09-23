@@ -30,6 +30,7 @@ import {
   Tr,
 } from "../../../shared/ui";
 import styles from "./DashboardPage.module.css";
+import { useI18n, translate, type Locale } from "../../../shared/i18n/I18nContext";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -52,15 +53,16 @@ function split(notes: Note[], now: number): Buckets {
   return buckets;
 }
 
-function ageLabel(iso: string, now: number): { text: string; stale: boolean } {
+function ageLabel(iso: string, now: number, locale: Locale): { text: string; stale: boolean } {
   const age = now - new Date(iso).getTime();
-  if (age < DAY) return { text: "сегодня", stale: false };
+  if (age < DAY) return { text: translate(locale, "сегодня", "бүгін", "today"), stale: false };
   const days = Math.floor(age / DAY);
-  if (days < 7) return { text: `${days} дн. назад`, stale: false };
-  return { text: `${days} дн. назад`, stale: true };
+  if (days < 7) return { text: translate(locale, `${days} дн. назад`, `${days} күн бұрын`, `${days} days ago`), stale: false };
+  return { text: translate(locale, `${days} дн. назад`, `${days} күн бұрын`, `${days} days ago`), stale: true };
 }
 
 export function DashboardPage() {
+  const { locale, t } = useI18n();
   const { notes, loading, busy, error, create, remove, reload } = useNotes();
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -70,7 +72,7 @@ export function DashboardPage() {
   const now = useMemo(() => Date.now(), [notes]);
   const buckets = useMemo(() => split(notes, now), [notes, now]);
 
-  const today = new Date(now).toLocaleDateString("ru-RU", {
+  const today = new Date(now).toLocaleDateString(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -97,11 +99,11 @@ export function DashboardPage() {
     <>
       <PageHeader
         title={today[0].toUpperCase() + today.slice(1)}
-        subtitle="Что записала команда и что из этого ждёт ответа дольше всего."
+        subtitle={t("Что записала команда и что из этого ждёт ответа дольше всего.", "Команда жазғандардың ішінде қайсысы көптен бері жауап күтуде.", "What the team noted and what has waited longest for a response.")}
         actions={
           <>
             <Button variant="secondary" size="sm" onClick={reload} disabled={loading || busy}>
-              Обновить
+              {t("Обновить", "Жаңарту", "Refresh")}
             </Button>
             <Button
               variant="dark"
@@ -109,7 +111,7 @@ export function DashboardPage() {
               icon={<Plus size={15} strokeWidth={1.8} />}
               onClick={() => titleField.current?.focus()}
             >
-              Заметка
+              {t("Заметка", "Жазба", "Note")}
             </Button>
           </>
         }
@@ -117,41 +119,41 @@ export function DashboardPage() {
 
       <Segmented
         className={styles.filter}
-        ariaLabel="Фильтр заметок по давности"
+        ariaLabel={t("Фильтр заметок по давности", "Жазбаларды мерзімі бойынша сүзу", "Filter notes by age")}
         value={filter}
         onValueChange={(value) => setFilter(value as Filter)}
         items={[
-          { value: "all", label: "Все", count: notes.length },
-          { value: "today", label: "Сегодня", count: buckets.today.length },
-          { value: "week", label: "Эта неделя", count: buckets.week.length },
-          { value: "older", label: "Старше недели", count: buckets.older.length },
+          { value: "all", label: t("Все", "Барлығы", "All"), count: notes.length },
+          { value: "today", label: t("Сегодня", "Бүгін", "Today"), count: buckets.today.length },
+          { value: "week", label: t("Эта неделя", "Осы апта", "This week"), count: buckets.week.length },
+          { value: "older", label: t("Старше недели", "Бір аптадан асқан", "Older than a week"), count: buckets.older.length },
         ]}
       />
 
       <StatRow
         items={[
           {
-            label: "Всего заметок",
+            label: t("Всего заметок", "Барлық жазба", "Total notes"),
             value: notes.length,
             icon: <StickyNote size={16} strokeWidth={1.8} />,
           },
           {
-            label: "Добавлено сегодня",
+            label: t("Добавлено сегодня", "Бүгін қосылған", "Added today"),
             value: buckets.today.length,
             icon: <Plus size={16} strokeWidth={1.8} />,
-            delta: buckets.today.length > 0 ? "есть движение" : "тихо",
+            delta: buckets.today.length > 0 ? t("есть движение", "белсенділік бар", "active") : t("тихо", "тыныш", "quiet"),
             deltaTone: buckets.today.length > 0 ? "good" : "neutral",
           },
           {
-            label: "За эту неделю",
+            label: t("За эту неделю", "Осы аптада", "This week"),
             value: buckets.week.length + buckets.today.length,
             icon: <TrendingUp size={16} strokeWidth={1.8} />,
           },
           {
-            label: "Висит дольше недели",
+            label: t("Висит дольше недели", "Бір аптадан астам күтуде", "Pending over a week"),
             value: buckets.older.length,
             icon: <CalendarClock size={16} strokeWidth={1.8} />,
-            delta: buckets.older.length > 0 ? "разобрать" : "чисто",
+            delta: buckets.older.length > 0 ? t("разобрать", "қарастыру", "review") : t("чисто", "таза", "clear"),
             deltaTone: buckets.older.length > 0 ? "warn" : "good",
           },
         ]}
@@ -159,64 +161,64 @@ export function DashboardPage() {
 
       <div className={styles.cols}>
         <Card
-          title="Заметки команды"
-          subtitle="Всё, что попало в общий список. Свежие сверху."
+          title={t("Заметки команды", "Команда жазбалары", "Team notes")}
+          subtitle={t("Всё, что попало в общий список. Свежие сверху.", "Ортақ тізімдегі барлық жазба. Жаңалары жоғарыда.", "Everything in the shared list. Newest first.")}
           actions={<Badge tone="neutral">{shown.length}</Badge>}
         >
           <form className={styles.form} onSubmit={(event) => void submit(event)}>
             <Field
-              label="Что нужно сделать команде?"
+              label={t("Что нужно сделать команде?", "Команда не істеуі керек?", "What does the team need to do?")}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Например, запросить CMR по отправке KZ-1176"
+              placeholder={t("Например, запросить CMR по отправке KZ-1176", "Мысалы, KZ-1176 жөнелтілімі бойынша CMR сұрау", "For example, request the CMR for shipment KZ-1176")}
               maxLength={200}
               disabled={busy || loading}
               ref={titleField}
             />
             <Button type="submit" disabled={busy || loading || !title.trim()} loading={busy}>
-              Добавить
+              {t("Добавить", "Қосу", "Add")}
             </Button>
           </form>
 
           {error ? (
             <ErrorState
-              title="Не удалось загрузить заметки"
+              title={t("Не удалось загрузить заметки", "Жазбаларды жүктеу мүмкін болмады", "Could not load notes")}
               text={error}
               onRetry={reload}
               retrying={loading}
             />
           ) : loading ? (
             <p className={styles.loading} role="status">
-              <Spinner size="sm" /> Загружаем заметки…
+              <Spinner size="sm" /> {t("Загружаем заметки…", "Жазбалар жүктелуде…", "Loading notes…")}
             </p>
           ) : shown.length === 0 ? (
             <EmptyState
               icon={<StickyNote size={20} strokeWidth={1.8} />}
-              title={filter === "all" ? "Список пуст" : "В этом наборе пусто"}
+              title={filter === "all" ? t("Список пуст", "Тізім бос", "List is empty") : t("В этом наборе пусто", "Бұл топта ештеңе жоқ", "No notes in this group")}
               text={
                 filter === "all"
-                  ? "Первая же запись появится здесь и переживёт перезапуск — она лежит в базе."
-                  : "Здесь ничего нет. Переключитесь на «Все», чтобы увидеть весь список."
+                  ? t("Первая же запись появится здесь и переживёт перезапуск — она лежит в базе.", "Алғашқы жазба осында пайда болып, дерекқорда сақталады.", "Your first note will appear here and stay saved after a restart.")
+                  : t("Здесь ничего нет. Переключитесь на «Все», чтобы увидеть весь список.", "Мұнда ештеңе жоқ. Толық тізімді көру үшін «Барлығы» тармағын таңдаңыз.", "Nothing here. Switch to All to see the full list.")
               }
             />
           ) : (
             <Table maxHeight="380px">
               <thead>
                 <Tr>
-                  <Th>Запись</Th>
-                  <Th>Возраст</Th>
-                  <Th align="right">Действие</Th>
+                  <Th>{t("Запись", "Жазба", "Note")}</Th>
+                  <Th>{t("Возраст", "Мерзімі", "Age")}</Th>
+                  <Th align="right">{t("Действие", "Әрекет", "Action")}</Th>
                 </Tr>
               </thead>
               <tbody>
                 {shown.map((note) => {
-                  const age = ageLabel(note.created_at, now);
+                  const age = ageLabel(note.created_at, now, locale);
                   return (
                     <Tr key={note.id}>
                       <Td>
                         <span className={styles.noteTitle}>{note.title}</span>
                         <time className={styles.noteTime} dateTime={note.created_at}>
-                          {new Date(note.created_at).toLocaleString("ru-RU", {
+                          {new Date(note.created_at).toLocaleString(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", {
                             day: "2-digit",
                             month: "2-digit",
                             hour: "2-digit",
@@ -233,9 +235,9 @@ export function DashboardPage() {
                           size="sm"
                           disabled={busy}
                           onClick={() => void remove(note.id)}
-                          aria-label={`Удалить заметку: ${note.title}`}
+                          aria-label={`${t("Удалить заметку", "Жазбаны жою", "Delete note")}: ${note.title}`}
                         >
-                          Удалить
+                          {t("Удалить", "Жою", "Delete")}
                         </Button>
                       </Td>
                     </Tr>
@@ -249,39 +251,39 @@ export function DashboardPage() {
             <Insight
               icon={<Lightbulb size={18} strokeWidth={1.8} />}
               tone="warning"
-              title={`${buckets.older.length} ${buckets.older.length === 1 ? "запись висит" : "записи висят"} дольше недели`}
-              detail={`Самая старая — «${stalest.title}». Либо у неё нет владельца, либо она уже неактуальна: и то и другое решается за минуту.`}
+              title={t(`${buckets.older.length} ${buckets.older.length === 1 ? "запись висит" : "записи висят"} дольше недели`, `${buckets.older.length} жазба бір аптадан астам күтуде`, `${buckets.older.length} notes pending over a week`)}
+              detail={t(`Самая старая — «${stalest.title}». Либо у неё нет владельца, либо она уже неактуальна: и то и другое решается за минуту.`, `Ең ескісі — «${stalest.title}». Оның иесі жоқ немесе ол өзектілігін жоғалтқан болуы мүмкін.`, `Oldest: “${stalest.title}”. It may have no owner or may no longer be relevant.`)}
             />
           ) : null}
         </Card>
 
         <div className={styles.side}>
-          <Card title="Давность записей" subtitle="Сколько времени висит то, что записано.">
+          <Card title={t("Давность записей", "Жазбалардың мерзімі", "Note age")} subtitle={t("Сколько времени висит то, что записано.", "Жазбалардың қанша уақыт күтіп тұрғаны.", "How long notes have been pending.")}>
             {notes.length === 0 ? (
-              <p className={styles.muted}>Пока нечего разбирать.</p>
+              <p className={styles.muted}>{t("Пока нечего разбирать.", "Әзірге қарайтын ештеңе жоқ.", "Nothing to review yet.")}</p>
             ) : (
               <Breakdown
-                totalLabel="Заметки по давности"
+                totalLabel={t("Заметки по давности", "Жазбалар мерзімі бойынша", "Notes by age")}
                 segments={[
                   {
-                    label: "Сегодня",
+                    label: t("Сегодня", "Бүгін", "Today"),
                     value: buckets.today.length,
                     display: buckets.today.length,
-                    note: "ещё в работе",
+                    note: t("ещё в работе", "жұмыста", "in progress"),
                     tone: "good",
                   },
                   {
-                    label: "Эта неделя",
+                    label: t("Эта неделя", "Осы апта", "This week"),
                     value: buckets.week.length,
                     display: buckets.week.length,
-                    note: "нормальный срок",
+                    note: t("нормальный срок", "қалыпты мерзім", "on track"),
                     tone: "accent",
                   },
                   {
-                    label: "Старше недели",
+                    label: t("Старше недели", "Бір аптадан асқан", "Over a week"),
                     value: buckets.older.length,
                     display: buckets.older.length,
-                    note: "пора разобрать",
+                    note: t("пора разобрать", "қарастыру керек", "review now"),
                     tone: "warn",
                   },
                 ]}
@@ -290,32 +292,32 @@ export function DashboardPage() {
           </Card>
 
           <Card
-            title="Каркас проекта"
-            subtitle="Что уже работает и на что можно опереться."
+            title={t("Каркас проекта", "Жоба негізі", "Project foundation")}
+            subtitle={t("Что уже работает и на что можно опереться.", "Қазір жұмыс істейтін мүмкіндіктер.", "What already works and can be built on.")}
             actions={<FileText size={16} strokeWidth={1.8} aria-hidden="true" />}
           >
             <ul className={styles.facts}>
               <li>
-                <span>Хранилище файлов</span>
-                <Badge tone="success">готово</Badge>
+                <span>{t("Хранилище файлов", "Файл қоймасы", "File storage")}</span>
+                <Badge tone="success">{t("готово", "дайын", "ready")}</Badge>
               </li>
               <li>
-                <span>Очередь фоновых задач</span>
-                <Badge tone="success">готово</Badge>
+                <span>{t("Очередь фоновых задач", "Фондық тапсырмалар кезегі", "Background task queue")}</span>
+                <Badge tone="success">{t("готово", "дайын", "ready")}</Badge>
               </li>
               <li>
-                <span>Роли и права</span>
-                <Badge tone="success">готово</Badge>
+                <span>{t("Роли и права", "Рөлдер мен құқықтар", "Roles and permissions")}</span>
+                <Badge tone="success">{t("готово", "дайын", "ready")}</Badge>
               </li>
               <li>
-                <span>Направление продукта</span>
-                <Badge tone="warning">не выбрано</Badge>
+                <span>{t("Направление продукта", "Өнім бағыты", "Product direction")}</span>
+                <Badge tone="warning">{t("не выбрано", "таңдалмаған", "not selected")}</Badge>
               </li>
             </ul>
             <Insight
               icon={<Lightbulb size={18} strokeWidth={1.8} />}
-              title="Домены под тему ещё не заводим"
-              detail="Пока трек не объявлен, каркас держит вход, файлы и задачи. Предметные разделы появятся вместе с темой."
+              title={t("Домены под тему ещё не заводим", "Тақырыпқа арналған бөлімдер әзірге жоқ", "Topic domains are not set up yet")}
+              detail={t("Пока трек не объявлен, каркас держит вход, файлы и задачи. Предметные разделы появятся вместе с темой.", "Бағыт жарияланғанша, негіз кіруді, файлдарды және тапсырмаларды қамтамасыз етеді. Арнайы бөлімдер кейін қосылады.", "Until the track is announced, the foundation supports sign-in, files, and tasks. Topic-specific sections will follow.")}
             />
           </Card>
         </div>

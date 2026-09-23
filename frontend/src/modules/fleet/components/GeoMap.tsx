@@ -9,6 +9,7 @@ import { progressOf } from "../lib/simulator";
 import type { SimState } from "../lib/simulator";
 import type { Trip, TripEvent } from "../types";
 import styles from "./GeoMap.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 /** Ширина системы координат карты. Всё внутри считается в этих единицах, не в пикселях. */
 const WIDTH = 1000;
@@ -118,6 +119,7 @@ export function GeoMap({
   onSelectTrip,
   onPickEvent,
 }: GeoMapProps) {
+  const { t } = useI18n();
   const selected = states[selectedId];
 
   const target = useMemo<Box>(
@@ -177,7 +179,7 @@ export function GeoMap({
         viewBox={box.join(" ")}
         preserveAspectRatio="xMidYMid slice"
         role="img"
-        aria-label="Карта рейсов: Китай, Казахстан, Узбекистан, Россия"
+        aria-label={t("Карта рейсов: Китай, Казахстан, Узбекистан, Россия", "Рейстер картасы: Қытай, Қазақстан, Өзбекстан, Ресей", "Trip map: China, Kazakhstan, Uzbekistan, Russia")}
       >
         <defs>
           <filter id="trackGlow" x="-40%" y="-40%" width="180%" height="180%">
@@ -324,7 +326,7 @@ export function GeoMap({
               onClick={() => onSelectTrip(trip.id)}
               transform={`translate(${at.x} ${at.y})`}
             >
-              <title>{`${trip.id} — ${idle ? (state.runtime.haltReason ?? "стоит") : "в пути"}`}</title>
+              <title>{`${trip.id} — ${idle ? (state.runtime.haltReason ?? t("стоит", "тоқтаған", "stopped")) : t("в пути", "жолда", "en route")}`}</title>
               {!idle ? <circle className={styles.halo} r={size} /> : null}
               <circle
                 className={`${styles.truckBody}${idle ? ` ${styles.truckIdle}` : ""}`}

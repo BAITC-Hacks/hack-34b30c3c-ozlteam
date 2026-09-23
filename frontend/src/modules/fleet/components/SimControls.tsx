@@ -18,6 +18,7 @@ import { MANUAL_STEP, RATES } from "../hooks/useFleetSim";
 import type { SimMode } from "../hooks/useFleetSim";
 import type { EventKind } from "../types";
 import styles from "./SimControls.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 /**
  * Что ведущий может подбросить рейсу руками. Список короткий намеренно: это
@@ -62,18 +63,19 @@ export function SimControls({
   onFocus,
   onFire,
 }: SimControlsProps) {
+  const { t } = useI18n();
   const auto = mode === "auto";
 
   return (
     <div className={styles.bar}>
       <div className={styles.group}>
         <Segmented
-          ariaLabel="Режим демонстрации"
+          ariaLabel={t("Режим демонстрации", "Демо режимі", "Demo mode")}
           value={mode}
           onValueChange={(value) => onMode(value as SimMode)}
           items={[
-            { value: "auto", label: "Авто" },
-            { value: "manual", label: "Ручной" },
+            { value: "auto", label: t("Авто", "Авто", "Auto") },
+            { value: "manual", label: t("Ручной", "Қолмен", "Manual") },
           ]}
         />
 
@@ -83,7 +85,7 @@ export function SimControls({
             icon={playing ? <Pause size={15} strokeWidth={2} /> : <Play size={15} strokeWidth={2} />}
             onClick={onToggle}
           >
-            {playing ? "Пауза" : "Запустить"}
+            {playing ? t("Пауза", "Үзіліс", "Pause") : t("Запустить", "Бастау", "Start")}
           </Button>
         ) : (
           <Button
@@ -92,13 +94,13 @@ export function SimControls({
             onClick={onStep}
             disabled={disabled}
           >
-            Шаг {MANUAL_STEP} мин
+            {t("Шаг", "Қадам", "Step")} {MANUAL_STEP} {t("мин", "мин", "min")}
           </Button>
         )}
 
         {auto ? (
           <Segmented
-            ariaLabel="Скорость демонстрации"
+            ariaLabel={t("Скорость демонстрации", "Демо жылдамдығы", "Demo speed")}
             value={String(rate)}
             onValueChange={(value) => onRate(Number(value))}
             items={RATES.map((value) => ({ value: String(value), label: `×${value / 10}` }))}
@@ -106,19 +108,19 @@ export function SimControls({
         ) : null}
 
         <Button variant="ghost" icon={<RotateCcw size={15} strokeWidth={1.8} />} onClick={onReset}>
-          Сначала
+          {t("Сначала", "Басынан", "Restart")}
         </Button>
       </div>
 
       <div className={styles.group}>
-        <span className={styles.caption}>Подбросить событие</span>
+        <span className={styles.caption}>{t("Подбросить событие", "Оқиға қосу", "Trigger event")}</span>
         {TROUBLES.map((trouble) => (
           <Chip key={trouble.kind} onClick={() => onFire(trouble.kind)} disabled={disabled}>
             <span className={styles.chip}>
               <span className={styles.chipIcon} aria-hidden="true">
                 {trouble.icon}
               </span>
-              {trouble.label}
+              {trouble.kind === "speeding" ? t("Превышение", "Жылдамдықты асыру", "Speeding") : trouble.kind === "customs" ? t("Держат декларацию", "Декларация ұсталды", "Customs hold") : trouble.kind === "breakdown" ? t("Поломка", "Ақау", "Breakdown") : trouble.kind === "detour" ? t("Объезд", "Айналма жол", "Detour") : t("Режим охлаждения", "Салқындату режимі", "Cooling issue")}
             </span>
           </Chip>
         ))}
@@ -131,7 +133,7 @@ export function SimControls({
           icon={focused ? <Minimize2 size={14} strokeWidth={1.8} /> : <Maximize2 size={14} strokeWidth={1.8} />}
           onClick={() => onFocus(!focused)}
         >
-          {focused ? "Весь регион" : "К рейсу"}
+          {focused ? t("Весь регион", "Бүкіл аймақ", "Whole region") : t("К рейсу", "Рейске", "To trip")}
         </Button>
       </div>
     </div>

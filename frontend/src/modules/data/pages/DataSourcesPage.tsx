@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { applyImport, createSource, getImport, listExchangeBatches, listImports, listSources, stageImport } from "../api/data";
 import type { ExchangeBatch, ImportBatch, ImportDetail, RowError, Source } from "../types";
@@ -17,6 +18,15 @@ const kinds = [
 ] as const;
 
 const kindName = new Map<string, string>(kinds);
+function localizedKindName(kind: string, t: ReturnType<typeof useI18n>["t"]): string {
+  const labels: Record<string, [string, string, string]> = {
+    categories: ["Категории", "Санаттар", "Categories"], suppliers: ["Поставщики", "Жеткізушілер", "Suppliers"], warehouses: ["Склады", "Қоймалар", "Warehouses"],
+    products: ["Товары", "Тауарлар", "Products"], sales: ["Продажи", "Сатылымдар", "Sales"], stocks: ["Остатки", "Қорлар", "Stock"],
+    inbound: ["Товары в пути", "Жолдағы тауарлар", "Inbound goods"], stockouts: ["Отсутствие товара", "Тауар жоқ кезеңдер", "Stockouts"], growth: ["Прирост спроса", "Сұраныс өсімі", "Demand growth"],
+  };
+  const label = labels[kind];
+  return label ? t(...label) : kind;
+}
 type ImportField = { name: string; label: string };
 type KindFormat = { required: ImportField[]; optional: ImportField[]; note: string };
 const fields = (names: string): ImportField[] => names.split(" ").map((name) => ({ name, label: name }));
@@ -33,80 +43,104 @@ const formats: Record<string, KindFormat> = {
   stockouts: { required: [...common, ...fields("product_external_id warehouse_external_id start")], optional: [...commonOptional, ...fields("end active")], note: "start и end: ГГГГ-ММ-ДД. Загружайте только подтверждённые интервалы отсутствия." },
   growth: { required: [...common, ...fields("start end rate")], optional: [...commonOptional, ...fields("product_external_id category_external_id mode active")], note: "Укажите ровно одно: product_external_id или category_external_id. rate=0.1 означает 10%." },
 };
+function localizedFormatNote(kind: string, fallback: string, t: ReturnType<typeof useI18n>["t"]): string {
+  switch (kind) {
+    case "categories": return t(fallback, "Алдымен санаттарды жүктеңіз. external_id — дереккөздегі тұрақты санат ID-і.", "Import categories first. external_id is the stable category ID in the source.");
+    case "suppliers": return t(fallback, "Жеткізуші оған сілтеме жасайтын тауардан бұрын жүктелуі керек.", "Import the supplier before products that reference it.");
+    case "warehouses": return t(fallback, "Қойманы сатылымдар, қорлар және жеткізілімдерден бұрын жүктеңіз.", "Import warehouses before sales, stock and inbound deliveries.");
+    case "products": return t(fallback, "sku артикулы мен code коды тұрақты external_id орнына жүрмейді. Мөлшер unit базалық бірлігінде көрсетіледі.", "SKU and code do not replace stable external_id. Quantity uses the base unit in unit.");
+    case "sales": return t(fallback, "date: ЖЖЖЖ-АА-КК; қайтарым — теріс мөлшер. client_id тек иесіздендірілген болуы керек.", "date: YYYY-MM-DD; returns use negative quantities. client_id must be anonymized.");
+    case "stocks": return t(fallback, "as_of — уақыт белдеуі бар күн мен уақыт, мысалы 2026-09-23T09:00:00+05:00.", "as_of is a date and time with time zone, e.g. 2026-09-23T09:00:00+05:00.");
+    case "inbound": return t(fallback, "expected_date: ЖЖЖЖ-АА-КК; quantity — әлі қабылданбаған мөлшер.", "expected_date: YYYY-MM-DD; quantity is the amount not yet received.");
+    case "stockouts": return t(fallback, "start және end: ЖЖЖЖ-АА-КК. Тауар жоқ болған расталған кезеңдерді ғана жүктеңіз.", "start and end: YYYY-MM-DD. Import only confirmed stockout periods.");
+    case "growth": return t(fallback, "Тек біреуін көрсетіңіз: product_external_id немесе category_external_id. rate=0.1 — 10% өсім.", "Specify exactly one of product_external_id or category_external_id. rate=0.1 means 10% growth.");
+    default: return fallback;
+  }
+}
 type MappingRow = { id: number; source: string; target: string };
 const statusName: Record<string, string> = { validated: "Проверен", invalid: "Есть ошибки", applied: "Применён" };
+function localizedStatusName(status: string, t: ReturnType<typeof useI18n>["t"]): string {
+  if (status === "validated") return t("Проверен", "Тексерілді", "Validated");
+  if (status === "invalid") return t("Есть ошибки", "Қателер бар", "Has errors");
+  if (status === "applied") return t("Применён", "Қолданылды", "Applied");
+  return status;
+}
 const PAGE_SIZE = 20;
-const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
+const formatDate = (value: string | null, locale: string) => value ? new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
 
-function errorText(error: unknown): string {
+function errorText(error: unknown, t: ReturnType<typeof useI18n>["t"]): string {
   if (error instanceof ApiError) {
-    if (error.status === 403) return "У вашей роли нет права на это действие.";
-    if (error.status === 409) return "Версия источника изменилась после проверки. Загрузите файл заново.";
-    if (error.status === 413) return "Файл слишком большой: до 25 МиБ и 10 000 строк.";
-    if (error.status === 415) return "Поддерживаются CSV UTF-8 и XLSX.";
+    if (error.status === 403) return t("У вашей роли нет права на это действие.", "Сіздің рөліңізге бұл әрекетке рұқсат жоқ.", "Your role cannot perform this action.");
+    if (error.status === 409) return t("Версия источника изменилась после проверки. Загрузите файл заново.", "Тексеруден кейін дереккөз нұсқасы өзгерді. Файлды қайта жүктеңіз.", "The source version changed after validation. Upload the file again.");
+    if (error.status === 413) return t("Файл слишком большой: до 25 МиБ и 10 000 строк.", "Файл тым үлкен: 25 МиБ және 10 000 жолға дейін.", "File too large: maximum 25 MiB and 10,000 rows.");
+    if (error.status === 415) return t("Поддерживаются CSV UTF-8 и XLSX.", "CSV UTF-8 және XLSX қолдау көрсетіледі.", "CSV UTF-8 and XLSX are supported.");
   }
-  return error instanceof Error ? error.message : "Не удалось выполнить действие.";
+  return error instanceof Error ? error.message : t("Не удалось выполнить действие.", "Әрекетті орындау мүмкін болмады.", "Could not complete the action.");
 }
 
-function importIssueText(issue: RowError): string {
-  const location = [issue.sheet, issue.row > 0 ? `строка ${issue.row}` : null, issue.column ? `колонка «${issue.column}»` : null]
+function importIssueText(issue: RowError, t: ReturnType<typeof useI18n>["t"]): string {
+  const location = [issue.sheet, issue.row > 0 ? `${t("строка", "жол", "row")} ${issue.row}` : null, issue.column ? `${t("колонка", "баған", "column")} «${issue.column}»` : null]
     .filter(Boolean).join(" · ");
   const message = issue.message === "Field required"
-    ? "Обязательное значение отсутствует. Проверьте заголовок колонки, сопоставление и ячейку."
+    ? t("Обязательное значение отсутствует. Проверьте заголовок колонки, сопоставление и ячейку.", "Міндетті мән жоқ. Баған атауын, сәйкестендіруді және ұяшықты тексеріңіз.", "Required value is missing. Check the column header, mapping and cell.")
     : issue.message.startsWith("Input should be a valid integer")
-      ? "Ожидается целое число."
+      ? t("Ожидается целое число.", "Бүтін сан қажет.", "An integer is required.")
       : issue.message.startsWith("Input should be a valid number") || issue.message.startsWith("Input should be a valid decimal")
-        ? "Ожидается число."
+        ? t("Ожидается число.", "Сан қажет.", "A number is required.")
         : issue.message.startsWith("Input should be a valid datetime")
-          ? "Ожидается дата и время с часовым поясом."
+          ? t("Ожидается дата и время с часовым поясом.", "Уақыт белдеуі бар күн мен уақыт қажет.", "A date and time with time zone is required.")
           : issue.message.startsWith("Input should be a valid date")
-            ? "Ожидается дата."
+            ? t("Ожидается дата.", "Күн қажет.", "A date is required.")
             : issue.message;
   return location ? `${location}: ${message}` : message;
 }
 
 function DataSkeleton() {
-  return <div className={styles.skeleton} role="status" aria-busy="true" aria-label="Загружаем источники данных">
+  const { t } = useI18n();
+  return <div className={styles.skeleton} role="status" aria-busy="true" aria-label={t("Загружаем источники данных", "Дереккөздер жүктелуде", "Loading data sources")}>
     <div><i /><i /><i /></div><div><i /><i /><i /><i /></div>
   </div>;
 }
 
 function SourceList({ sources, selectedSourceId, onViewBatches }: { sources: Source[]; selectedSourceId: string | null; onViewBatches: (id: string) => void }) {
-  return <Card title="Источники" subtitle="Версия и полнота данных, полученных из 1С или файлов">
-    {sources.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Источник</Th><Th>Версия</Th><Th>Состояние</Th><Th>Синхронизация</Th><Th>Пакеты</Th></Tr></thead><tbody>
+  const { locale, t } = useI18n();
+  return <Card title={t("Источники", "Дереккөздер", "Sources")} subtitle={t("Версия и полнота данных, полученных из 1С или файлов", "1С немесе файлдардан алынған деректердің нұсқасы мен толықтығы", "Version and completeness of data from 1C or files")}>
+    {sources.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>{t("Источник", "Дереккөз", "Source")}</Th><Th>{t("Версия", "Нұсқа", "Version")}</Th><Th>{t("Состояние", "Күйі", "Status")}</Th><Th>{t("Синхронизация", "Синхрондау", "Sync")}</Th><Th>{t("Пакеты", "Пакеттер", "Packages")}</Th></Tr></thead><tbody>
       {sources.map((source) => <Tr key={source.id}>
-        <Td><strong>{source.name}</strong><small className={styles.muted}>{source.system === "1c" ? "База 1С" : "Файловые выгрузки"}</small></Td>
+        <Td><strong>{source.name}</strong><small className={styles.muted}>{source.system === "1c" ? t("База 1С", "1С базасы", "1C database") : t("Файловые выгрузки", "Файлдық экспорттар", "File exports")}</small></Td>
         <Td>{source.revision}</Td>
-        <Td><Badge tone={source.complete ? "success" : "warning"}>{source.complete ? "Полный набор" : "Загрузка не завершена"}</Badge></Td>
-        <Td>{formatDate(source.synced_at)}</Td>
-        <Td><button className={styles.textButton} type="button" aria-pressed={selectedSourceId === source.id} onClick={() => onViewBatches(source.id)}>{selectedSourceId === source.id ? "Скрыть" : "Журнал"}<span className="srOnly"> источника {source.name}</span></button></Td>
+        <Td><Badge tone={source.complete ? "success" : "warning"}>{source.complete ? t("Полный набор", "Толық жиын", "Complete set") : t("Загрузка не завершена", "Жүктеу аяқталмады", "Import incomplete")}</Badge></Td>
+        <Td>{formatDate(source.synced_at, locale)}</Td>
+        <Td><button className={styles.textButton} type="button" aria-pressed={selectedSourceId === source.id} onClick={() => onViewBatches(source.id)}>{selectedSourceId === source.id ? t("Скрыть", "Жасыру", "Hide") : t("Журнал", "Журнал", "Log")}<span className="srOnly"> {t("источника", "дереккөзі", "for source")} {source.name}</span></button></Td>
       </Tr>)}
-    </tbody></Table></div> : <EmptyState title="Источников пока нет" text="Зарегистрируйте базу 1С или источник файловых выгрузок." />}
+    </tbody></Table></div> : <EmptyState title={t("Источников пока нет", "Әзірге дереккөздер жоқ", "No sources yet")} text={t("Зарегистрируйте базу 1С или источник файловых выгрузок.", "1С базасын немесе файлдық экспорт дереккөзін тіркеңіз.", "Register a 1C database or file export source.")} />}
   </Card>;
 }
 
 function ImportHistory({ batches, sourceNames, onOpen, page, hasNext, loading, onPageChange }: { batches: ImportBatch[]; sourceNames: Map<string, string>; onOpen: (id: string) => void; page: number; hasNext: boolean; loading: boolean; onPageChange: (page: number) => void }) {
-  return <Card title="История загрузок" subtitle="Проверенные файлы и результаты применения">
-    {batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Файл</Th><Th>Источник</Th><Th>Строк</Th><Th>Состояние</Th><Th>Проверка</Th></Tr></thead><tbody>
+  const { locale, t } = useI18n();
+  return <Card title={t("История загрузок", "Жүктеу тарихы", "Import history")} subtitle={t("Проверенные файлы и результаты применения", "Тексерілген файлдар және қолдану нәтижелері", "Validated files and application results")}>
+    {batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>{t("Файл", "Файл", "File")}</Th><Th>{t("Источник", "Дереккөз", "Source")}</Th><Th>{t("Строк", "Жолдар", "Rows")}</Th><Th>{t("Состояние", "Күйі", "Status")}</Th><Th>{t("Проверка", "Тексеру", "Check")}</Th></Tr></thead><tbody>
       {batches.map((batch) => <Tr key={batch.id}>
-        <Td><strong>{batch.filename}</strong><small className={styles.muted}>{kindName.get(batch.kind) ?? batch.kind} · {formatDate(batch.created_at)}</small></Td>
+        <Td><strong>{batch.filename}</strong><small className={styles.muted}>{localizedKindName(batch.kind, t)} · {formatDate(batch.created_at, locale)}</small></Td>
         <Td>{sourceNames.get(batch.source_id) ?? batch.source_id.slice(0, 8)}</Td>
         <Td>{batch.row_count}</Td>
-        <Td><Badge tone={batch.status === "applied" ? "success" : batch.status === "invalid" ? "danger" : "warning"}>{statusName[batch.status] ?? batch.status}</Badge></Td>
-        <Td><button className={styles.textButton} type="button" onClick={() => onOpen(batch.id)}>Открыть<span className="srOnly"> {batch.filename}</span></button></Td>
+        <Td><Badge tone={batch.status === "applied" ? "success" : batch.status === "invalid" ? "danger" : "warning"}>{localizedStatusName(batch.status, t)}</Badge></Td>
+        <Td><button className={styles.textButton} type="button" onClick={() => onOpen(batch.id)}>{t("Открыть", "Ашу", "Open")}<span className="srOnly"> {batch.filename}</span></button></Td>
       </Tr>)}
-    </tbody></Table></div> : loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем историю" /> : <EmptyState title={page ? "На этой странице загрузок нет" : "Файлы ещё не загружались"} text={page ? "Вернитесь к предыдущей странице." : "Выберите источник и загрузите нормализованный CSV или XLSX."} />}
-    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>Назад</Button><span>Страница {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>Далее</Button></div> : null}
+    </tbody></Table></div> : loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label={t("Загружаем историю", "Тарих жүктелуде", "Loading history")} /> : <EmptyState title={page ? t("На этой странице загрузок нет", "Бұл бетте жүктеулер жоқ", "No imports on this page") : t("Файлы ещё не загружались", "Файлдар әлі жүктелмеген", "No files imported yet")} text={page ? t("Вернитесь к предыдущей странице.", "Алдыңғы бетке оралыңыз.", "Return to the previous page.") : t("Выберите источник и загрузите нормализованный CSV или XLSX.", "Дереккөзді таңдап, қалыпқа келтірілген CSV немесе XLSX жүктеңіз.", "Choose a source and upload a normalized CSV or XLSX.")} />}
+    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>{t("Назад", "Артқа", "Previous")}</Button><span>{t("Страница", "Бет", "Page")} {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>{t("Далее", "Келесі", "Next")}</Button></div> : null}
   </Card>;
 }
 
 function ExchangeHistory({ source, batches, page, hasNext, loading, error, onPageChange, onClose }: { source: Source; batches: ExchangeBatch[]; page: number; hasNext: boolean; loading: boolean; error: string | null; onPageChange: (page: number) => void; onClose: () => void }) {
-  return <Card title={`Пакеты источника: ${source.name}`} subtitle="Журнал успешно применённых нормализованных пакетов; регистрация источника сама по себе не подключает 1С" actions={<Button variant="ghost" size="sm" onClick={onClose}>Закрыть</Button>}>
-    {error ? <Alert tone="danger" title="Не удалось загрузить журнал">{error}</Alert> : null}
-    {loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем пакеты источника" /> : batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Пакет</Th><Th>Ревизия</Th><Th>Строк</Th><Th>Курсор</Th><Th>Применён</Th></Tr></thead><tbody>
-      {batches.map((batch) => <Tr key={batch.id}><Td><strong>{batch.batch_key}</strong></Td><Td>{batch.revision}</Td><Td>{batch.row_count}</Td><Td>{batch.cursor ?? "—"}</Td><Td>{formatDate(batch.created_at)}</Td></Tr>)}
-    </tbody></Table></div> : !error ? <EmptyState title={page ? "На этой странице пакетов нет" : "Применённых пакетов пока нет"} text={page ? "Вернитесь к предыдущей странице." : "Пакеты появятся после обмена через внешний адаптер 1С."} /> : null}
-    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>Назад</Button><span>Страница {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>Далее</Button></div> : null}
+  const { locale, t } = useI18n();
+  return <Card title={`${t("Пакеты источника", "Дереккөз пакеттері", "Source packages")}: ${source.name}`} subtitle={t("Журнал успешно применённых нормализованных пакетов; регистрация источника сама по себе не подключает 1С", "Сәтті қолданылған қалыпқа келтірілген пакеттер журналы; дереккөзді тіркеу 1С-ке қоспайды", "Log of successfully applied normalized packages; registering a source does not connect to 1C")} actions={<Button variant="ghost" size="sm" onClick={onClose}>{t("Закрыть", "Жабу", "Close")}</Button>}>
+    {error ? <Alert tone="danger" title={t("Не удалось загрузить журнал", "Журналды жүктеу мүмкін болмады", "Could not load log")}>{error}</Alert> : null}
+    {loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label={t("Загружаем пакеты источника", "Дереккөз пакеттері жүктелуде", "Loading source packages")} /> : batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>{t("Пакет", "Пакет", "Package")}</Th><Th>{t("Ревизия", "Ревизия", "Revision")}</Th><Th>{t("Строк", "Жолдар", "Rows")}</Th><Th>{t("Курсор", "Курсор", "Cursor")}</Th><Th>{t("Применён", "Қолданылды", "Applied")}</Th></Tr></thead><tbody>
+      {batches.map((batch) => <Tr key={batch.id}><Td><strong>{batch.batch_key}</strong></Td><Td>{batch.revision}</Td><Td>{batch.row_count}</Td><Td>{batch.cursor ?? "—"}</Td><Td>{formatDate(batch.created_at, locale)}</Td></Tr>)}
+    </tbody></Table></div> : !error ? <EmptyState title={page ? t("На этой странице пакетов нет", "Бұл бетте пакеттер жоқ", "No packages on this page") : t("Применённых пакетов пока нет", "Әзірге қолданылған пакеттер жоқ", "No applied packages yet")} text={page ? t("Вернитесь к предыдущей странице.", "Алдыңғы бетке оралыңыз.", "Return to the previous page.") : t("Пакеты появятся после обмена через внешний адаптер 1С.", "Пакеттер сыртқы 1С адаптерімен алмасудан кейін пайда болады.", "Packages will appear after exchange through the external 1C adapter.")} /> : null}
+    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>{t("Назад", "Артқа", "Previous")}</Button><span>{t("Страница", "Бет", "Page")} {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>{t("Далее", "Келесі", "Next")}</Button></div> : null}
   </Card>;
 }
 
@@ -116,6 +150,7 @@ function previewLabel(row: Record<string, unknown>): string {
 }
 
 export function DataSourcesPage() {
+  const { locale, t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -189,7 +224,7 @@ export function DataSourcesPage() {
       setImportsHasNext(nextBatches.length > PAGE_SIZE);
       setSourceId((current) => current || nextSources[0]?.id || "");
       setError(null);
-    }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
+    }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught, t)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [reload, importPage]);
@@ -204,7 +239,7 @@ export function DataSourcesPage() {
         setExchangeBatches(nextBatches.slice(0, PAGE_SIZE));
         setExchangeHasNext(nextBatches.length > PAGE_SIZE);
       })
-      .catch((caught: unknown) => { if (!controller.signal.aborted) setExchangeError(errorText(caught)); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setExchangeError(errorText(caught, t)); })
       .finally(() => { if (!controller.signal.aborted) setExchangeLoading(false); });
     return () => controller.abort();
   }, [selectedSourceId, exchangePage, reload]);
@@ -217,7 +252,7 @@ export function DataSourcesPage() {
     const controller = new AbortController();
     setDetailLoading(true);
     getImport(batchId, controller.signal).then(setDetail)
-      .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught, t)); })
       .finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
     return () => controller.abort();
   }, [batchId]);
@@ -228,8 +263,8 @@ export function DataSourcesPage() {
     try {
       const added = await createSource(sourceName.trim(), sourceSystem);
       setSourceName(""); setSourceId(added.id); setReload((value) => value + 1);
-      setNotice("Источник зарегистрирован. Теперь можно загрузить нормализованный файл.");
-    } catch (caught) { setError(errorText(caught)); }
+      setNotice(t("Источник зарегистрирован. Теперь можно загрузить нормализованный файл.", "Дереккөз тіркелді. Енді қалыпқа келтірілген файлды жүктеуге болады.", "Source registered. You can now upload a normalized file."));
+    } catch (caught) { setError(errorText(caught, t)); }
     finally { setBusy(null); }
   }
 
@@ -237,15 +272,15 @@ export function DataSourcesPage() {
     if (!sourceId || !file) return;
     const pairs = mappingRows.map((row) => ({ source: row.source.trim(), target: row.target }));
     if (pairs.some((row) => !row.source || !row.target)) {
-      setError("Заполните оба поля каждой пары сопоставления или удалите пустую строку."); return;
+      setError(t("Заполните оба поля каждой пары сопоставления или удалите пустую строку.", "Әр сәйкестендіру жұбының екі өрісін толтырыңыз немесе бос жолды жойыңыз.", "Fill both fields in each mapping pair or remove the empty row.")); return;
     }
     if (new Set(pairs.map((row) => row.source)).size !== pairs.length || new Set(pairs.map((row) => row.target)).size !== pairs.length) {
-      setError("Каждую исходную колонку и каждое поле результата можно выбрать только один раз."); return;
+      setError(t("Каждую исходную колонку и каждое поле результата можно выбрать только один раз.", "Әр бастапқы баған мен нәтиже өрісін бір рет қана таңдауға болады.", "Each source column and output field can be selected only once.")); return;
     }
     if (pairs.length) {
       const targets = new Set(pairs.map((row) => row.target));
       const missing = format.required.filter((field) => !targets.has(field.name)).map((field) => field.name);
-      if (missing.length) { setError(`Добавьте обязательные поля в сопоставление: ${missing.join(", ")}.`); return; }
+      if (missing.length) { setError(`${t("Добавьте обязательные поля в сопоставление", "Сәйкестендіруге міндетті өрістерді қосыңыз", "Add required fields to the mapping")}: ${missing.join(", ")}.`); return; }
     }
     const mapping = Object.fromEntries(pairs.map(({ source, target }) => [source, target]));
     setBusy("stage"); setError(null); setNotice(null);
@@ -253,8 +288,8 @@ export function DataSourcesPage() {
       const staged = await stageImport({ sourceId, kind, file, mapping: JSON.stringify(mapping), multiplier: reverseSign ? -1 : 1 });
       setFile(null); if (fileInputRef.current) fileInputRef.current.value = "";
       setDetail(staged); selectBatch(staged.id); setImportPage(0); setReload((value) => value + 1);
-      setNotice(staged.status === "invalid" ? "Файл проверен: исправьте ошибки и загрузите его снова." : "Файл проверен. Просмотрите строки перед применением.");
-    } catch (caught) { setError(errorText(caught)); }
+      setNotice(staged.status === "invalid" ? t("Файл проверен: исправьте ошибки и загрузите его снова.", "Файл тексерілді: қателерді түзетіп, қайта жүктеңіз.", "File checked: fix the errors and upload it again.") : t("Файл проверен. Просмотрите строки перед применением.", "Файл тексерілді. Қолданар алдында жолдарды қарап шығыңыз.", "File checked. Review the rows before applying."));
+    } catch (caught) { setError(errorText(caught, t)); }
     finally { setBusy(null); }
   }
 
@@ -264,36 +299,36 @@ export function DataSourcesPage() {
     try {
       const applied = await applyImport(detail.id, complete);
       setDetail(applied); closeApplyModal(); setReload((value) => value + 1);
-      setNotice(complete ? "Данные применены. Пакет отмечен завершённым; расчёт для полного источника разрешён." : "Данные применены. Пакет остаётся незавершённым до загрузки последней согласованной части.");
-    } catch (caught) { setError(errorText(caught)); }
+      setNotice(complete ? t("Данные применены. Пакет отмечен завершённым; расчёт для полного источника разрешён.", "Деректер қолданылды. Пакет аяқталды деп белгіленді; толық дереккөз үшін есептеуге рұқсат берілді.", "Data applied. The package is marked complete; calculations are enabled for the full source.") : t("Данные применены. Пакет остаётся незавершённым до загрузки последней согласованной части.", "Деректер қолданылды. Келісілген соңғы бөлік жүктелгенше пакет аяқталмаған күйде қалады.", "Data applied. The package remains incomplete until the final agreed part is uploaded."));
+    } catch (caught) { setError(errorText(caught, t)); }
     finally { setBusy(null); }
   }
 
   return <div className={styles.page}>
-    <PageHeader title="Источники данных" subtitle="Проверка нормализованных файлов перед расчётом пополнения" actions={<><Button variant="secondary" size="sm" onClick={() => navigate("/data/integrations", { state: { from: `${location.pathname}${location.search}${location.hash}` } })}>Интеграция с 1С</Button><Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button></>} />
-    {error ? <Alert tone="danger" title="Действие не выполнено" onDismiss={() => setError(null)}>{error}</Alert> : null}
+    <PageHeader title={t("Источники данных", "Дереккөздер", "Data sources")} subtitle={t("Проверка нормализованных файлов перед расчётом пополнения", "Толықтыруды есептемес бұрын қалыпқа келтірілген файлдарды тексеру", "Check normalized files before calculating replenishment")} actions={<><Button variant="secondary" size="sm" onClick={() => navigate("/data/integrations", { state: { from: `${location.pathname}${location.search}${location.hash}` } })}>{t("Интеграция с 1С", "1С интеграциясы", "1C integration")}</Button><Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>{t("Обновить", "Жаңарту", "Refresh")}</Button></>} />
+    {error ? <Alert tone="danger" title={t("Действие не выполнено", "Әрекет орындалмады", "Action failed")} onDismiss={() => setError(null)}>{error}</Alert> : null}
     {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
     <PackageImportsPanel sources={sources} onChanged={() => setReload((value) => value + 1)} />
     {loading && !sources.length && !batches.length ? <DataSkeleton /> : <>
       <SourceList sources={sources} selectedSourceId={selectedSourceId} onViewBatches={viewBatches} />
       {selectedSource ? <ExchangeHistory source={selectedSource} batches={exchangeBatches} page={exchangePage} hasNext={exchangeHasNext} loading={exchangeLoading} error={exchangeError} onPageChange={setExchangePage} onClose={() => setSelectedSourceId(null)} /> : null}
       <div className={styles.forms}>
-        <Card title="Зарегистрировать источник" subtitle="Регистрация базы 1С не устанавливает соединение с ней">
+        <Card title={t("Зарегистрировать источник", "Дереккөзді тіркеу", "Register source")} subtitle={t("Регистрация базы 1С не устанавливает соединение с ней", "1С базасын тіркеу онымен байланыс орнатпайды", "Registering a 1C database does not connect to it")}>
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void addSource(); }}>
-            <label>Название<input value={sourceName} maxLength={200} required onChange={(event) => setSourceName(event.target.value)} placeholder="Например, 1С Алматы" /></label>
-            <Select label="Тип" wrapperClassName={styles.selectField} value={sourceSystem} onChange={(event) => setSourceSystem(event.target.value as "1c" | "file")}><option value="file">Файловые выгрузки</option><option value="1c">База 1С</option></Select>
-            <Button type="submit" variant="secondary" icon={<Plus size={16} strokeWidth={1.8} />} loading={busy === "source"} disabled={!sourceName.trim() || busy !== null}>Добавить источник</Button>
+            <label>{t("Название", "Атауы", "Name")}<input value={sourceName} maxLength={200} required onChange={(event) => setSourceName(event.target.value)} placeholder={t("Например, 1С Алматы", "Мысалы, 1С Алматы", "For example, 1C Almaty")} /></label>
+            <Select label={t("Тип", "Түрі", "Type")} wrapperClassName={styles.selectField} value={sourceSystem} onChange={(event) => setSourceSystem(event.target.value as "1c" | "file")}><option value="file">{t("Файловые выгрузки", "Файлдық экспорттар", "File exports")}</option><option value="1c">{t("База 1С", "1С базасы", "1C database")}</option></Select>
+            <Button type="submit" variant="secondary" icon={<Plus size={16} strokeWidth={1.8} />} loading={busy === "source"} disabled={!sourceName.trim() || busy !== null}>{t("Добавить источник", "Дереккөз қосу", "Add source")}</Button>
           </form>
         </Card>
-        <Card title="Загрузить файл" subtitle="CSV UTF-8 или XLSX · до 25 МиБ и 10 000 строк">
+        <Card title={t("Загрузить файл", "Файл жүктеу", "Upload file")} subtitle={t("CSV UTF-8 или XLSX · до 25 МиБ и 10 000 строк", "CSV UTF-8 немесе XLSX · 25 МиБ және 10 000 жолға дейін", "CSV UTF-8 or XLSX · up to 25 MiB and 10,000 rows")}>
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void upload(); }}>
-            <Select label="Источник" wrapperClassName={styles.selectField} value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</Select>
-            <Select label="Вид данных" wrapperClassName={styles.selectField} value={kind} onChange={(event) => { setKind(event.target.value); setMappingRows([]); }}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select>
+            <Select label={t("Источник", "Дереккөз", "Source")} wrapperClassName={styles.selectField} value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">{t("Выберите источник", "Дереккөзді таңдаңыз", "Choose source")}</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</Select>
+            <Select label={t("Вид данных", "Деректер түрі", "Data type")} wrapperClassName={styles.selectField} value={kind} onChange={(event) => { setKind(event.target.value); setMappingRows([]); }}>{kinds.map(([value]) => <option key={value} value={value}>{localizedKindName(value, t)}</option>)}</Select>
             <div className={styles.formatGuide}>
-              <strong>Формат: {kindName.get(kind)}</strong>
-              <p>Обязательные колонки: <code>{format.required.map((field) => field.name).join(", ")}</code></p>
-              <p>Дополнительные: <code>{format.optional.map((field) => field.name).join(", ")}</code></p>
-              <p>{format.note}</p>
+              <strong>{t("Формат", "Пішім", "Format")}: {localizedKindName(kind, t)}</strong>
+              <p>{t("Обязательные колонки", "Міндетті бағандар", "Required columns")}: <code>{format.required.map((field) => field.name).join(", ")}</code></p>
+              <p>{t("Дополнительные", "Қосымша", "Optional")}: <code>{format.optional.map((field) => field.name).join(", ")}</code></p>
+              <p>{localizedFormatNote(kind, format.note, t)}</p>
             </div>
             <label>Файл
               <span className={styles.fileControl}>
@@ -325,9 +360,9 @@ export function DataSourcesPage() {
         {detailLoading && !detail ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем проверку" /> : null}
         {detail ? <div className={styles.detail}>
           <Badge tone={detail.status === "applied" ? "success" : detail.status === "invalid" ? "danger" : "warning"}>{statusName[detail.status] ?? detail.status}</Badge>
-          {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue)}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
+          {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue, t)}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
           {detail.preview.length ? <div><h4>Предпросмотр: первые {detail.preview.length} из {detail.row_count} строк</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>ID источника</Th><Th>Версия</Th><Th>Данные</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
-          {detail.status === "applied" ? <p className={styles.hint}>Данные применены {formatDate(detail.applied_at)}. Полноту всего источника смотрите в таблице выше.</p> : null}
+          {detail.status === "applied" ? <p className={styles.hint}>Данные применены {formatDate(detail.applied_at, locale)}. Полноту всего источника смотрите в таблице выше.</p> : null}
           {detail.status === "validated" ? <Button variant="dark" icon={<Check size={16} strokeWidth={1.8} />} onClick={() => setApplyOpen(true)}>Применить проверенный файл</Button> : null}
           {detail.status === "invalid" ? <p className={styles.hint}>Этот файл нельзя применить. Исправьте строки и загрузите новую версию.</p> : null}
         </div> : null}

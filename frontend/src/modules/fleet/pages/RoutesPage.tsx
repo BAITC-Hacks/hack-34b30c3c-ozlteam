@@ -18,6 +18,7 @@ import { eventContext } from "../lib/context";
 import { duration } from "../lib/format";
 import type { Order, Trip, TripEvent } from "../types";
 import styles from "./RoutesPage.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 /**
  * Живая карта рейсов: движение, события и разбор ассистента на одном экране.
@@ -26,6 +27,7 @@ import styles from "./RoutesPage.module.css";
  * что придёт от настоящего трекера, поэтому экран переживёт замену источника.
  */
 export function RoutesPage() {
+  const { t } = useI18n();
   const sim = useFleetSim();
   const [focused, setFocused] = useState(true);
   const [picked, setPicked] = useState<TripEvent | undefined>(undefined);
@@ -76,8 +78,8 @@ export function RoutesPage() {
   return (
     <>
       <PageHeader
-        title="Маршруты"
-        subtitle="Где сейчас машины, что с ними происходит и что с этим делать."
+        title={t("Маршруты", "Бағыттар", "Routes")}
+        subtitle={t("Где сейчас машины, что с ними происходит и что с этим делать.", "Көліктер қайда, не болып жатыр және не істеу керек.", "Where vehicles are, what is happening, and what to do.")}
         actions={
           <Button
             variant="dark"
@@ -87,24 +89,24 @@ export function RoutesPage() {
               setPlanning(true);
             }}
           >
-            Новый рейс
+            {t("Новый рейс", "Жаңа рейс", "New trip")}
           </Button>
         }
       />
 
       <div className={styles.tiles}>
-        <Tile label="В пути" value={running} hint={`из ${sim.trips.length} рейсов`} />
+        <Tile label={t("В пути", "Жолда", "En route")} value={running} hint={t(`из ${sim.trips.length} рейсов`, `${sim.trips.length} рейстің ішінен`, `of ${sim.trips.length} trips`)} />
         <Tile
-          label="Стоят"
+          label={t("Стоят", "Тоқтаған", "Stopped")}
           value={held}
-          hint={held === 0 ? "все едут" : "граница, отдых, поломка"}
+          hint={held === 0 ? t("все едут", "бәрі жүріп жатыр", "all moving") : t("граница, отдых, поломка", "шекара, демалыс, ақау", "border, rest, breakdown")}
           tone={held > 0 ? "warn" : "default"}
         />
-        <Tile label="Нарушений" value={alerts} hint="за всё время демонстрации" tone={alerts > 0 ? "up" : "default"} />
+        <Tile label={t("Нарушений", "Ереже бұзулар", "Alerts")} value={alerts} hint={t("за всё время демонстрации", "демо барысында", "during this demo")} tone={alerts > 0 ? "up" : "default"} />
         <Tile
-          label="Отставание"
-          value={delay === 0 ? "нет" : duration(delay)}
-          hint={sim.selected?.id ?? "рейс не выбран"}
+          label={t("Отставание", "Кідіріс", "Delay")}
+          value={delay === 0 ? t("нет", "жоқ", "none") : duration(delay)}
+          hint={sim.selected?.id ?? t("рейс не выбран", "рейс таңдалмаған", "no trip selected")}
           tone={delay > 0 ? "warn" : "good"}
         />
       </div>
@@ -138,19 +140,19 @@ export function RoutesPage() {
       </Card>
 
       {state !== undefined ? (
-        <Card title={`Рейс ${state.trip.id}`} subtitle={state.trip.cargo.name}>
+        <Card title={`${t("Рейс", "Рейс", "Trip")} ${state.trip.id}`} subtitle={state.trip.cargo.name}>
           <TripSummary state={state} />
         </Card>
       ) : null}
 
       <div className={styles.columns}>
         <Card
-          title="Рейсы"
-          subtitle="Выберите рейс — карта и лента переключатся на него."
+          title={t("Рейсы", "Рейстер", "Trips")}
+          subtitle={t("Выберите рейс — карта и лента переключатся на него.", "Рейсті таңдаңыз — карта мен оқиғалар соған ауысады.", "Select a trip to show it on the map and timeline.")}
           actions={
             sim.selected !== undefined && sim.selected.status === "planned" ? (
               <Button size="sm" onClick={() => sim.launch(sim.selected?.id ?? "")}>
-                Выпустить в рейс
+                {t("Выпустить в рейс", "Рейсті бастау", "Start trip")}
               </Button>
             ) : undefined
           }
@@ -163,15 +165,15 @@ export function RoutesPage() {
           />
         </Card>
 
-        <Card title="Хронология" subtitle="Граница, телематика и режим водителя в одной ленте.">
+        <Card title={t("Хронология", "Оқиғалар реті", "Timeline")} subtitle={t("Граница, телематика и режим водителя в одной ленте.", "Шекара, телематика және жүргізуші режимі бір тізімде.", "Border, telematics, and driver activity in one feed.")}>
           <EventFeed events={[...events].reverse()} activeId={active?.id} onPick={setPicked} />
         </Card>
 
         <div className={styles.stack}>
-          <Card title="Разбор ассистента">
+          <Card title={t("Разбор ассистента", "Ассистент талдауы", "Assistant analysis")}>
             <VerdictCard event={active} verdict={analysis.verdict} pending={analysis.pending} />
           </Card>
-          <Card title="Заказы без рейса" subtitle="Рейс создаётся прямо отсюда.">
+          <Card title={t("Заказы без рейса", "Рейссіз тапсырыстар", "Orders without a trip")} subtitle={t("Рейс создаётся прямо отсюда.", "Рейсті осы жерден жасауға болады.", "Create a trip directly from here.")}>
             <OrdersCard
               orders={orders}
               onPlan={(item) => {

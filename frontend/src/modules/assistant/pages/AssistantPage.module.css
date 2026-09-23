@@ -60,6 +60,12 @@
   border-radius: var(--r-s);
   background: var(--panel);
   box-shadow: var(--sh-1);
+  transition: background-color var(--t-hover), transform var(--t-press);
+}
+
+.backgroundSwitch:active { transform: scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  .backgroundSwitch:hover { background: var(--ac-soft); transition-duration: 0s; }
 }
 
 .welcome {

@@ -1,4 +1,5 @@
 import { Badge, Card } from "../../../shared/ui";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import type { Recommendation } from "../types";
 import styles from "../pages/ReplenishmentPage.module.css";
 
@@ -23,11 +24,12 @@ interface Props {
 }
 
 export function RecommendationGroup({ supplier, rows, quantities, onQuantityChange }: Props) {
+  const { t } = useI18n();
   const includedRows = rows.filter((row) => (quantities[recommendationKey(row)] ?? row.recommended_qty) > 0);
   const total = includedRows.reduce((sum, row) => sum + (quantities[recommendationKey(row)] ?? row.recommended_qty), 0);
 
   return (
-    <Card className={styles.supplierCard} title={supplier} subtitle={`${includedRows.length} поз. · ${number(total)} шт. к заказу`}>
+    <Card className={styles.supplierCard} title={supplier} subtitle={`${includedRows.length} ${t("поз.", "позиция", "items")} · ${number(total)} ${t("шт. к заказу", "дана тапсырысқа", "units to order")}`}>
       <div className={styles.recommendations}>
         {rows.map((row) => {
           const key = recommendationKey(row);
@@ -40,30 +42,30 @@ export function RecommendationGroup({ supplier, rows, quantities, onQuantityChan
                   <div className={styles.productTitle}><strong>{row.name}</strong><span className={styles.sku}>{row.sku}</span></div>
                   <p>{row.warehouse} · {row.category}</p>
                 </div>
-                <Badge tone={urgency[row.urgency].tone}>{urgency[row.urgency].label}</Badge>
+                <Badge tone={urgency[row.urgency].tone}>{t(urgency[row.urgency].label, row.urgency === "critical" ? "Өте шұғыл" : row.urgency === "soon" ? "Жақында" : "Жоспарлы", row.urgency === "critical" ? "Critical" : row.urgency === "soon" ? "Soon" : "Planned")}</Badge>
               </div>
               <div className={styles.rowBody}>
                 <div className={styles.reason}>
                   <p>{row.explanation}</p>
                   <details className={styles.details}>
-                    <summary>Почему столько?</summary>
+                    <summary>{t('Почему столько?', 'Неге осынша?', 'Why this quantity?')}</summary>
                     <dl className={styles.metricGrid}>
-                      <div><dt>Продажи за историю</dt><dd>{number(m.raw_sales)} шт.</dd></div>
-                      <div><dt>Исключённый всплеск</dt><dd>{number(m.excluded_spike_units)} шт.</dd></div>
-                      <div><dt>Упущенный спрос</dt><dd>{number(m.lost_demand_units)} шт.</dd></div>
-                      <div><dt>Спрос в день</dt><dd>{number(m.adjusted_daily_demand)} шт.</dd></div>
-                      <div><dt>Сезонность</dt><dd>×{number(m.seasonality_factor)}</dd></div>
-                      <div><dt>Тренд</dt><dd>×{number(m.trend_factor)}</dd></div>
-                      <div><dt>Рост категории</dt><dd>{percent(m.category_growth_factor)}</dd></div>
-                      <div><dt>На складе / в пути</dt><dd>{number(m.on_hand)} / {number(m.inbound)}</dd></div>
-                      <div><dt>Целевой запас</dt><dd>{number(m.target_stock)} шт.</dd></div>
-                      <div><dt>Позиция запаса</dt><dd>{number(m.stock_position)} шт.</dd></div>
-                      <div><dt>Срок поставки / пересмотр</dt><dd>{m.lead_days} / {m.review_days} дн.</dd></div>
+                      <div><dt>{t('Продажи за историю', 'Кезеңдегі сатылымдар', 'Historical sales')}</dt><dd>{number(m.raw_sales)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Исключённый всплеск', 'Алып тасталған шарықтау', 'Excluded spike')}</dt><dd>{number(m.excluded_spike_units)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Упущенный спрос', 'Өткізіп алған сұраныс', 'Lost demand')}</dt><dd>{number(m.lost_demand_units)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Спрос в день', 'Күндік сұраныс', 'Daily demand')}</dt><dd>{number(m.adjusted_daily_demand)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Сезонность', 'Маусымдылық', 'Seasonality')}</dt><dd>×{number(m.seasonality_factor)}</dd></div>
+                      <div><dt>{t('Тренд', 'Тренд', 'Trend')}</dt><dd>×{number(m.trend_factor)}</dd></div>
+                      <div><dt>{t('Рост категории', 'Санат өсімі', 'Category growth')}</dt><dd>{percent(m.category_growth_factor)}</dd></div>
+                      <div><dt>{t('На складе / в пути', 'Қоймада / жолда', 'In stock / inbound')}</dt><dd>{number(m.on_hand)} / {number(m.inbound)}</dd></div>
+                      <div><dt>{t('Целевой запас', 'Мақсатты қор', 'Target stock')}</dt><dd>{number(m.target_stock)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Позиция запаса', 'Қор позициясы', 'Stock position')}</dt><dd>{number(m.stock_position)} {t("шт.", "дана", "units")}</dd></div>
+                      <div><dt>{t('Срок поставки / пересмотр', 'Жеткізу мерзімі / қайта қарау', 'Lead time / review')}</dt><dd>{m.lead_days} / {m.review_days} {t("дн.", "күн", "days")}</dd></div>
                     </dl>
                   </details>
                 </div>
                 <label className={styles.quantityLabel}>
-                  <span>Заказать, шт.</span>
+                  <span>{t('Заказать, шт.', 'Тапсырыс, дана', 'Order, units')}</span>
                   <input
                     className={styles.quantityInput}
                     type="number"
@@ -77,7 +79,7 @@ export function RecommendationGroup({ supplier, rows, quantities, onQuantityChan
                       if (Number.isSafeInteger(next) && next >= 0 && next <= 9999999) onQuantityChange(key, next);
                     }}
                   />
-                  {qty !== row.recommended_qty ? <small>Было {number(row.recommended_qty)}</small> : null}
+                  {qty !== row.recommended_qty ? <small>{t("Было", "Бұрын", "Was")} {number(row.recommended_qty)}</small> : null}
                 </label>
               </div>
             </article>

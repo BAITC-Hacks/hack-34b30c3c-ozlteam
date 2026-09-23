@@ -8,6 +8,7 @@ import { duration, km, money, num } from "../lib/format";
 import { findRoute, planRoute } from "../lib/route";
 import type { Cargo, CargoClass, Order, Trip } from "../types";
 import styles from "./NewTripModal.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 const CARGO_CLASSES: { value: CargoClass; label: string }[] = [
   { value: "general", label: "Обычный груз" },
@@ -32,6 +33,7 @@ export interface NewTripModalProps {
  * иначе рейс приходится удалять и заводить заново.
  */
 export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: NewTripModalProps) {
+  const { t } = useI18n();
   const [from, setFrom] = useState("almaty");
   const [to, setTo] = useState("astana");
   const [vehicleId, setVehicleId] = useState(VEHICLES[0].id);
@@ -67,7 +69,7 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
   function submit() {
     if (route === null) return;
     const cargo: Cargo = {
-      name: name.trim() === "" ? "Груз" : name.trim(),
+      name: name.trim() === "" ? t("Груз", "Жүк", "Cargo") : name.trim(),
       class: cargoClass,
       weightT: Number.isFinite(weightValue) ? weightValue : 0,
       volumeM3: order?.cargo.volumeM3 ?? Math.round(Number(pallets) * 1.9),
@@ -92,22 +94,22 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
   return (
     <FormModal
       id="fleet-new-trip"
-      title={order === undefined ? "Новый рейс" : `Рейс по заказу ${order.id}`}
+      title={order === undefined ? t("Новый рейс", "Жаңа рейс", "New trip") : t(`Рейс по заказу ${order.id}`, `${order.id} тапсырысы бойынша рейс`, `Trip for order ${order.id}`)}
       size="lg"
       open={open}
       onOpenChange={onOpenChange}
-      submitLabel="Создать рейс"
+      submitLabel={t("Создать рейс", "Рейс жасау", "Create trip")}
       onSubmit={submit}
     >
       <div className={styles.grid}>
-        <Select label="Откуда" value={from} onChange={(event) => setFrom(event.target.value)}>
+        <Select label={t("Откуда", "Қайдан", "From")} value={from} onChange={(event) => setFrom(event.target.value)}>
           {PLACES.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
             </option>
           ))}
         </Select>
-        <Select label="Куда" value={to} onChange={(event) => setTo(event.target.value)}>
+        <Select label={t("Куда", "Қайда", "To")} value={to} onChange={(event) => setTo(event.target.value)}>
           {PLACES.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -116,10 +118,10 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
         </Select>
 
         <Select
-          label="Машина"
+          label={t("Машина", "Көлік", "Vehicle")}
           value={vehicleId}
           onChange={(event) => setVehicleId(event.target.value)}
-          hint={`${car.capacityT} т · ${car.capacityM3} м³ · ${car.consumption} л/100 км`}
+          hint={`${car.capacityT} ${t("т", "т", "t")} · ${car.capacityM3} ${t("м³", "м³", "m³")} · ${car.consumption} ${t("л/100 км", "л/100 км", "L/100 km")}`}
         >
           {VEHICLES.map((item) => (
             <option key={item.id} value={item.id}>
@@ -127,7 +129,7 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
             </option>
           ))}
         </Select>
-        <Select label="Водитель" value={driverId} onChange={(event) => setDriverId(event.target.value)}>
+        <Select label={t("Водитель", "Жүргізуші", "Driver")} value={driverId} onChange={(event) => setDriverId(event.target.value)}>
           {DRIVERS.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name} ({item.category})
@@ -135,7 +137,7 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
           ))}
         </Select>
 
-        <Select label="Клиент" value={clientId} onChange={(event) => setClientId(event.target.value)}>
+        <Select label={t("Клиент", "Клиент", "Client")} value={clientId} onChange={(event) => setClientId(event.target.value)}>
           {CLIENTS.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -143,28 +145,28 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
           ))}
         </Select>
         <Select
-          label="Класс груза"
+          label={t("Класс груза", "Жүк санаты", "Cargo class")}
           value={cargoClass}
           onChange={(event) => setCargoClass(event.target.value as CargoClass)}
         >
           {CARGO_CLASSES.map((item) => (
             <option key={item.value} value={item.value}>
-              {item.label}
+              {item.value === "general" ? t("Обычный груз", "Қарапайым жүк", "General cargo") : item.value === "food" ? t("Продукты, температурный режим", "Азық-түлік, температуралық режим", "Food, temperature controlled") : item.value === "fragile" ? t("Хрупкий", "Сынғыш", "Fragile") : item.value === "danger" ? t("Опасный", "Қауіпті", "Hazardous") : t("Негабарит", "Ірі көлемді", "Oversize")}
             </option>
           ))}
         </Select>
 
-        <Field label="Груз" value={name} onChange={(event) => setName(event.target.value)} />
+        <Field label={t("Груз", "Жүк", "Cargo")} value={name} onChange={(event) => setName(event.target.value)} />
         <div className={styles.pair}>
           <Field
-            label="Вес, т"
+            label={t("Вес, т", "Салмақ, т", "Weight, t")}
             inputMode="decimal"
             value={weight}
             onChange={(event) => setWeight(event.target.value)}
-            error={overweight ? `Больше грузоподъёмности: ${car.capacityT} т` : undefined}
+            error={overweight ? t(`Больше грузоподъёмности: ${car.capacityT} т`, `Жүк көтерімділігінен асады: ${car.capacityT} т`, `Exceeds capacity: ${car.capacityT} t`) : undefined}
           />
           <Field
-            label="Паллет"
+            label={t("Паллет", "Паллет", "Pallets")}
             inputMode="numeric"
             value={pallets}
             onChange={(event) => setPallets(event.target.value)}
@@ -173,32 +175,31 @@ export function NewTripModal({ open, onOpenChange, order, existing, onCreate }: 
       </div>
 
       {route === null ? (
-        <Alert tone="warning" title="Маршрут не найден">
-          Между «{placeName(from)}» и «{placeName(to)}» в справочнике нет дороги. Выберите
-          другие точки — сеть коридоров пока покрывает Китай, Казахстан, Узбекистан и Россию.
+        <Alert tone="warning" title={t("Маршрут не найден", "Бағыт табылмады", "Route not found")}>
+          {t(`Между «${placeName(from)}» и «${placeName(to)}» в справочнике нет дороги. Выберите другие точки — сеть коридоров пока покрывает Китай, Казахстан, Узбекистан и Россию.`, `Анықтамалықта «${placeName(from)}» және «${placeName(to)}» арасында жол жоқ. Басқа нүктелерді таңдаңыз — желі әзірге Қытай, Қазақстан, Өзбекстан және Ресейді қамтиды.`, `There is no road between “${placeName(from)}” and “${placeName(to)}” in the directory. Choose other points. The network currently covers China, Kazakhstan, Uzbekistan, and Russia.`)}
         </Alert>
       ) : (
         <div className={styles.plan}>
           <p className={styles.chain}>{route.map((id) => placeName(id)).join(" → ")}</p>
           <dl className={styles.numbers}>
             <div>
-              <dt>Расстояние</dt>
+              <dt>{t("Расстояние", "Қашықтық", "Distance")}</dt>
               <dd>{km(plan?.km ?? 0)}</dd>
             </div>
             <div>
-              <dt>В пути</dt>
+              <dt>{t("В пути", "Жолда", "Travel time")}</dt>
               <dd>{duration((plan?.totalHours ?? 0) * 60)}</dd>
             </div>
             <div>
-              <dt>Топливо</dt>
-              <dd>{num(plan?.fuelL ?? 0)} л</dd>
+              <dt>{t("Топливо", "Жанармай", "Fuel")}</dt>
+              <dd>{num(plan?.fuelL ?? 0)} {t("л", "л", "L")}</dd>
             </div>
             <div>
-              <dt>Себестоимость</dt>
+              <dt>{t("Себестоимость", "Өзіндік құн", "Cost")}</dt>
               <dd>{money(plan?.cost ?? 0)}</dd>
             </div>
             <div className={styles.price}>
-              <dt>Клиенту</dt>
+              <dt>{t("Клиенту", "Клиентке", "Client price")}</dt>
               <dd>{money(plan?.price ?? 0)}</dd>
             </div>
           </dl>

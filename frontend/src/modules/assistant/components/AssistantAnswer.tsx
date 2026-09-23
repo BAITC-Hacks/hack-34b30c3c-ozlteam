@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { answerParagraphs, createRevealPlan, revealWindow } from "./answerReveal";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import styles from "./AssistantAnswer.module.css";
 
 interface AssistantAnswerProps {
@@ -16,6 +17,7 @@ function prefersReducedMotion() {
 
 /** Presentation of an already received answer, not simulated server streaming. */
 export function AssistantAnswer({ content, animate, receivedAt, onComplete }: AssistantAnswerProps) {
+  const { t } = useI18n();
   const mountedAt = useRef(Date.now());
   const completed = useRef<string | null>(null);
   const completion = useRef(onComplete);
@@ -68,8 +70,8 @@ export function AssistantAnswer({ content, animate, receivedAt, onComplete }: As
       })}
     </div>
     {revealing ? <div className={styles.revealControls}>
-      <span aria-hidden="true">Ответ получен</span>
-      <button type="button" onClick={() => setSkippedContent(content)}>Показать полностью</button>
+      <span aria-hidden="true">{t("Ответ получен", "Жауап алынды", "Answer received")}</span>
+      <button type="button" onClick={() => setSkippedContent(content)}>{t("Показать полностью", "Толық көрсету", "Show full answer")}</button>
     </div> : null}
   </div>;
 }

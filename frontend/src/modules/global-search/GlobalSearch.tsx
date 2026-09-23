@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiRequest } from "../../shared/api/client";
+import { useI18n } from "../../shared/i18n/I18nContext";
 import { Modal } from "../../shared/ui";
 import styles from "./GlobalSearch.module.css";
 
@@ -49,15 +50,13 @@ async function loadRuns(signal: AbortSignal): Promise<Run[]> {
   }
 }
 
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Не удалось получить данные.";
-}
-
 function normalizeSearch(value: string): string {
   return value.toLocaleLowerCase("ru-RU").replaceAll("ё", "е");
 }
 
 export function GlobalSearch() {
+  const { locale, t } = useI18n();
+  const errorMessage = (error: unknown) => error instanceof Error ? error.message : t("Не удалось получить данные.", "Деректерді алу мүмкін болмады.", "Could not load data.");
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -94,13 +93,13 @@ export function GlobalSearch() {
     Promise.allSettled([loadOrders(controller.signal), loadRuns(controller.signal)]).then(([orderResult, runResult]) => {
       if (controller.signal.aborted) return;
       if (orderResult.status === "fulfilled") setOrders(orderResult.value);
-      else { setOrders([]); setErrors((current) => [...current, `Заказы: ${errorMessage(orderResult.reason)}`]); }
+      else { setOrders([]); setErrors((current) => [...current, `${t("Заказы", "Тапсырыстар", "Orders")}: ${errorMessage(orderResult.reason)}`]); }
       if (runResult.status === "fulfilled") setRuns(runResult.value);
-      else { setRuns([]); setErrors((current) => [...current, `Расчёты: ${errorMessage(runResult.reason)}`]); }
+      else { setRuns([]); setErrors((current) => [...current, `${t("Расчёты", "Есептеулер", "Calculations")}: ${errorMessage(runResult.reason)}`]); }
       setLoading(false);
     });
     return () => controller.abort();
-  }, [open, refresh]);
+  }, [open, refresh, t]);
 
   const terms = useMemo(() => normalizeSearch(query.trim()).split(/\s+/).filter(Boolean), [query]);
   const results = useMemo<Result[]>(() => [
@@ -111,7 +110,7 @@ export function GlobalSearch() {
       return {
         key: `order-${order.id}`,
         title: order.supplier_name,
-        detail: `Заказ № ${order.id.slice(-8)} · ${order.status === "approved" ? "утверждён" : "черновик"} · ${order.lines.length} поз.`,
+        detail: `${t("Заказ", "Тапсырыс", "Order")} № ${order.id.slice(-8)} · ${order.status === "approved" ? t("утверждён", "бекітілген", "approved") : t("черновик", "жоба", "draft")} · ${order.lines.length} ${t("поз.", "позиция", "items")}`,
         match: matchedLine ? `${matchedLine.name} · ${matchedLine.sku}` : undefined,
         searchText: `${order.id} ${order.supplier_name} ${order.lines.map((line) => `${line.sku} ${line.name}`).join(" ")}`,
         href: `/orders?id=${encodeURIComponent(order.id)}`,
@@ -120,13 +119,13 @@ export function GlobalSearch() {
     }),
     ...runs.map((run) => ({
       key: `run-${run.id}`,
-      title: `Расчёт от ${new Intl.DateTimeFormat("ru-RU").format(new Date(`${run.as_of}T00:00:00`))}`,
-      detail: `Расчёт № ${run.id.slice(-8)} · ${run.status === "done" ? "готов" : run.status === "failed" ? "ошибка" : "в работе"}`,
-      searchText: `${run.id} ${run.as_of} расчёт пополнение`,
+      title: `${t("Расчёт от", "Есептеу күні", "Calculation on")} ${new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU").format(new Date(`${run.as_of}T00:00:00`))}`,
+      detail: `${t("Расчёт", "Есептеу", "Calculation")} № ${run.id.slice(-8)} · ${run.status === "done" ? t("готов", "дайын", "complete") : run.status === "failed" ? t("ошибка", "қате", "failed") : t("в работе", "орындалуда", "in progress")}`,
+      searchText: `${run.id} ${run.as_of} расчёт пополнение есептеу толықтыру calculation replenishment`,
       href: `/recommendations?run=${encodeURIComponent(run.id)}`,
       kind: "run" as const,
     })),
-  ], [orders, runs, terms]);
+  ], [orders, runs, terms, locale, t]);
   const visible = useMemo(() => {
     return results.filter((item) => terms.every((term) => normalizeSearch(item.searchText).includes(term))).slice(0, 50);
   }, [terms, results]);
@@ -138,13 +137,13 @@ export function GlobalSearch() {
   }
 
   return <>
-    <button type="button" className={styles.trigger} onClick={() => setOpen(true)} aria-label="Открыть поиск по заказам и расчётам">
+    <button type="button" className={styles.trigger} onClick={() => setOpen(true)} aria-label={t("Открыть поиск по заказам и расчётам", "Тапсырыстар мен есептеулерді іздеуді ашу", "Search orders and calculations")}>
       <Search size={15} strokeWidth={1.8} aria-hidden="true" />
-      <span>Поиск</span>
+      <span>{t("Поиск", "Іздеу", "Search")}</span>
       <kbd>{navigator.platform.includes("Mac") ? "⌘K" : "Ctrl+K"}</kbd>
     </button>
-    <Modal id="global-search" title="Поиск" open={open} onOpenChange={setOpen} size="md">
-      <label className={styles.label} htmlFor="global-search-input">Заказ, товар, поставщик или расчёт</label>
+    <Modal id="global-search" title={t("Поиск", "Іздеу", "Search")} open={open} onOpenChange={setOpen} size="md">
+      <label className={styles.label} htmlFor="global-search-input">{t("Заказ, товар, поставщик или расчёт", "Тапсырыс, тауар, жеткізуші немесе есептеу", "Order, product, supplier or calculation")}</label>
       <div className={styles.inputWrap}>
         <Search size={18} strokeWidth={1.8} aria-hidden="true" />
         <input
@@ -158,7 +157,7 @@ export function GlobalSearch() {
             if (event.key === "ArrowUp") { event.preventDefault(); setSelected((value) => Math.max(value - 1, 0)); }
             if (event.key === "Enter" && visible[selected]) { event.preventDefault(); choose(visible[selected]); }
           }}
-          placeholder="Начните вводить…"
+          placeholder={t("Начните вводить…", "Іздеу сөзін енгізіңіз…", "Start typing…")}
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
@@ -167,9 +166,9 @@ export function GlobalSearch() {
           aria-activedescendant={visible[selected] ? `global-result-${visible[selected].key}` : undefined}
         />
       </div>
-      {loading ? <div className={styles.loading} role="status" aria-label="Загружаем результаты"><i /><i /><i /></div> : <>
-        {errors.length ? <div className={styles.error} role="alert">{errors.map((message) => <p key={message}>{message}</p>)}<button type="button" onClick={() => setRefresh((value) => value + 1)}>Повторить</button></div> : null}
-        <div id="global-search-results" className={styles.results} role="listbox" aria-label="Результаты поиска">
+      {loading ? <div className={styles.loading} role="status" aria-label={t("Загружаем результаты", "Нәтижелер жүктелуде", "Loading results")}><i /><i /><i /></div> : <>
+        {errors.length ? <div className={styles.error} role="alert">{errors.map((message) => <p key={message}>{message}</p>)}<button type="button" onClick={() => setRefresh((value) => value + 1)}>{t("Повторить", "Қайталау", "Retry")}</button></div> : null}
+        <div id="global-search-results" className={styles.results} role="listbox" aria-label={t("Результаты поиска", "Іздеу нәтижелері", "Search results")}>
           {visible.map((item, index) => <button
             id={`global-result-${item.key}`}
             key={item.key}
@@ -181,13 +180,13 @@ export function GlobalSearch() {
             onClick={() => choose(item)}
           >
             {item.kind === "order" ? <ShoppingCart size={18} aria-hidden="true" /> : <ClipboardList size={18} aria-hidden="true" />}
-            <span><strong>{item.title}</strong><small>{item.detail}</small>{item.match ? <small className={styles.match}>Товар: {item.match}</small> : null}</span>
+            <span><strong>{item.title}</strong><small>{item.detail}</small>{item.match ? <small className={styles.match}>{t("Товар", "Тауар", "Product")}: {item.match}</small> : null}</span>
             <ArrowRight size={16} aria-hidden="true" />
           </button>)}
-          {!visible.length ? <p className={styles.empty}>{errors.length === 2 ? "Данные недоступны. Повторите загрузку." : query.trim() ? "Совпадений нет. Попробуйте другое название, артикул или номер." : "Заказов и расчётов пока нет."}</p> : null}
+          {!visible.length ? <p className={styles.empty}>{errors.length === 2 ? t("Данные недоступны. Повторите загрузку.", "Деректер қолжетімсіз. Қайта жүктеп көріңіз.", "Data is unavailable. Try loading again.") : query.trim() ? t("Совпадений нет. Попробуйте другое название, артикул или номер.", "Сәйкестік табылмады. Басқа атауды, артикулды немесе нөмірді енгізіңіз.", "No matches. Try another name, SKU or number.") : t("Заказов и расчётов пока нет.", "Әзірге тапсырыстар мен есептеулер жоқ.", "There are no orders or calculations yet.")}</p> : null}
         </div>
       </>}
-      <p className={styles.hint}>↑ ↓ выбрать · Enter открыть · Esc закрыть</p>
+      <p className={styles.hint}>{t("↑ ↓ выбрать · Enter открыть · Esc закрыть", "↑ ↓ таңдау · Enter ашу · Esc жабу", "↑ ↓ select · Enter open · Esc close")}</p>
     </Modal>
   </>;
 }
