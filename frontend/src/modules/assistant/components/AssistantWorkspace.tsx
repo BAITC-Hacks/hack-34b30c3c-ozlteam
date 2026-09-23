@@ -46,11 +46,12 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
     if (Object.keys(context).length) update({ context, allowData: false });
   }, [workspace.userId, location.pathname, location.search, state.busy]);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
-  useEffect(() => { if (latestMessageId) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId]);
+  const pending = state.pendingMessage?.conversationId === state.activeId ? state.pendingMessage : null;
+  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id]);
   const chat = conversation.data;
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
   const initialLoading = !!state.activeId && conversation.isPending;
-  const empty = !initialLoading && !chat?.messages.length;
+  const empty = !initialLoading && !chat?.messages.length && !pending;
   const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
   useEffect(() => { if (!state.error) setDismissedError(""); }, [state.error]);
   const resultErrorVisible = !!state.error && state.error !== dismissedError;
@@ -129,7 +130,8 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
         </article>)}
       </>}
       {chat?.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} busy={state.busy} onDecision={(item, decision) => void workspace.decide(item, decision)} />)}
-      {state.busy ? <p className={styles.note} role="status">Запрос выполняется. Результат ещё не подтверждён сервером.</p> : null}
+      {pending && !chat?.messages.some((message) => message.id === pending.existingMessageId) ? <article className={styles.mine} aria-label="Отправленный вопрос"><small>Вы</small><p>{pending.content}</p></article> : null}
+      {state.busy ? <p className={styles.note} role="status">{pending ? "Помощник готовит ответ…" : "Запрос выполняется. Результат ещё не подтверждён сервером."}</p> : null}
       <div ref={tail} />
     </div>
     {historyErrorVisible ? <Alert className={styles.statusNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.noticeAction} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : resultErrorVisible ? <Alert className={styles.statusNotice} tone="danger" onDismiss={() => setDismissedError(state.error)} dismissLabel="Закрыть сообщение об ошибке диалога">Не удалось получить результат: {state.error} <button className={styles.noticeAction} type="button" disabled={state.busy} onClick={() => { if (state.retry) void workspace.send("", true); else void conversation.refetch(); }}>{state.retry ? "Повторить вопрос" : "Обновить диалог"}</button></Alert> : null}

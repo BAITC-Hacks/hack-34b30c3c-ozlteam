@@ -1,4 +1,4 @@
-.workspace { --assistant-side-width: clamp(270px, 25vw, 360px); position: relative; display: grid; grid-template-columns: var(--assistant-side-width) minmax(0, 1fr); gap: var(--sp-6); min-width: 0; min-height: 0; height: 100%; width: 100%; }
+.workspace { --assistant-side-width: 0px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--sp-4); min-width: 0; min-height: 0; height: 100%; width: 100%; }
 .sidebar { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; overflow-y: auto; padding: var(--sp-1) var(--sp-2) var(--sp-3) var(--sp-1); }
 .chat { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; padding-bottom: 120px; }
 .workspace:not(.compact) .chat > .composer { position: absolute; z-index: 1; bottom: 30px; left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
@@ -9,7 +9,7 @@
 .noticeAction:disabled { opacity: .5; cursor: not-allowed; }
 .workspace:not(.compact) .chat > .statusNotice { position: absolute; z-index: 1; bottom: calc(30px + var(--touch) + var(--sp-6) + var(--sp-2)); left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
 .toolbar { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
-.chatTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--mut); }
+.chatTitle { min-width: 0; max-width: 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--mut); }
 .contextBar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); color: var(--mut); font-size: var(--fs-cap); }
 .contextBar button { border: 0; border-radius: var(--r-xs); background: var(--sunken); color: var(--ac-ink); font: inherit; padding: var(--sp-1) var(--sp-2); cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
 .historyList { display: grid; gap: var(--sp-1); }
@@ -30,9 +30,11 @@
 .contextItem button, .note button { color: var(--ac-ink); background: none; border: 0; cursor: pointer; font: inherit; }
 .permission { display: flex; align-items: start; gap: var(--sp-2); font-size: var(--fs-sm); line-height: var(--lh-body); }
 .permission input { flex: none; margin-top: var(--sp-1); }
-.messages { position: relative; isolation: isolate; display: grid; align-content: start; gap: var(--sp-4); min-width: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+.messages { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: var(--sp-4); min-width: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
 .emptyMessages { overflow: visible; }
-.workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: translateX(calc((var(--assistant-side-width) + var(--sp-6)) / -2)); }
+.workspace:not(.compact) .messages { width: min(760px, 100%); align-self: center; }
+.workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
+.workspace:not(.compact) .emptyMessages > div > :first-child { transform: none; }
 .mine, .theirs { min-width: 0; max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
 .mine { justify-self: end; background: var(--ac-soft); color: var(--ink); }
 .theirs { justify-self: start; background: var(--panel); box-shadow: var(--sh-1); }
