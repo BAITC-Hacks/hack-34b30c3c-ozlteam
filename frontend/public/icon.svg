@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="План закупок">
+  <rect width="512" height="512" rx="112" fill="#1B84FF" />
+  <path d="M150 365V148h212v217" fill="none" stroke="#FFF" stroke-width="48" stroke-linecap="square" stroke-linejoin="miter" />
+</svg>

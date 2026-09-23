@@ -1,4 +1,4 @@
-# Дизайн-система «Поток ИИ»
+# Дизайн-система «План закупок»
 
 Правила интерфейса для команды и агентов. Значения живут в [`design/tokens.css`](design/tokens.css), живой каталог компонентов — [`design/ui-kit.html`](design/ui-kit.html), эталонный прототип — [`../.lavish/page-elevated.html`](../.lavish/page-elevated.html). Порядок работы для агента — [`.agents/skills/project-design/SKILL.md`](../.agents/skills/project-design/SKILL.md). Исходный бриф и границы — [`design-agent-handoff.md`](design-agent-handoff.md).
 
