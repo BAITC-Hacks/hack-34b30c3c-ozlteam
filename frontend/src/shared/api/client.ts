@@ -92,6 +92,11 @@ export async function apiRequest<T>(
 export async function apiUpload<T>(path: string, file: File, field = "file"): Promise<T> {
   const form = new FormData();
   form.append(field, file);
+  return apiFormRequest(path, form);
+}
+
+/** Multipart-запрос с полями формы и файлом. Boundary задаёт браузер. */
+export async function apiFormRequest<T>(path: string, form: FormData): Promise<T> {
   const response = await request(path, { method: "POST", body: form });
   return (await response.json()) as T;
 }

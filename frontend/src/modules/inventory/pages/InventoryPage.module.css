@@ -1,0 +1,31 @@
+.page { display: grid; gap: var(--gap-blocks); min-width: 0; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: var(--sp-3); }
+.filters label { display: grid; gap: var(--sp-1); min-width: 180px; color: var(--mut); font-size: var(--fs-xs); }
+.filters label:nth-child(2) { min-width: 220px; }
+.filters label:nth-child(3) { flex: 1; }
+.filters input, .filters select { min-height: var(--ctl); width: 100%; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
+.filters input:focus-visible, .filters select:focus-visible, .tabs button:focus-visible, .catalogError button:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.hint, .catalogError { margin: var(--sp-3) 0 0; color: var(--mut); font-size: var(--fs-xs); }
+.catalogError { color: var(--er-ink); }
+.catalogError button { padding: var(--sp-1); border: 0; background: none; color: var(--ac-ink); cursor: pointer; font: inherit; }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.tabs button { min-height: var(--ctl); padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--mut); font: inherit; font-size: var(--fs-body); cursor: pointer; }
+.tabs button:hover { color: var(--ink); }
+.tabs button.activeTab { background: var(--ac-soft); color: var(--ac-ink); font-weight: 600; }
+.secondary { display: block; margin-top: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
+.pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-xs); }
+.pager > div { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.skeleton { display: grid; }
+.skeletonRow { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--sp-4); padding: var(--sp-4) 0; border-bottom: 1px solid var(--hair); }
+.skeletonRow i { display: block; height: var(--sp-3); border-radius: var(--r-xs); background-image: linear-gradient(100deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+.skeletonRow i:nth-child(2) { width: 75%; }
+.skeletonRow i:nth-child(3) { width: 60%; }
+.skeletonRow i:nth-child(4) { width: 70%; }
+@keyframes shimmer { to { background-position-x: -200%; } }
+@media (max-width: 700px) {
+  .filters { display: grid; }
+  .filters label, .filters label:nth-child(2) { min-width: 0; width: 100%; }
+  .skeletonRow { grid-template-columns: 2fr 1fr; }
+  .skeletonRow i:nth-child(n+3) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .skeletonRow i { animation: none; background-image: none; background-color: var(--sunken); } }

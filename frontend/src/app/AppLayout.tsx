@@ -1,4 +1,4 @@
-import { ClipboardList, Container, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart } from "lucide-react";
+import { Boxes, ClipboardList, Container, Database, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -19,10 +19,15 @@ interface NavItem {
 const WORK: NavItem[] = [
   { to: "/recommendations", label: "Расчёты", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
+  { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
+];
+
+const DATA: NavItem[] = [
+  { to: "/data", label: "Источники данных", mobileLabel: "Данные", icon: <Database size={17} strokeWidth={1.8} /> },
 ];
 
 const MOBILE_PRIMARY = WORK;
-const MOBILE_REST: NavItem[] = [];
+const MOBILE_REST = DATA;
 
 function initials(fullName: string): string {
   return fullName
@@ -126,6 +131,7 @@ export function AppLayout() {
               onScroll={updateNavigationFade}
             >
               <Section title="Работа" items={WORK} />
+              <Section title="Данные" items={DATA} />
             </nav>
           </div>
 

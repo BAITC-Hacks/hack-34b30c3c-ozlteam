@@ -2,7 +2,9 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
+import { DataSourcesPage } from "../modules/data";
 import { RoutesPage } from "../modules/fleet";
+import { InventoryPage } from "../modules/inventory";
 import { NotesPage } from "../modules/notes";
 import { OrdersPage } from "../modules/orders";
 import { ReplenishmentPage, RunsPage } from "../modules/replenishment";
@@ -41,11 +43,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "inventory",
-        element: <Placeholder title="Запасы" description="Остатки, товары в пути и периоды отсутствия товара будут собраны здесь." />,
+        element: <InventoryPage />,
       },
       {
         path: "data",
-        element: <Placeholder title="Источники данных" description="Здесь будут загрузка выгрузок, проверка полей и состояние данных." />,
+        element: <DataSourcesPage />,
       },
       {
         path: "data/catalogs",

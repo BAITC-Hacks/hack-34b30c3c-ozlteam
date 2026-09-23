@@ -50,6 +50,8 @@ MOCK_USERS: tuple[MockUser, ...] = (
         position="Руководитель направления",
         role="manager",
         permissions=(
+            "integrations.write",
+            "imports.write",
             "replenishment.run",
             "orders.write",
             "orders.approve",
