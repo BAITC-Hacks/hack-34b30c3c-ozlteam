@@ -1,0 +1,17 @@
+.chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 300px; height: min(58vh, 540px); }
+.messages { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 0; overflow: auto; padding: var(--sp-4); }
+.empty { display: grid; justify-items: start; gap: var(--sp-2); color: var(--mut); font-size: var(--fs-sm); line-height: var(--lh-body); }
+.empty svg { color: var(--ac-ink); }
+.empty b { color: var(--ink); font-size: var(--fs-body); }
+.empty p, .error p { margin: 0; }
+.empty button, .error button { border: 0; background: var(--ac-soft); color: var(--ac-ink); border-radius: var(--r-s); padding: var(--sp-2) var(--sp-3); font: inherit; font-weight: 600; cursor: pointer; }
+.mine, .theirs { max-width: 88%; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-s); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-sm); line-height: var(--lh-body); }
+.mine { align-self: flex-end; color: #fff; background: var(--ac); }
+.theirs { align-self: flex-start; color: var(--ink); background: var(--sunken); }
+.pending { margin: 0; color: var(--mut); font-size: var(--fs-sm); }
+.error { display: grid; justify-items: start; gap: var(--sp-2); color: var(--er); font-size: var(--fs-sm); }
+.composer { display: flex; align-items: flex-end; gap: var(--sp-2); padding: var(--sp-3); border-top: 1px solid var(--hair); }
+.composer textarea { flex: 1; min-width: 0; max-height: 120px; padding: var(--sp-2); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-sm); resize: vertical; }
+.composer button { display: grid; place-items: center; flex: none; width: var(--touch); height: var(--touch); border: 0; border-radius: var(--r-s); color: #fff; background: var(--ac); cursor: pointer; }
+.composer button:disabled { color: var(--faint); background: var(--sunken); cursor: not-allowed; }
+.chat button:focus-visible, .composer textarea:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }

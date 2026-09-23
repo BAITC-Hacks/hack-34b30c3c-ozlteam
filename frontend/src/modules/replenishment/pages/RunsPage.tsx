@@ -6,7 +6,7 @@ import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tile, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
 import { createOrders, createRun, getCatalog, getJob, getOverview, getRecommendation, getRecommendations, getRun, getRuns } from "../api/runs";
-import type { CatalogOption, JobStatus, ReplenishmentOverview, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
+import type { CatalogOption, CreatedOrder, JobStatus, ReplenishmentOverview, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
 import styles from "./RunsPage.module.css";
 
 const urgency = {
@@ -18,6 +18,7 @@ const urgency = {
 
 const historyLimit = 30;
 const orderAttemptStorage = "hackalem.order-attempt";
+const runAttemptStorage = "hackalem.run-attempt";
 
 function errorText(error: unknown): string {
   if (error instanceof ApiError && error.status === 403) return "У вашей роли нет права на это действие. Войдите как закупщик или администратор.";
@@ -28,6 +29,18 @@ function quantity(value: string): string {
   const [whole, fraction] = value.split(".");
   const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   return fraction && Number(fraction) ? `${grouped},${fraction.replace(/0+$/, "")}` : grouped;
+}
+
+function sumQuantities(values: string[]): string {
+  const scale = Math.max(0, ...values.map((value) => value.split(".")[1]?.length ?? 0));
+  const unit = 10n ** BigInt(scale);
+  const sum = values.reduce((total, value) => {
+    const [whole, fraction = ""] = value.split(".");
+    return total + BigInt(whole) * unit + BigInt((fraction.padEnd(scale, "0") || "0"));
+  }, 0n);
+  const whole = sum / unit;
+  const fraction = (sum % unit).toString().padStart(scale, "0").replace(/0+$/, "");
+  return quantity(fraction ? `${whole}.${fraction}` : String(whole));
 }
 
 function isOrderable(row: SavedRecommendation): boolean {
@@ -80,7 +93,9 @@ export function RunsPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [conflictIds, setConflictIds] = useState<string[]>([]);
+  const [createdOrders, setCreatedOrders] = useState<CreatedOrder[]>([]);
   const orderAttempt = useRef<{ signature: string; key: string } | null>(null);
+  const runAttempt = useRef<{ signature: string; key: string } | null>(null);
   const activeRunId = useRef<string | null>(null);
 
   const historyOffset = Math.max(0, Math.floor(Number(params.get("history_offset") || "0") || 0));
@@ -89,9 +104,12 @@ export function RunsPage() {
   const recommendationId = params.get("recommendation");
   const offset = Math.max(0, Math.floor(Number(params.get("offset") || "0") || 0));
   const urgencyFilter = params.get("urgency") ?? "";
-  const pageKey = `${runId ?? ""}:${offset}:${urgencyFilter}`;
+  const supplierFilter = params.get("supplier") ?? "";
+  const pageKey = `${runId ?? ""}:${offset}:${urgencyFilter}:${supplierFilter}`;
   const visiblePage = pageLoadedKey === pageKey ? page : null;
   const selectedOrderableCount = visiblePage?.items.filter((row) => selected.has(row.id) && isOrderable(row)).length ?? 0;
+  const selectedRows = visiblePage?.items.filter((row) => selected.has(row.id) && isOrderable(row)) ?? [];
+  const selectedUnits = [...selectedRows.reduce((map, row) => map.set(row.unit, [...(map.get(row.unit) ?? []), row.recommended_quantity]), new Map<string, string[]>())];
   const conflictOrders = visiblePage?.items.filter((row) => conflictIds.includes(row.id) && row.order_id) ?? [];
   const supplierNames = useMemo(() => new Map(suppliers.map((item) => [item.id, item.name])), [suppliers]);
 
@@ -188,14 +206,14 @@ export function RunsPage() {
     const controller = new AbortController();
     setRecommendationsError(null);
     setLoadingRows(true);
-    getRecommendations(runId, offset, urgencyFilter, controller.signal)
+    getRecommendations(runId, offset, urgencyFilter, supplierFilter, controller.signal)
       .then((next) => { setPage(next); setPageLoadedKey(pageKey); setSelected((current) => new Set([...current].filter((id) => next.items.some((row) => row.id === id && isOrderable(row))))); })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setRecommendationsError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoadingRows(false); });
     return () => controller.abort();
-  }, [runId, run?.id, run?.status, offset, urgencyFilter, pageKey, recommendationsRetry]);
+  }, [runId, run?.id, run?.status, offset, urgencyFilter, supplierFilter, pageKey, recommendationsRetry]);
 
-  useEffect(() => { setSelected(new Set()); setPreviewOpen(false); setOrderError(null); setConflictIds([]); }, [runId, urgencyFilter, offset]);
+  useEffect(() => { setSelected(new Set()); setPreviewOpen(false); setOrderError(null); setConflictIds([]); }, [runId, urgencyFilter, supplierFilter, offset]);
 
   useEffect(() => {
     if (!recommendationId) { setDetail(null); return; }
@@ -211,13 +229,27 @@ export function RunsPage() {
 
   async function startRun() {
     if (!warehouseId) return;
+    const signature = `${warehouseId}:${categoryId}:${asOf}:1095`;
+    let attempt = runAttempt.current;
+    if (!attempt || attempt.signature !== signature) {
+      try {
+        const saved: unknown = JSON.parse(sessionStorage.getItem(runAttemptStorage) ?? "null");
+        if (saved && typeof saved === "object" && "signature" in saved && "key" in saved && saved.signature === signature && typeof saved.key === "string") attempt = { signature, key: saved.key };
+      } catch { /* Ключ остаётся в памяти вкладки. */ }
+      if (!attempt || attempt.signature !== signature) attempt = { signature, key: crypto.randomUUID() };
+      runAttempt.current = attempt;
+      try { sessionStorage.setItem(runAttemptStorage, JSON.stringify(attempt)); } catch { /* Хранилище недоступно. */ }
+    }
     setBusy("run");
     setError(null);
     try {
-      const next = await createRun({ warehouse_id: warehouseId, category_id: categoryId || null, as_of: asOf, idempotency_key: crypto.randomUUID(), parameters: { history_days: 1095 } });
+      const next = await createRun({ warehouse_id: warehouseId, category_id: categoryId || null, as_of: asOf, idempotency_key: attempt.key, parameters: { history_days: 1095 } });
+      runAttempt.current = null;
+      try { sessionStorage.removeItem(runAttemptStorage); } catch { /* Хранилище недоступно. */ }
+      setCreatedOrders([]);
       setRunsLoadedOffset(null);
       setHistoryRetry((current) => current + 1);
-      updateParams({ history_offset: null, run: next.id, recommendation: null, offset: null, urgency: null });
+      updateParams({ history_offset: null, run: next.id, recommendation: null, offset: null, urgency: null, supplier: null });
     } catch (caught) { setError(errorText(caught)); }
     finally { setBusy(null); }
   }
@@ -246,7 +278,8 @@ export function RunsPage() {
       setPreviewOpen(false);
       setConflictIds([]);
       setSelected(new Set());
-      if (orders[0]) navigate(`/orders?id=${encodeURIComponent(orders[0].id)}`);
+      setCreatedOrders(orders);
+      setRecommendationsRetry((current) => current + 1);
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 409) {
         setOrderError("Не удалось создать заказ: часть рекомендаций уже включена в заказ или данные изменились. Список обновляется; проверьте выбор.");
@@ -269,19 +302,30 @@ export function RunsPage() {
     return [...groups.entries()];
   }, [rows]);
 
+  function toggleSupplierPage(rowsForSupplier: SavedRecommendation[]) {
+    const available = rowsForSupplier.filter(isOrderable).map((row) => row.id);
+    setSelected((current) => {
+      const next = new Set(current);
+      if (available.every((id) => next.has(id))) available.forEach((id) => next.delete(id));
+      else available.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
   return <div className={styles.page}>
     <PageHeader title="Расчёты пополнения" subtitle="Сохранённые рекомендации по товарам и складам" actions={<Button variant="secondary" size="sm" icon={<ClipboardList size={15} strokeWidth={1.8} />} onClick={() => navigate("/recommendations/demo")}>Открыть демо</Button>} />
 
     {error ? <Alert tone="danger" title="Не удалось выполнить действие">{error}</Alert> : null}
+    {createdOrders.length ? <Alert tone="success" title={`Создано черновиков: ${createdOrders.length}`}>{createdOrders.map((order, index) => <button type="button" className={styles.orderLink} key={order.id} onClick={() => navigate(`/orders?id=${encodeURIComponent(order.id)}`)}>{order.supplier_name || `Заказ ${index + 1}`}: открыть черновик</button>)}</Alert> : null}
     {catalogLoading ? <RunSkeleton /> : <>
-      <Card title="Новый расчёт" subtitle="Данные берутся из последней завершённой загрузки 1С">
+      <Card title="Новый расчёт" subtitle="Данные берутся из последней завершённой загрузки">
         <div className={styles.controls}>
           <Select label="Склад" wrapperClassName={styles.selectControl} value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}><option value="">Выберите склад</option>{warehouses.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
           <Select label="Категория" wrapperClassName={styles.selectControl} value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Все категории</option>{categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
           <label>Дата среза<input type="date" value={asOf} max={today} onChange={(event) => setAsOf(event.target.value)} /></label>
           <Button variant="primary" icon={<Play size={16} strokeWidth={1.8} />} loading={busy === "run"} disabled={!warehouseId || !asOf || busy !== null} onClick={() => void startRun()}>Рассчитать</Button>
         </div>
-        {!warehouses.length ? <p className={styles.note}>Склады пока не загружены. Для работы с реальными данными сначала примените источник 1С; демонстрационный расчёт доступен отдельно.</p> : null}
+        {!warehouses.length ? <p className={styles.note}>Склады пока не загружены. Сначала примените подготовленные данные; демонстрационный расчёт доступен отдельно.</p> : null}
       </Card>
 
       {overview ? <section className={styles.overview} aria-label="Состояние закупок">
@@ -311,13 +355,14 @@ export function RunsPage() {
         <Card title="Рекомендации" subtitle={visiblePage ? `${visiblePage.total} позиций · расчёт ${run.as_of}` : recommendationsError ? "Результат временно недоступен" : "Загружаем результат"}>
           <div className={styles.listControls}>
             <Select label="Срочность" wrapperClassName={styles.selectControl} value={urgencyFilter} onChange={(event) => updateParams({ urgency: event.target.value, offset: null, recommendation: null })}><option value="">Все</option><option value="critical">Критично</option><option value="high">Высокий</option><option value="normal">Планово</option><option value="none">Без заказа</option></Select>
+            <Select label="Поставщик" wrapperClassName={styles.selectControl} value={supplierFilter} onChange={(event) => updateParams({ supplier: event.target.value, offset: null, recommendation: null })}><option value="">Все поставщики</option>{suppliers.map((supplier) => <option value={supplier.id} key={supplier.id}>{supplier.name}</option>)}</Select>
             <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!visiblePage || loadingRows || !selectedOrderableCount || busy !== null} onClick={() => { setOrderError(null); setConflictIds([]); setPreviewOpen(true); }}>Создать черновики ({selectedOrderableCount})</Button>
           </div>
           {!visiblePage && !recommendationsError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем рекомендации"><i /><i /><i /><i /></div> : null}
           {recommendationsError ? <div><Alert tone="danger" title="Не удалось загрузить рекомендации">{recommendationsError}</Alert><Button variant="secondary" size="sm" onClick={() => setRecommendationsRetry((current) => current + 1)}>Повторить</Button></div> : null}
           {visiblePage && !rows.length ? <EmptyState title="Позиций нет" text="Для выбранного фильтра рекомендаций не найдено." /> : null}
           {grouped.map(([supplierId, supplierRows]) => <section className={styles.group} key={supplierId} aria-label={supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? "Поставщик"}>
-            <h3>{supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? `Поставщик ${supplierId.slice(0, 8)}`}</h3>
+            <div className={styles.groupHeader}><h3>{supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? `Поставщик ${supplierId.slice(0, 8)}`}</h3>{supplierRows.some(isOrderable) ? <Button variant="ghost" size="sm" disabled={loadingRows || busy !== null} onClick={() => toggleSupplierPage(supplierRows)}>{supplierRows.filter(isOrderable).every((row) => selected.has(row.id)) ? "Снять выбор на странице" : "Выбрать доступные на странице"}</Button> : null}</div>
             <Table><thead><Tr><Th>Выбор</Th><Th>Товар</Th><Th>Статус</Th><Th numeric>Заказать</Th><Th>Обоснование</Th></Tr></thead><tbody>{supplierRows.map((row) => <Tr key={row.id}>
               <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id) && isOrderable(row)} disabled={loadingRows || !isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
               <Td><button type="button" className={styles.productLink} onClick={() => navigate(`/recommendations/${row.id}?${new URLSearchParams({ from: `${location.pathname}${location.search}${location.hash}` })}`)}>{row.name}</button><small className={styles.sku}>{row.sku}</small></Td>
@@ -341,9 +386,9 @@ export function RunsPage() {
       </> : null}
     </>}
 
-    <Modal id="create-orders" title="Создать черновики заказов" open={previewOpen} onOpenChange={(open) => { setPreviewOpen(open); if (!open) { setOrderError(null); setConflictIds([]); } }} size="md" footer={<><Button variant="secondary" disabled={busy === "orders"} onClick={() => setPreviewOpen(false)}>Вернуться</Button><Button variant="primary" loading={busy === "orders"} disabled={!selectedOrderableCount || busy === "orders"} onClick={() => void submitOrders()}>Создать черновики</Button></>}>
+    <Modal id="create-orders" title="Создать черновики заказов" open={previewOpen} onOpenChange={(open) => { if (busy === "orders" && !open) return; setPreviewOpen(open); if (!open) { setOrderError(null); setConflictIds([]); } }} closeOnEscape={busy !== "orders"} closeOnBackdrop={busy !== "orders"} showClose={busy !== "orders"} size="md" footer={<><Button variant="secondary" disabled={busy === "orders"} onClick={() => setPreviewOpen(false)}>Вернуться</Button><Button variant="primary" loading={busy === "orders"} disabled={!selectedOrderableCount || busy === "orders"} onClick={() => void submitOrders()}>Создать черновики</Button></>}>
       {orderError ? <Alert tone="danger" title="Заказ не создан">{orderError}{conflictOrders.length ? <div className={styles.conflictLinks}>{conflictOrders.map((row) => <button type="button" className={styles.orderLink} key={row.id} onClick={() => navigate(`/orders?id=${encodeURIComponent(row.order_id!)}`)}>{row.name}: открыть заказ</button>)}</div> : null}</Alert> : null}
-      <ActionPreview items={[`Выбрано рекомендаций: ${selectedOrderableCount}. Система сгруппирует их по поставщику и складу`, "После создания количество можно исправить с указанием причины"]} note="Заказы останутся черновиками. Поставщикам ничего не отправляется." />
+      <ActionPreview items={[`Выбрано рекомендаций: ${selectedOrderableCount}. Система сгруппирует их по поставщику и складу`, ...selectedUnits.map(([unit, values]) => `${sumQuantities(values)} ${unit} по ${values.length} позициям`), "После создания количество можно исправить с указанием причины"]} note="Заказы останутся черновиками. Поставщикам ничего не отправляется." />
     </Modal>
   </div>;
 }

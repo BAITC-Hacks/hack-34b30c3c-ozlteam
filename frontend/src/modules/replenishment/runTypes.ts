@@ -87,4 +87,5 @@ export interface JobStatus {
 
 export interface CreatedOrder {
   id: string;
+  supplier_name: string;
 }

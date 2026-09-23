@@ -12,8 +12,13 @@ import type {
 
 const base = "/v1";
 
-export function getCatalog(kind: "warehouses" | "categories" | "suppliers", signal?: AbortSignal): Promise<CatalogOption[]> {
-  return apiRequest(`${base}/catalogs/${kind}?limit=200&active=true`, { signal });
+export async function getCatalog(kind: "warehouses" | "categories" | "suppliers", signal?: AbortSignal): Promise<CatalogOption[]> {
+  const result: CatalogOption[] = [];
+  for (let offset = 0; ; offset += 200) {
+    const page = await apiRequest<CatalogOption[]>(`${base}/catalogs/${kind}?limit=200&offset=${offset}&active=true`, { signal });
+    result.push(...page);
+    if (page.length < 200) return result;
+  }
 }
 
 export function getRuns(offset: number, signal?: AbortSignal): Promise<RunPage> {
@@ -28,9 +33,10 @@ export function createRun(input: { warehouse_id: string; category_id: string | n
   return apiRequest(`${base}/replenishment/runs`, { method: "POST", body: input });
 }
 
-export function getRecommendations(runId: string, offset: number, urgency: string, signal?: AbortSignal): Promise<SavedRecommendationPage> {
+export function getRecommendations(runId: string, offset: number, urgency: string, supplierId: string, signal?: AbortSignal): Promise<SavedRecommendationPage> {
   const params = new URLSearchParams({ limit: "50", offset: String(offset) });
   if (urgency) params.set("urgency", urgency);
+  if (supplierId) params.set("supplier_id", supplierId);
   return apiRequest(`${base}/replenishment/runs/${runId}/recommendations?${params}`, { signal });
 }
 

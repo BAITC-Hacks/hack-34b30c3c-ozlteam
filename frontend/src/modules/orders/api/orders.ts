@@ -3,10 +3,22 @@ import type { OrderAudit, OrderHandoff, SupplierOrder } from "../types";
 
 const base = "/v1/orders";
 
-export function listOrders(status: string, offset: number, signal: AbortSignal) {
+export function listOrders(status: string, offset: number, signal: AbortSignal, supplierId = "", warehouseId = "") {
   const query = new URLSearchParams({ limit: "20", offset: String(offset) });
   if (status === "draft" || status === "approved") query.set("status", status);
+  if (supplierId) query.set("supplier_id", supplierId);
+  if (warehouseId) query.set("warehouse_id", warehouseId);
   return apiRequest<SupplierOrder[]>(`${base}?${query}`, { signal });
+}
+
+export async function listOrderFilterOptions(kind: "suppliers" | "warehouses", signal: AbortSignal) {
+  const result: Array<{ id: string; name: string }> = [];
+  for (let offset = 0; ; offset += 200) {
+    const query = new URLSearchParams({ limit: "200", offset: String(offset) });
+    const page = await apiRequest<Array<{ id: string; name: string }>>(`/v1/catalogs/${kind}?${query}`, { signal });
+    result.push(...page);
+    if (page.length < 200) return result;
+  }
 }
 
 export function getOrder(id: string, signal: AbortSignal) {

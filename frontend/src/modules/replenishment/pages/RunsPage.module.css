@@ -20,7 +20,9 @@
 .stepDone { color: var(--ok-ink); }
 .listControls { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4); }
 .group + .group { margin-top: var(--sp-5); }
+.groupHeader { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 .group h3 { margin-bottom: var(--sp-2); font-size: var(--fs-body); font-weight: 600; }
+.groupHeader h3 { margin-bottom: 0; }
 .group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ac); }
 .productLink { display: block; padding: 0; border: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
 .orderLink { display: block; margin-top: var(--sp-2); padding: 0; border: 0; background: none; color: var(--ac-ink); font: inherit; font-size: var(--fs-xs); text-align: left; cursor: pointer; }
