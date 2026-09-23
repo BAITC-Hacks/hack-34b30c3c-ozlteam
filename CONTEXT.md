@@ -107,7 +107,7 @@ OpenAI/NVIDIA и общий AI-ассистент доступны как инф
 
 ## 8. Что реализовано и что ещё предстоит
 
-Снимок по коду после `5211bc9` от 23.09.2026. Перед новой задачей сверять актуальную ветку; наличие кода не равно приёмке на реальных данных.
+Снимок по коду после `89f2ab8` от 23.09.2026. Перед новой задачей сверять актуальную ветку; наличие кода не равно приёмке на реальных данных.
 
 | Область | Подтверждённая реализация / граница | Где проверять |
 | --- | --- | --- |
@@ -115,9 +115,9 @@ OpenAI/NVIDIA и общий AI-ассистент доступны как инф
 | Справочники и факты | Товары, склады, поставщики, категории, продажи, остатки, путь, stockout, рост | `Domains/Catalogs`, `Domains/Inventory` |
 | Серверный расчёт | Снимок, worker, история, объяснения и ограничения | `Domains/Replenishment`, [backend-replenishment](docs/backend-replenishment.md) |
 | Заказы | Черновики, правка, утверждение, CSV/XLSX, пакет/подтверждение для 1С | `Domains/Procurement`, [backend-procurement](docs/backend-procurement.md) |
-| Рабочие страницы | `/recommendations`, `/orders`, `/data`, `/inventory` подключены к API | `frontend/src/app/routes.tsx`, модули `replenishment`, `orders`, `data`, `inventory` |
+| Рабочие страницы | Обзор `/`, `/recommendations` и детализация рекомендации, `/orders`, `/data`, `/inventory` подключены к API | `frontend/src/app/routes.tsx`, модули `overview`, `replenishment`, `orders`, `data`, `inventory` |
 | Демо отдельно | `/recommendations/demo`: синтетика, stateless расчёт/шаблон XLSX, локальный CSV | [replenishment-case](docs/replenishment-case.md) |
-| Управление справочниками в UI | API есть, `/data/catalogs` пока заглушка | `frontend/src/app/routes.tsx` |
+| Справочники в UI | `/data/catalogs`: просмотр, поиск, фильтры и карточка товаров/категорий/поставщиков/складов; редактирования на странице нет | Модуль `frontend/src/modules/catalogs` |
 | Реальные широкие отчёты | Требуют отдельного адаптера и реестра кодов; generic импорт их не заменяет | [TrackLogic](docs/hackathon/tracklogic.md) |
 | Общая готовность данных | Часть сигналов есть, единый preflight и подтверждение условий ещё нужны | Раздел 6 выше |
 | Реальная 1С / поставщик | Адаптер конфигурации, сетевой обмен и промышленная приёмка не подтверждены; автоотправки нет | [backend-data](docs/backend-data.md), [backend-procurement](docs/backend-procurement.md) |
