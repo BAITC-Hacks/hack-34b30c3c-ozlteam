@@ -107,6 +107,10 @@
   padding: var(--sp-1);
 }
 
+.sidebarSlot[data-collapsed] .me > button {
+  display: none;
+}
+
 .mark {
   display: grid;
   place-items: center;

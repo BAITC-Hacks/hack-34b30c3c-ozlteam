@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
-import { Button } from "../shared/ui";
+import { Button, ConfirmModal } from "../shared/ui";
 import { useCurrentUser, useLogout } from "../modules/auth";
 import styles from "./AppLayout.module.css";
 import { MobileNav } from "./MobileNav";
@@ -32,6 +32,15 @@ const DATA: NavItem[] = [
 
 const MOBILE_PRIMARY = WORK.slice(0, 3);
 const MOBILE_REST = [WORK[3], ...DATA];
+const SIDEBAR_MODE_KEY = "hackalem.sidebar-mode";
+
+function initialSidebarOpen(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_MODE_KEY) !== "compact";
+  } catch {
+    return true;
+  }
+}
 
 function initials(fullName: string): string {
   return fullName
@@ -89,7 +98,8 @@ function Section({
 export function AppLayout() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(initialSidebarOpen);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const navigation = useRef<HTMLElement>(null);
   const [navigationHasPrevious, setNavigationHasPrevious] = useState(false);
   const [navigationHasMore, setNavigationHasMore] = useState(false);
@@ -107,6 +117,14 @@ export function AppLayout() {
     if (navigation.current) observer.observe(navigation.current);
     return () => observer.disconnect();
   }, [sidebarOpen, updateNavigationFade]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_MODE_KEY, sidebarOpen ? "full" : "compact");
+    } catch {
+      // Меню продолжит работать, даже если браузер запретил хранилище.
+    }
+  }, [sidebarOpen]);
 
   return (
     <div className={styles.app}>
@@ -158,7 +176,7 @@ export function AppLayout() {
               aria-label="Выйти"
               icon={<LogOut size={15} strokeWidth={1.8} />}
               loading={logout.isPending}
-              onClick={() => logout.mutate()}
+              onClick={() => setLogoutConfirmOpen(true)}
             />
           </div>
         </aside>
@@ -174,9 +192,22 @@ export function AppLayout() {
         userName={user?.full_name ?? "Гость"}
         userEmail={user?.email ?? ""}
         initials={user ? initials(user.full_name) : "—"}
-        onLogout={() => logout.mutate()}
+        onLogout={() => setLogoutConfirmOpen(true)}
         loggingOut={logout.isPending}
       />
+
+      <ConfirmModal
+        id="confirm-logout"
+        title="Выйти из аккаунта?"
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        confirmLabel="Выйти"
+        cancelLabel="Остаться"
+        confirmVariant="danger"
+        onConfirm={() => logout.mutateAsync().catch(() => undefined)}
+      >
+        Вы точно хотите выйти? Для продолжения работы понадобится войти снова.
+      </ConfirmModal>
     </div>
   );
 }
