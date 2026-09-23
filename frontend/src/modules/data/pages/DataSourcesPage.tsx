@@ -203,7 +203,13 @@ export function DataSourcesPage() {
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void upload(); }}>
             <label>Источник<select value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select></label>
             <label>Вид данных<select value={kind} onChange={(event) => setKind(event.target.value)}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label>Файл<input ref={fileInputRef} type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required /></label>
+            <label>Файл
+              <span className={styles.fileControl}>
+                <span className={styles.fileChoose}>Выбрать файл</span>
+                <span className={styles.fileName} aria-live="polite">{file?.name ?? "Файл не выбран"}</span>
+                <input ref={fileInputRef} type="file" aria-label="Выбрать файл" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+              </span>
+            </label>
             <details className={styles.advanced}><summary>Дополнительные настройки</summary><div className={styles.advancedBody}>
               <label>Сопоставление колонок (JSON)<textarea value={mapping} onChange={(event) => setMapping(event.target.value)} rows={3} placeholder={'{"Исходная колонка":"external_id"}'} /></label>
               <label className={styles.check}><input type="checkbox" checked={reverseSign} onChange={(event) => setReverseSign(event.target.checked)} />Продажи в файле записаны отрицательным количеством</label>

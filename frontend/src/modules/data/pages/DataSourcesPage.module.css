@@ -3,7 +3,12 @@
 .form { display: grid; gap: var(--sp-3); }
 .form label, .advancedBody label { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
 .form input, .form select, .form textarea { width: 100%; min-height: var(--ctl); padding: var(--sp-2) var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
-.form input[type="file"] { padding-top: var(--sp-2); }
+.fileControl { position: relative; display: flex; align-items: center; gap: var(--sp-3); min-width: 0; min-height: var(--touch); padding: var(--sp-2); border-radius: var(--r-s); background: var(--sunken); cursor: pointer; }
+.fileChoose { flex: none; display: inline-flex; align-items: center; min-height: var(--ctl); padding: 0 var(--sp-3); border-radius: var(--r-xs); background: var(--panel); color: var(--ink); font-size: var(--fs-sm); font-weight: 600; }
+.fileName { min-width: 0; overflow: hidden; color: var(--mut); font-size: var(--fs-sm); text-overflow: ellipsis; white-space: nowrap; }
+.fileControl:hover .fileChoose { background: var(--ac-soft); color: var(--ac-ink); }
+.fileControl:focus-within { outline: 2px solid var(--ac); outline-offset: 2px; }
+.form .fileControl input[type="file"] { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; clip-path: inset(50%); }
 .form textarea { resize: vertical; min-height: 80px; }
 .form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible, .textButton:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .form button { justify-self: start; }
