@@ -311,7 +311,45 @@
   max-width: var(--content-max);
 }
 
+.main:has([data-assistant-page]) {
+  max-width: none;
+  height: 100dvh;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.main:has([data-assistant-page="decorated"]) {
+  --assistant-orb-x: 50%;
+  --assistant-orb-y: 233px;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 43% 37% at var(--assistant-orb-x) var(--assistant-orb-y), color-mix(in srgb, var(--ac) 14%, transparent), transparent 76%),
+    radial-gradient(ellipse 28% 32% at 7% 74%, color-mix(in srgb, var(--ac) 8%, transparent), transparent 85%),
+    radial-gradient(ellipse 32% 30% at 94% 86%, color-mix(in srgb, var(--ac) 9%, transparent), transparent 85%);
+}
+
+.main:has([data-assistant-page="decorated"])::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background: repeating-radial-gradient(
+    circle at var(--assistant-orb-x) var(--assistant-orb-y),
+    transparent 0 132px,
+    color-mix(in srgb, var(--ac) 10%, transparent) 133px 134px,
+    transparent 135px 178px
+  );
+  filter: blur(2px);
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 70%, transparent);
+}
+
 @media (max-width: 900px) {
+  .main:has([data-assistant-page="decorated"]) {
+    --assistant-orb-y: clamp(300px, 56dvh, 480px);
+  }
+
   .sidebarSlot,
   .side {
     display: none;

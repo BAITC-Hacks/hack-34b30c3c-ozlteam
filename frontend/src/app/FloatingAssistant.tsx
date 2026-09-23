@@ -81,6 +81,8 @@ export function FloatingAssistant() {
     };
   }, [isOpen]);
 
+  if (pathname === "/assistant") return null;
+
   return (
     <div className={styles.root} ref={root}>
       <div className={styles.nudge} data-visible={nudgeIndex >= 0 && !isOpen && pathname !== "/assistant" ? "" : undefined} aria-hidden={nudgeIndex < 0 || isOpen || pathname === "/assistant"}>
@@ -104,7 +106,7 @@ export function FloatingAssistant() {
             <X size={18} strokeWidth={1.8} />
           </button>
         </header>
-        <AssistantPanel />
+        <AssistantPanel onOpenFull={() => setIsOpen(false)} />
       </aside>
 
       <button

@@ -1,4 +1,4 @@
-import { ArrowUp, Plus, RefreshCw } from "lucide-react";
+import { ArrowUp, Maximize2, Plus, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -23,8 +23,9 @@ function incomingContext(pathname: string, search: string): AssistantContext {
 }
 function Loading({ label }: { label: string }) { return <div className={styles.skeleton} role="status" aria-label={label} aria-busy="true"><i /><i /><i /></div>; }
 
-export function AssistantWorkspace({ compact = false, decorated = true }: { compact?: boolean; decorated?: boolean }) {
+export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: boolean; onOpenFull?: () => void }) {
   const [offset, setOffset] = useState(0);
+  const [dismissedHistoryErrorAt, setDismissedHistoryErrorAt] = useState(0);
   const workspace = useWorkspace(offset);
   const question = workspace.draft;
   const { state, update, conversation, conversations, assistants } = workspace;
@@ -46,25 +47,36 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
   const initialLoading = !!state.activeId && conversation.isPending;
   const empty = !initialLoading && !chat?.messages.length;
+  const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
   async function send(text: string) {
     await workspace.send(text);
   }
   function setContext(key: ContextKey, value: string) { const context = { ...state.context }; if (value) context[key] = value; else delete context[key]; update({ context, allowData: false }); }
   return <div className={`${styles.workspace} ${compact ? styles.compact : ""}`}>
+    <aside className={styles.sidebar} aria-label="Настройки диалога">
     <div className={styles.toolbar}>
-      <Select label="Диалог" value={state.activeId} disabled={state.busy || conversations.isPending} onChange={(event) => workspace.select(event.target.value)}>
+      <Select label={<span className={styles.visuallyHidden}>Диалог</span>} value={state.activeId} disabled={state.busy || conversations.isPending} onChange={(event) => workspace.select(event.target.value)}>
         <option value="">Новый диалог</option>
         {state.activeId && !conversations.data?.some((item) => item.id === state.activeId) ? <option value={state.activeId}>{chat?.title ?? "Выбранный диалог"}</option> : null}
         {conversations.data?.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
       </Select>
-      <Button variant="secondary" size="sm" icon={<Plus size={16} />} disabled={state.busy} onClick={() => void workspace.newConversation()}>Новый</Button>
-      {state.activeId ? <Button variant="ghost" size="sm" icon={<RefreshCw size={15} />} disabled={state.busy} onClick={() => void conversation.refetch()}>Обновить</Button> : null}
-      {compact ? <Link to="/assistant">Открыть помощника</Link> : null}
+      {compact ? <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="Новый диалог" disabled={state.busy} onClick={() => void workspace.newConversation()}><Plus size={18} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">Новый диалог</span>
+      </span> : <Button variant="secondary" icon={<Plus size={16} />} disabled={state.busy} onClick={() => void workspace.newConversation()}>Новый</Button>}
+      {state.activeId ? compact ? <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" aria-label="Обновить диалог" disabled={state.busy} onClick={() => void conversation.refetch()}><RefreshCw size={17} strokeWidth={1.8} /></button>
+        <span className={styles.actionTooltip} role="tooltip">Обновить диалог</span>
+      </span> : <Button variant="ghost" icon={<RefreshCw size={15} />} disabled={state.busy} onClick={() => void conversation.refetch()}>Обновить</Button> : null}
+      {compact ? <span className={styles.iconAction}>
+        <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
+        <span className={styles.actionTooltip} role="tooltip">Открыть помощника</span>
+      </span> : null}
     </div>
-    {conversations.isPending ? <Loading label="Загружаем диалоги" /> : conversations.isError ? <Alert tone="warning" action={<Button variant="ghost" size="sm" onClick={() => void conversations.refetch()}>Повторить</Button>}>История недоступна: {conversations.error.message}</Alert> : null}
+    {conversations.isPending ? <Loading label="Загружаем диалоги" /> : null}
     {offset > 0 || (conversations.data?.length ?? 0) >= 50 ? <div className={styles.actions}><Button variant="ghost" size="sm" disabled={!offset || state.busy} onClick={() => setOffset(Math.max(0, offset - 50))}>Новые диалоги</Button><Button variant="ghost" size="sm" disabled={(conversations.data?.length ?? 0) < 50 || state.busy} onClick={() => setOffset(offset + 50)}>Ранние диалоги</Button></div> : null}
     <details className={styles.scope}>
-      <summary>Помощник и контекст · {state.allowData ? "передача сводок разрешена" : "доступ к данным не разрешён"}</summary>
+      <summary>{compact ? `Контекст · сводки ${state.allowData ? "разрешены" : "выключены"}` : `Помощник и контекст · ${state.allowData ? "передача сводок разрешена" : "доступ к данным не разрешён"}`}</summary>
       <div className={styles.controls}>
         <Select label="Специализация" value={state.assistantId} disabled={state.busy || assistants.isPending} onChange={(event) => update({ assistantId: event.target.value })}>
           {!assistants.data?.length ? <option value="auto">Автоматически</option> : assistants.data.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
@@ -80,8 +92,10 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
         <p className={styles.note}>По умолчанию доступ не разрешён. Вложения загружаются в <Link to="/data">«Источники данных»</Link>; затем выберите пакет здесь. Заказы поставщикам автоматически не отправляются.</p>
       </div>
     </details>
-    <div className={`${styles.messages} ${empty && !compact && decorated ? hero.roomDecorated : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
-      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p><Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
+    </aside>
+    <section className={styles.chat} aria-label="Чат помощника">
+    <div className={`${styles.messages} ${empty && !compact ? styles.emptyMessages : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
+      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
         {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
           {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{tool.name}</b> · {tool.status}<p>{tool.summary}</p></li>)}</ul></details> : null}
@@ -92,11 +106,13 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
       {state.busy ? <p className={styles.note} role="status">Запрос выполняется. Результат ещё не подтверждён сервером.</p> : null}
       <div ref={tail} />
     </div>
+    {historyErrorVisible ? <Alert className={styles.historyNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.retryHistory} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : null}
     {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
       <textarea value={question} onChange={(event) => workspace.setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>
     </form>
-    <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p>
+    {!compact ? <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p> : null}
+    </section>
   </div>;
 }
