@@ -69,10 +69,10 @@ export interface SavedRecommendationPage {
 export interface RecommendationDetails {
   breakdown: Record<string, number | string | null>;
   warnings: string[];
-  forecast: Array<{ date: string; quantity: string; seasonal_factor: string; trend_increment: string; growth_rate: string }>;
+  forecast: Array<{ date: string; quantity: string; seasonal_factor: string; trend_increment: string; growth_rate: string; growth_mode?: "additional" | "replace_trend" }>;
   history: Array<{ date: string; raw: string; corrected: string; stockout: boolean }>;
   excluded_sales: Array<{ date: string; client_id: string | null; quantity: string; threshold: string; reason: string }>;
-  inbound: Array<{ expected_date: string; quantity: string; status: string }>;
+  inbound: Array<{ product_id?: string; expected_date: string; quantity: string; status: string }>;
 }
 
 export interface SavedRecommendationDetail extends SavedRecommendation {

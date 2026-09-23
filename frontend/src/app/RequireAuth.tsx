@@ -11,7 +11,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading, isError } = useCurrentUser();
 
   if (!hasToken || isError) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}${location.hash}` }} />;
   }
   if (isLoading || !user) {
     return (

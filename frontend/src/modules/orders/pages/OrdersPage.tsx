@@ -96,7 +96,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   </div>;
 }
 
-function LineEditor({ order, line, onSaved }: { order: SupplierOrder; line: OrderLine; onSaved: (order: SupplierOrder) => void }) {
+function LineEditor({ order, line, onSaved, onEditingChange }: { order: SupplierOrder; line: OrderLine; onSaved: (order: SupplierOrder) => void; onEditingChange: (lineId: string, editing: boolean) => void }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(line.quantity);
   const [reason, setReason] = useState("");
@@ -110,7 +110,7 @@ function LineEditor({ order, line, onSaved }: { order: SupplierOrder; line: Orde
     setPending(true); setError(null);
     try {
       onSaved(await editOrderLine(order.id, line.id, normalized, reason.trim(), order.version));
-      setEditing(false); setReason("");
+      setEditing(false); onEditingChange(line.id, false); setReason("");
     } catch (caught) { setError(explainError(caught)); }
     finally { setPending(false); }
   }
@@ -121,10 +121,10 @@ function LineEditor({ order, line, onSaved }: { order: SupplierOrder; line: Orde
     {order.status === "draft" ? editing ? <div className={styles.editor}>
       <label>Количество<input inputMode="decimal" value={value} onChange={(event) => setValue(event.target.value)} aria-invalid={value.length > 0 && !validQuantity(value)} /></label>
       <label>Причина изменения<input value={reason} maxLength={4000} onChange={(event) => setReason(event.target.value)} placeholder="Например, согласована партия поставки" /></label>
-      <div className={styles.editorActions}><Button size="sm" loading={pending} disabled={!ready} onClick={() => void save()}>Сохранить</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setEditing(false); setValue(line.quantity); setReason(""); setError(null); }}>Отмена</Button></div>
+      <div className={styles.editorActions}><Button size="sm" loading={pending} disabled={!ready} onClick={() => void save()}>Сохранить</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setEditing(false); onEditingChange(line.id, false); setValue(line.quantity); setReason(""); setError(null); }}>Отмена</Button></div>
       {value && !validQuantity(value) ? <small className={styles.errorText}>Введите положительное число: до 20 цифр и 6 знаков после запятой.</small> : null}
       {error ? <Alert tone="danger">{error}</Alert> : null}
-    </div> : <Button size="sm" variant="ghost" onClick={() => { setValue(line.quantity); setEditing(true); }}>Изменить количество</Button> : null}
+    </div> : <Button size="sm" variant="ghost" onClick={() => { setValue(line.quantity); setEditing(true); onEditingChange(line.id, true); }}>Изменить количество</Button> : null}
   </div>;
 }
 
@@ -137,11 +137,12 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [pending, setPending] = useState(false);
   const [exporting, setExporting] = useState<"csv" | "xlsx" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [editingLineIds, setEditingLineIds] = useState<Set<string>>(new Set());
   const [warehouseNames, setWarehouseNames] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError(null); setOrder(null); setPreview(false);
+    setLoading(true); setError(null); setOrder(null); setPreview(false); setEditingLineIds(new Set());
     getOrder(id, controller.signal).then(setOrder).catch((caught: unknown) => { if (!controller.signal.aborted) setError(explainError(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     listWarehouses(controller.signal).then((items) => setWarehouseNames(new Map(items.map((item) => [item.id, item.name])))).catch(() => undefined);
@@ -149,7 +150,7 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
   }, [id, reload]);
 
   async function approve() {
-    if (!order) return;
+    if (!order || editingLineIds.size) return;
     setPending(true); setError(null);
     try { setOrder(await approveOrder(order.id, order.version)); setPreview(false); setNotice("Заказ утверждён. Теперь доступен экспорт; поставщику он не отправлен."); }
     catch (caught) { setError(explainError(caught)); setPreview(false); }
@@ -174,10 +175,11 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
         {order.comment ? <p className={styles.comment}>{order.comment}</p> : null}
       </Card>
       <Card title="Позиции заказа" subtitle={order.status === "draft" ? "Количество можно изменить, указав причину" : "Утверждённый состав сохранён без изменений"}>
-        <div className={styles.lines}>{order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { setOrder(updated); setError(null); }} />)}</div>
+        <div className={styles.lines}>{order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { setOrder(updated); setError(null); }} onEditingChange={(lineId, editing) => { setEditingLineIds((current) => { const next = new Set(current); if (editing) next.add(lineId); else next.delete(lineId); return next; }); if (editing) setPreview(false); }} />)}</div>
       </Card>
       {order.status === "draft" ? <Card title="Утверждение" subtitle="После утверждения заказ и его строки станут неизменяемыми">
-        {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}
+        {editingLineIds.size ? <p className={styles.pendingEdit}>Сохраните или отмените изменение строки перед утверждением.</p> : null}
+        {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} disabled={editingLineIds.size > 0} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0 || editingLineIds.size > 0} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}
       </Card> : <Card title="Экспорт" subtitle="Файл для передачи в учётную систему; отправка поставщику остаётся ручным действием"><div className={styles.exportActions}><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "xlsx"} disabled={exporting !== null} onClick={() => void download("xlsx")}>Скачать XLSX</Button><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "csv"} disabled={exporting !== null} onClick={() => void download("csv")}>Скачать CSV</Button></div></Card>}
     </> : null}
   </div>;

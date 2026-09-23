@@ -4,14 +4,10 @@
 .filters label:nth-child(2) { min-width: 220px; }
 .filters label:nth-child(3) { flex: 1; }
 .filters input, .filters select { min-height: var(--ctl); width: 100%; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
-.filters input:focus-visible, .filters select:focus-visible, .tabs button:focus-visible, .catalogError button:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.filters input:focus-visible, .filters select:focus-visible, .catalogError button:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .hint, .catalogError { margin: var(--sp-3) 0 0; color: var(--mut); font-size: var(--fs-xs); }
 .catalogError { color: var(--er-ink); }
 .catalogError button { padding: var(--sp-1); border: 0; background: none; color: var(--ac-ink); cursor: pointer; font: inherit; }
-.tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
-.tabs button { min-height: var(--ctl); padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--mut); font: inherit; font-size: var(--fs-body); cursor: pointer; }
-.tabs button:hover { color: var(--ink); }
-.tabs button.activeTab { background: var(--ac-soft); color: var(--ac-ink); font-weight: 600; }
 .secondary { display: block; margin-top: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
 .pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-xs); }
 .pager > div { display: flex; flex-wrap: wrap; gap: var(--sp-2); }

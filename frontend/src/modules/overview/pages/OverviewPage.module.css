@@ -1,0 +1,35 @@
+.page { display: grid; gap: var(--gap-blocks); }
+.content { display: grid; gap: var(--gap-blocks); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3); }
+.toolbar label { color: var(--mut); font-size: var(--fs-sm); }
+.toolbar select { min-height: var(--ctl); max-width: min(100%, 360px); padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--panel); box-shadow: var(--sh-1); color: var(--ink); font: inherit; }
+.toolbar select:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.muted { color: var(--mut); font-size: var(--fs-sm); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
+.snapshotGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap-cards); }
+.meta { display: grid; gap: var(--sp-3); margin: 0; }
+.meta > div { display: flex; justify-content: space-between; gap: var(--sp-4); }
+.meta dt { color: var(--mut); }
+.meta dd { margin: 0; text-align: right; font-weight: 600; }
+.note { margin: var(--sp-5) 0 0; color: var(--mut); font-size: var(--fs-xs); }
+.sourceSummary { margin: 0 0 var(--sp-3); font-weight: 600; }
+.sources { display: grid; gap: var(--sp-2); max-height: 240px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.sources li { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-2) 0; }
+.sources li + li { border-top: 1px solid var(--hair); }
+.sources li span { overflow-wrap: anywhere; }
+.warnings { display: grid; gap: var(--sp-1); margin: 0; padding-left: var(--sp-5); }
+.nextSteps h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.skeleton { display: grid; gap: var(--gap-blocks); }
+.skeletonTiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
+.skeletonCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap-cards); }
+.skeletonTiles > div, .skeletonCards > div { display: grid; gap: var(--sp-3); min-height: 125px; padding: var(--pad-card); border-radius: var(--r); background: var(--panel); box-shadow: var(--sh-1); }
+.skeletonCards > div { min-height: 230px; align-content: start; }
+.skeleton i { display: block; width: 75%; height: var(--sp-3); border-radius: var(--r-xs); background: linear-gradient(100deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+.skeleton i:first-child { width: 45%; }
+.skeleton i:nth-child(2) { width: 60%; height: var(--fs-num); }
+@keyframes shimmer { to { background-position-x: -200%; } }
+@media (max-width: 1100px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .skeletonTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .snapshotGrid, .skeletonCards { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .tiles, .skeletonTiles { grid-template-columns: 1fr; } .toolbar select { width: 100%; max-width: none; } .meta > div { display: block; } .meta dd { text-align: left; } .actions > button { width: 100%; justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; background: var(--sunken); } }

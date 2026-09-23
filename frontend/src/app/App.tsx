@@ -31,7 +31,8 @@ export function App() {
     () => onUnauthorized(() => {
       queryClient.removeQueries({ queryKey: CURRENT_USER_KEY });
       if (router.state.location.pathname !== "/login") {
-        void router.navigate("/login", { replace: true });
+        const { pathname, search, hash } = router.state.location;
+        void router.navigate("/login", { replace: true, state: { from: `${pathname}${search}${hash}` } });
       }
     }),
     [queryClient],
