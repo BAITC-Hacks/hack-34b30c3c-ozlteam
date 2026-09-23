@@ -11,13 +11,11 @@
 @media (min-width: 901px) {
   .page {
     position: relative;
-    display: block;
+    display: grid;
   }
 
   .page > :first-child {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: relative;
     z-index: 2;
   }
 }
