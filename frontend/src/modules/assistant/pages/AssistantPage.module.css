@@ -12,7 +12,7 @@
 .room:has(.thread) {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 150px);
+  min-height: calc(100dvh - 80px);
 }
 
 .room:has(.thread) .thread {
@@ -289,7 +289,7 @@
 
 @media (max-width: 560px) {
   .room:has(.thread) {
-    min-height: calc(100dvh - var(--mobile-bar-h) - 112px - env(safe-area-inset-bottom, 0px));
+    min-height: calc(100dvh - var(--mobile-bar-h) - 42px - env(safe-area-inset-bottom, 0px));
   }
 
   .orbStage { min-height: 250px; }

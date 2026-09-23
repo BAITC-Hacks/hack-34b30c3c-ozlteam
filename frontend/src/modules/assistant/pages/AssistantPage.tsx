@@ -110,10 +110,10 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader
+      {empty ? <PageHeader
         title="Помощник"
         subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами."
-        actions={empty ? (
+        actions={
           <Switch
             label="Фон"
             aria-label="Показывать фон помощника"
@@ -129,8 +129,8 @@ export function AssistantPage() {
             }}
             className={styles.backgroundSwitch}
           />
-        ) : undefined}
-      />
+        }
+      /> : null}
 
       <div className={`${styles.room} ${empty && showBackground ? styles.roomDecorated : ""}`}>
         {empty ? (
