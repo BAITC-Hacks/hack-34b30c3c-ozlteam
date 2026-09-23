@@ -46,6 +46,9 @@
 .failedAnswer small { color: var(--er-ink); }
 .theirs details { margin-top: var(--sp-3); font-size: var(--fs-sm); }
 .theirs details summary { width: fit-content; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); cursor: pointer; user-select: none; transition: background-color var(--t-hover), transform var(--t-press); }
+.theirs details[open] summary { margin-bottom: var(--sp-4); }
+.theirs details ul { display: grid; gap: var(--sp-3); margin: 0; padding-left: var(--sp-5); }
+.theirs details li p { margin: var(--sp-3) 0 0; }
 .theirs details summary:active { transform: scale(.98); }
 @media (hover: hover) and (pointer: fine) { .theirs details summary:hover { background: var(--sunken); } }
 @media (prefers-reduced-motion: reduce) { .theirs details summary { transition: none; } }
