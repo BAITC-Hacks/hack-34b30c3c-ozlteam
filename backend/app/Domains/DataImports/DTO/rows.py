@@ -2,7 +2,16 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    JsonValue,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
 
 Quantity = Annotated[Decimal, Field(ge=0, max_digits=20, decimal_places=6)]
 ExternalId = Annotated[str, Field(min_length=1, max_length=200)]
@@ -50,7 +59,33 @@ class ProductRow(SourceRow):
     pack_size: Quantity = Field(default=Decimal(1), gt=0)
     min_order_qty: Quantity = Decimal(0)
     lead_time_days: int | None = Field(default=None, ge=0, le=3650)
+    data_quality: dict[str, JsonValue] = Field(
+        default_factory=dict,
+        exclude_if=lambda value: not value,
+        description="Готовность и происхождение; пустое значение совместимо со старыми выгрузками.",
+    )
     active: bool = True
+
+    @field_validator("data_quality")
+    @classmethod
+    def validate_quality(cls, value):
+        if "status" in value and value["status"] not in ("ready", "limited", "blocked"):
+            raise ValueError("Неизвестный статус готовности данных")
+        for key in ("reasons", "blocking_reasons", "warnings"):
+            if key in value and (
+                not isinstance(value[key], list)
+                or any(not isinstance(reason, str) for reason in value[key])
+            ):
+                raise ValueError(f"{key} должен быть списком строк")
+        if "history_start" in value:
+            if not isinstance(value["history_start"], str):
+                raise ValueError("history_start должен быть датой YYYY-MM-DD")
+            date.fromisoformat(value["history_start"])
+        if "stock_max_age_days" in value:
+            age = value["stock_max_age_days"]
+            if type(age) is not int or not 0 <= age <= 365:
+                raise ValueError("stock_max_age_days должен быть целым числом от 0 до 365")
+        return value
 
 
 class WarehouseProductRow(SourceRow):

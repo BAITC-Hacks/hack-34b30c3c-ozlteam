@@ -15,6 +15,7 @@ from app.core.security_middleware import MaxBodySizeMiddleware, SecurityHeadersM
 from app.Domains.Ai.controllers.http import router as ai_router
 from app.Domains.Catalogs.controllers.http import router as catalogs_router
 from app.Domains.DataImports.controllers.http import router as imports_router
+from app.Domains.DataImports.controllers.packages import router as packages_router
 from app.Domains.Files.controllers.http import router as files_router
 from app.Domains.Integrations1C.controllers.http import router as integrations_router
 from app.Domains.Inventory.controllers.http import router as inventory_router
@@ -61,6 +62,7 @@ app.include_router(files_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
 app.include_router(catalogs_router, prefix="/api/v1")
+app.include_router(packages_router, prefix="/api/v1")
 app.include_router(imports_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")

@@ -15,7 +15,9 @@ class CreateCalculation(BaseModel):
 
     warehouse_id: UUID = Field(description="Внутренний UUID склада из справочника")
     category_id: UUID | None = Field(default=None, description="Без значения — все категории")
-    as_of: date = Field(description="Дата среза включительно; прогноз начинается на следующий день")
+    as_of: date = Field(
+        description="Дата среза включительно в Asia/Almaty; прогноз начинается на следующий день"
+    )
     idempotency_key: str = Field(
         min_length=1, max_length=100, description="Ключ повторного запроса"
     )

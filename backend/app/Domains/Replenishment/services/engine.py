@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from decimal import ROUND_CEILING, Decimal
 from statistics import mean, median
 
-ALGORITHM_VERSION = "robust-daily-v1"
+ALGORITHM_VERSION = "robust-daily-v2"
 ZERO = Decimal("0")
 
 
@@ -29,6 +29,9 @@ def dates(start: date, end: date):
 def _history(snapshot: dict, product: dict, as_of: date, history_days: int) -> dict:
     key = str(product["id"])
     lower = as_of - timedelta(days=history_days - 1)
+    coverage_start = product.get("data_quality", {}).get("history_start")
+    if coverage_start:
+        lower = max(lower, day(coverage_start))
     sales = [
         row
         for row in snapshot.get("sales", [])
@@ -205,9 +208,19 @@ def calculate(snapshot: dict, as_of: date, parameters: dict | None = None) -> li
         key = str(product["id"])
         history = histories[key]
         warnings = list(snapshot.get("warnings", []))
+        warnings.extend(product.get("warnings", []))
         if history["missing_client"]:
             warnings.append("missing_client_ids_day_level_outliers_only")
         blocked = []
+        quality = product.get("data_quality") or {}
+        if quality.get("status") == "blocked":
+            blocked.extend(
+                quality.get("blocking_reasons")
+                or quality.get("reasons")
+                or ["incomplete_product_data"]
+            )
+        warnings.extend(quality.get("reasons") or [])
+        warnings.extend(quality.get("warnings") or [])
         if not product.get("supplier_id"):
             blocked.append("missing_supplier")
         if product.get("lead_time_days") is None:
@@ -248,6 +261,10 @@ def calculate(snapshot: dict, as_of: date, parameters: dict | None = None) -> li
             blocked.append("missing_stock_snapshot")
         elif (as_of - day(stock["as_of"])).days > 1:
             warnings.append("stale_stock_snapshot")
+        if stock and quality.get("origin") == "partner_workbook":
+            max_age = int(quality.get("stock_max_age_days", 1))
+            if (as_of - day(stock["as_of"])).days > max_age:
+                blocked.append("stale_partner_stock_snapshot")
         available = (
             max(ZERO, number(stock["quantity"]) - number(stock.get("reserved"))) if stock else ZERO
         )

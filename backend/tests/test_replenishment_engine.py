@@ -91,6 +91,37 @@ def test_baseline_and_each_input_changes_result():
     assert quantity(growth) == 336
 
 
+def test_partner_missing_conditions_block_even_with_valid_numeric_inputs():
+    data = snapshot()
+    data["products"][0]["data_quality"] = {
+        "origin": "partner_workbook",
+        "status": "blocked",
+        "reasons": ["unconfirmed_purchase_unit"],
+    }
+    result = calculate(data, AS_OF)[0]
+    assert result["status"] == "blocked"
+    assert "unconfirmed_purchase_unit" in result["details"]["warnings"]
+
+
+def test_partner_historical_stock_cannot_authorize_order():
+    data = snapshot()
+    data["products"][0]["data_quality"] = {"origin": "partner_workbook", "status": "limited"}
+    data["stocks"][0]["as_of"] = (AS_OF - timedelta(days=30)).isoformat()
+    result = calculate(data, AS_OF)[0]
+    assert result["status"] == "blocked"
+    assert "stale_partner_stock_snapshot" in result["details"]["warnings"]
+
+
+def test_partner_coverage_ignores_old_isolated_return():
+    data = snapshot()
+    data["products"][0]["data_quality"] = {"history_start": "2026-02-01"}
+    before = calculate(data, AS_OF)[0]
+    data["sales"].append({"product_id": PRODUCT, "date": "2025-01-01", "quantity": "-50"})
+    after = calculate(data, AS_OF)[0]
+    assert after["recommended_quantity"] == before["recommended_quantity"]
+    assert after["details"]["history"] == before["details"]["history"]
+
+
 def test_stockout_compensation_is_above_raw_forecast():
     data = snapshot()
     data["sales"] = [row for row in data["sales"] if row["date"] < "2026-05-18"]

@@ -59,10 +59,18 @@ class CatalogService:
         self.repository = repository
         self.exchange_service = exchange_service
 
-    async def list(self, kind, limit, offset, query, active):
+    async def list(self, kind, limit, offset, query, active, source_id=None, supplier_id=None):
+        if supplier_id is not None and kind != "products":
+            raise DomainError(
+                "Фильтр поставщика доступен только для товаров",
+                status_code=422,
+                code="invalid_catalog_filter",
+            )
         return [
             RESOURCES[kind].model_validate(r)
-            for r in await self.repository.list(kind, limit, offset, query, active)
+            for r in await self.repository.list(
+                kind, limit, offset, query, active, source_id, supplier_id
+            )
         ]
 
     async def get(self, kind, record_id):

@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
@@ -46,8 +46,10 @@ function OrderSkeleton({ detail = false }: { detail?: boolean }) {
 function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   const [params, setParams] = useSearchParams();
   const status = params.get("status") ?? "all";
-  const query = params.get("q") ?? "";
   const supplierId = params.get("supplier_id") ?? "";
+  const from = params.get("from");
+  const supplierReturn = from?.startsWith("/data/catalogs?") ? from : `/data/catalogs?${new URLSearchParams({ tab: "suppliers", id: supplierId ?? "" })}`;
+  const query = params.get("q") ?? "";
   const warehouseId = params.get("warehouse_id") ?? "";
   const offset = Math.max(0, Number(params.get("offset") ?? 0) || 0);
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
@@ -93,6 +95,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   return <div className={styles.page}>
     <PageHeader title="Заказы поставщикам" subtitle="Черновики, утверждение и экспорт для учётной системы" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
     <Card title="Список заказов" subtitle="Каждый заказ относится к одному поставщику и складу">
+      {supplierId ? <Alert tone="info" title="Заказы выбранного поставщика" action={<Button variant="ghost" size="sm" onClick={() => updateParam("supplier_id", "")}>Все поставщики</Button>}>Фильтр сохраняется при смене статуса и страницы. <Link to={supplierReturn}>Вернуться в справочник</Link></Alert> : null}
       <div className={styles.filters}>
         <Select label="Статус" value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></Select>
         <Select label="Поставщик" value={supplierId} onChange={(event) => updateParam("supplier_id", event.target.value)}><option value="">Все поставщики</option>{suppliers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}{supplierId && !suppliers.some((item) => item.id === supplierId) ? <option value={supplierId}>{supplierId}</option> : null}</Select>

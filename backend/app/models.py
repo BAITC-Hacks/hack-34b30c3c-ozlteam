@@ -6,6 +6,12 @@
 
 from app.Domains.Catalogs.models import Category, Product, Supplier, Warehouse
 from app.Domains.DataImports.models import ImportBatch
+from app.Domains.DataImports.models.packages import (
+    ImportIdentity,
+    ImportPackage,
+    ImportPackageChunk,
+    ImportPackageEvidence,
+)
 from app.Domains.Files.models.file import File
 from app.Domains.Integrations1C.models import ExchangeBatch, IntegrationSource
 from app.Domains.Inventory.models import (
@@ -42,6 +48,10 @@ __all__ = [
     "Supplier",
     "Warehouse",
     "ImportBatch",
+    "ImportIdentity",
+    "ImportPackage",
+    "ImportPackageChunk",
+    "ImportPackageEvidence",
     "ExchangeBatch",
     "IntegrationSource",
     "GrowthForecast",

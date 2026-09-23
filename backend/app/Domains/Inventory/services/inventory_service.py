@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.Domains.Inventory.business_time import BUSINESS_TIMEZONE
 from app.Domains.Inventory.repositories.inventory_repository import InventoryRepository
 from app.Domains.Inventory.resources.inventory import RESOURCES
 
@@ -67,10 +68,11 @@ class InventoryService:
         stocked = {s.product_id for s in stocks}
         product_data = []
         for p, category, supplier in products:
+            product_warnings = []
             if p.id not in stocked:
-                warnings.append(f"Нет остатка для товара {p.id}")
+                product_warnings.append("Нет остатка для товара")
             if category is None:
-                warnings.append(f"Нет категории для товара {p.id}; политика 7/7 дней")
+                product_warnings.append("Нет категории для товара; политика 7/7 дней")
             product_data.append(
                 dict(
                     id=str(p.id),
@@ -89,6 +91,8 @@ class InventoryService:
                     review_days=category.review_days if category else 7,
                     safety_days=category.safety_days if category else 7,
                     active=p.active,
+                    data_quality=getattr(p, "data_quality", {}),
+                    warnings=product_warnings,
                 )
             )
         return dict(
@@ -106,7 +110,7 @@ class InventoryService:
             stocks=[
                 dict(
                     product_id=str(s.product_id),
-                    as_of=s.as_of.date().isoformat(),
+                    as_of=s.as_of.astimezone(BUSINESS_TIMEZONE).date().isoformat(),
                     quantity=str(s.quantity),
                     reserved=str(s.reserved),
                 )
