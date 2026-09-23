@@ -330,41 +330,41 @@ export function DataSourcesPage() {
               <p>{t("Дополнительные", "Қосымша", "Optional")}: <code>{format.optional.map((field) => field.name).join(", ")}</code></p>
               <p>{localizedFormatNote(kind, format.note, t)}</p>
             </div>
-            <label>Файл
+            <label>{t("Файл", "Файл", "File")}
               <span className={styles.fileControl}>
-                <span className={styles.fileChoose}>Выбрать файл</span>
-                <span className={styles.fileName} aria-live="polite">{file?.name ?? "Файл не выбран"}</span>
-                <input ref={fileInputRef} type="file" aria-label="Выбрать файл" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+                <span className={styles.fileChoose}>{t("Выбрать файл", "Файл таңдау", "Choose file")}</span>
+                <span className={styles.fileName} aria-live="polite">{file?.name ?? t("Файл не выбран", "Файл таңдалмады", "No file selected")}</span>
+                <input ref={fileInputRef} type="file" aria-label={t("Выбрать файл", "Файл таңдау", "Choose file")} accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
               </span>
             </label>
-            <details className={styles.advanced}><summary>Дополнительные настройки</summary><div className={styles.advancedBody}>
+            <details className={styles.advanced}><summary>{t("Дополнительные настройки", "Қосымша баптаулар", "Advanced settings")}</summary><div className={styles.advancedBody}>
               <div className={styles.mappingEditor}>
-                <strong>Сопоставление колонок</strong>
-                <p className={styles.mappingHint}>Если заголовки файла уже совпадают с полями выше, оставьте список пустым. Если добавили хотя бы одну пару, перечислите <b>все колонки файла, которые хотите сохранить</b>: остальные сервер пропустит. Это переименование колонок, не сопоставление товаров.</p>
+                <strong>{t("Сопоставление колонок", "Бағандарды сәйкестендіру", "Column mapping")}</strong>
+                <p className={styles.mappingHint}>{t("Если заголовки файла уже совпадают с полями выше, оставьте список пустым. Если добавили хотя бы одну пару, перечислите все колонки файла, которые хотите сохранить: остальные сервер пропустит. Это переименование колонок, не сопоставление товаров.", "Файл бағандарының атауы жоғарыдағы өрістерге сәйкес келсе, тізімді бос қалдырыңыз. Бір жұп қоссаңыз, сақтағыңыз келетін барлық бағанды көрсетіңіз: қалғанын сервер өткізіп жібереді. Бұл тауарларды емес, бағандарды қайта атау.", "If file headers already match the fields above, leave this list empty. If you add a mapping pair, list every column you want to keep; the server skips the rest. This renames columns, it does not match products.")}</p>
                 {mappingRows.map((row) => <div className={styles.mappingRow} key={row.id}>
-                  <label>Заголовок в файле<input value={row.source} onChange={(event) => changeMapping(row.id, { source: event.target.value })} placeholder="Например, Код записи" /></label>
-                  <Select label="Поле результата" wrapperClassName={styles.selectField} value={row.target} onChange={(event) => changeMapping(row.id, { target: event.target.value })}><option value="">Выберите поле</option>{[...format.required, ...format.optional].map((field) => <option key={field.name} value={field.name}>{field.label}</option>)}</Select>
-                  <Button type="button" variant="ghost" size="sm" icon={<Trash2 size={15} />} aria-label={`Удалить сопоставление ${row.source || row.id}`} onClick={() => setMappingRows((rows) => rows.filter((item) => item.id !== row.id))}>Удалить</Button>
+                  <label>{t("Заголовок в файле", "Файлдағы баған атауы", "Header in file")}<input value={row.source} onChange={(event) => changeMapping(row.id, { source: event.target.value })} placeholder={t("Например, Код записи", "Мысалы, Жазба коды", "For example, Record code")} /></label>
+                  <Select label={t("Поле результата", "Нәтиже өрісі", "Output field")} wrapperClassName={styles.selectField} value={row.target} onChange={(event) => changeMapping(row.id, { target: event.target.value })}><option value="">{t("Выберите поле", "Өрісті таңдаңыз", "Choose field")}</option>{[...format.required, ...format.optional].map((field) => <option key={field.name} value={field.name}>{field.label}</option>)}</Select>
+                  <Button type="button" variant="ghost" size="sm" icon={<Trash2 size={15} />} aria-label={`${t("Удалить сопоставление", "Сәйкестендіруді жою", "Remove mapping")} ${row.source || row.id}`} onClick={() => setMappingRows((rows) => rows.filter((item) => item.id !== row.id))}>{t("Удалить", "Жою", "Remove")}</Button>
                 </div>)}
-                <Button type="button" variant="secondary" size="sm" icon={<Plus size={15} />} onClick={addMapping}>Добавить колонку</Button>
+                <Button type="button" variant="secondary" size="sm" icon={<Plus size={15} />} onClick={addMapping}>{t("Добавить колонку", "Баған қосу", "Add column")}</Button>
               </div>
-              <label className={styles.check}><input type="checkbox" checked={reverseSign} onChange={(event) => setReverseSign(event.target.checked)} />Продажи в файле записаны отрицательным количеством</label>
+              <label className={styles.check}><input type="checkbox" checked={reverseSign} onChange={(event) => setReverseSign(event.target.checked)} />{t("Продажи в файле записаны отрицательным количеством", "Файлдағы сатылымдар теріс мөлшермен жазылған", "Sales in the file use negative quantities")}</label>
             </div></details>
-            <Button type="submit" variant="primary" icon={<FileUp size={16} strokeWidth={1.8} />} loading={busy === "stage"} disabled={!sourceId || !file || busy !== null}>Загрузить и проверить</Button>
+            <Button type="submit" variant="primary" icon={<FileUp size={16} strokeWidth={1.8} />} loading={busy === "stage"} disabled={!sourceId || !file || busy !== null}>{t("Загрузить и проверить", "Жүктеп, тексеру", "Upload and check")}</Button>
           </form>
-          <p className={styles.hint}>Сначала загрузите категории, поставщиков, склады и товары; затем продажи, остатки и другие факты. До подтверждения рабочие данные не меняются.</p>
+          <p className={styles.hint}>{t("Сначала загрузите категории, поставщиков, склады и товары; затем продажи, остатки и другие факты. До подтверждения рабочие данные не меняются.", "Алдымен санаттарды, жеткізушілерді, қоймаларды және тауарларды; содан кейін сатылымдарды, қорларды және басқа фактілерді жүктеңіз. Растағанға дейін жұмыс деректері өзгермейді.", "Import categories, suppliers, warehouses and products first; then sales, stock and other facts. Working data does not change until you confirm.")}</p>
         </Card>
       </div>
       <ImportHistory batches={batches} sourceNames={sourceNames} onOpen={selectBatch} page={importPage} hasNext={importsHasNext} loading={loading} onPageChange={setImportPage} />
-      {batchId ? <Card title={detail ? `Проверка: ${detail.filename}` : "Проверка файла"} subtitle={detail ? `${kindName.get(detail.kind) ?? detail.kind} · ${detail.row_count} строк · версия источника ${detail.base_revision}` : "Загружаем результат"} actions={<Button variant="ghost" size="sm" onClick={() => selectBatch(null)}>Закрыть</Button>}>
-        {detailLoading && !detail ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем проверку" /> : null}
+      {batchId ? <Card title={detail ? `${t("Проверка", "Тексеру", "Check")}: ${detail.filename}` : t("Проверка файла", "Файлды тексеру", "File check")} subtitle={detail ? `${localizedKindName(detail.kind, t)} · ${detail.row_count} ${t("строк", "жол", "rows")} · ${t("версия источника", "дереккөз нұсқасы", "source version")} ${detail.base_revision}` : t("Загружаем результат", "Нәтиже жүктелуде", "Loading result")} actions={<Button variant="ghost" size="sm" onClick={() => selectBatch(null)}>{t("Закрыть", "Жабу", "Close")}</Button>}>
+        {detailLoading && !detail ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label={t("Загружаем проверку", "Тексеру жүктелуде", "Loading check")} /> : null}
         {detail ? <div className={styles.detail}>
-          <Badge tone={detail.status === "applied" ? "success" : detail.status === "invalid" ? "danger" : "warning"}>{statusName[detail.status] ?? detail.status}</Badge>
-          {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue, t)}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
-          {detail.preview.length ? <div><h4>Предпросмотр: первые {detail.preview.length} из {detail.row_count} строк</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>ID источника</Th><Th>Версия</Th><Th>Данные</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
-          {detail.status === "applied" ? <p className={styles.hint}>Данные применены {formatDate(detail.applied_at, locale)}. Полноту всего источника смотрите в таблице выше.</p> : null}
-          {detail.status === "validated" ? <Button variant="dark" icon={<Check size={16} strokeWidth={1.8} />} onClick={() => setApplyOpen(true)}>Применить проверенный файл</Button> : null}
-          {detail.status === "invalid" ? <p className={styles.hint}>Этот файл нельзя применить. Исправьте строки и загрузите новую версию.</p> : null}
+          <Badge tone={detail.status === "applied" ? "success" : detail.status === "invalid" ? "danger" : "warning"}>{localizedStatusName(detail.status, t)}</Badge>
+          {detail.errors.length ? <div><h4>{t("Ошибки", "Қателер", "Errors")} ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue, t)}</li>)}</ul>{detail.errors.length > 20 ? <p>{t("Показаны первые 20 ошибок.", "Алғашқы 20 қате көрсетілген.", "Showing the first 20 errors.")}</p> : null}</div> : null}
+          {detail.preview.length ? <div><h4>{t("Предпросмотр: первые", "Алдын ала қарау: алғашқы", "Preview: first")} {detail.preview.length} {t("из", "/", "of")} {detail.row_count} {t("строк", "жол", "rows")}</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>{t("ID источника", "Дереккөз ID-і", "Source ID")}</Th><Th>{t("Версия", "Нұсқа", "Version")}</Th><Th>{t("Данные", "Деректер", "Data")}</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
+          {detail.status === "applied" ? <p className={styles.hint}>{t("Данные применены", "Деректер қолданылды", "Data applied")} {formatDate(detail.applied_at, locale)}. {t("Полноту всего источника смотрите в таблице выше.", "Дереккөздің толықтығын жоғарыдағы кестеден қараңыз.", "See the table above for overall source completeness.")}</p> : null}
+          {detail.status === "validated" ? <Button variant="dark" icon={<Check size={16} strokeWidth={1.8} />} onClick={() => setApplyOpen(true)}>{t("Применить проверенный файл", "Тексерілген файлды қолдану", "Apply validated file")}</Button> : null}
+          {detail.status === "invalid" ? <p className={styles.hint}>{t("Этот файл нельзя применить. Исправьте строки и загрузите новую версию.", "Бұл файлды қолдануға болмайды. Жолдарды түзетіп, жаңа нұсқасын жүктеңіз.", "This file cannot be applied. Fix the rows and upload a new version.")}</p> : null}
         </div> : null}
       </Card> : null}
     </>}
