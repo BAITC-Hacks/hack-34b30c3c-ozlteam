@@ -1,4 +1,4 @@
-import { BookOpen, Boxes, ClipboardList, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Plug, ShoppingCart, Sparkles } from "lucide-react";
+import { BookOpen, Boxes, ClipboardList, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Plug, ShoppingCart, Sparkles, Truck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -89,6 +89,7 @@ export function AppLayout() {
     { to: "/recommendations", label: t("Расчёты", "Есептеулер", "Calculations"), icon: <ClipboardList size={17} strokeWidth={1.8} /> },
     { to: "/orders", label: t("Заказы поставщикам", "Жеткізушілерге тапсырыстар", "Supplier orders"), mobileLabel: t("Заказы", "Тапсырыстар", "Orders"), icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
     { to: "/inventory", label: t("Запасы", "Қорлар", "Inventory"), icon: <Boxes size={17} strokeWidth={1.8} /> },
+    { to: "/shipments", label: t("Поставки", "Жеткізілімдер", "Deliveries"), icon: <Truck size={17} strokeWidth={1.8} /> },
     { to: "/assistant", label: t("ИИ Помощник", "ЖИ көмекшісі", "AI assistant"), icon: <Sparkles size={17} strokeWidth={1.8} /> },
   ];
   const data: NavItem[] = [
@@ -190,7 +191,7 @@ export function AppLayout() {
 
       <MobileNav
         primary={work.slice(0, 3)}
-        rest={[work[3], ...data]}
+        rest={[work[3], work[4], ...data]}
         userName={user?.full_name ?? t("Гость", "Қонақ", "Guest")}
         userEmail={user?.email ?? ""}
         initials={user ? initials(user.full_name) : "—"}

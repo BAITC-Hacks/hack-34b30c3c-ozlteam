@@ -83,7 +83,7 @@ export function RoutesPage() {
         title={t("Маршруты", "Бағыттар", "Routes")}
         subtitle={t("Где сейчас машины, что с ними происходит и что с этим делать.", "Көліктер қайда, не болып жатыр және не істеу керек.", "Where vehicles are, what is happening, and what to do.")}
         actions={
-          <><Link to="/routes/demo" state={{ from: location.pathname + location.search + location.hash }}>{t("Демо поставки с ИИ", "AI жеткізу демосы", "AI delivery demo")}</Link>
+          <><Link to="/shipments" state={{ from: location.pathname + location.search + location.hash }}>{t("Поставки на карте", "Картадағы жеткізілімдер", "Delivery map")}</Link>
           <Button
             variant="dark"
             icon={<Plus size={15} strokeWidth={2} />}

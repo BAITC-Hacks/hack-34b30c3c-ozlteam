@@ -11,15 +11,12 @@
   align-items: start;
 }
 
-.scenarioHead, .next, .mapTitle {
+.mapTitle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
 }
-
-.scenarioHead > div { min-width: 0; }
-.scenarioHead > button { flex-shrink: 0; }
 
 .note, .mapNote {
   color: var(--mut);
@@ -27,40 +24,11 @@
   line-height: var(--lh-body);
 }
 
-.scenarioHead .note { margin-top: var(--sp-2); }
-
-.stages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3) var(--sp-6);
-  padding: var(--sp-6) 0;
-  list-style: none;
-}
-
-.stages li {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--mut);
-  font-size: var(--fs-xs);
-}
-
-.stages li > span {
-  display: grid;
-  place-items: center;
-  width: var(--ctl-xs);
-  height: var(--ctl-xs);
-  border-radius: var(--r-pill);
-  background: var(--sunken);
-  font-variant-numeric: tabular-nums;
-}
-
-.stages .reached { color: var(--ink); }
-.stages .reached > span { background: var(--ac-soft); color: var(--ac-ink); }
-.stages li[aria-current="step"] { font-weight: 600; }
-.stages li[aria-current="step"] > span { background: var(--stamp); color: var(--panel); }
-
-.next { padding-top: var(--sp-3); border-top: 1px solid var(--hair); }
+.source { color: var(--mut); font-size: var(--fs-xs); }
+.source summary { cursor: pointer; min-height: var(--ctl); }
+.source p { margin-bottom: var(--sp-3); }
+.source select { margin-left: var(--sp-2); padding: var(--sp-2); border: 0; border-radius: var(--r-xs); background: var(--sunken); color: var(--ink); font: inherit; }
+.source :focus-visible { outline: 2px solid var(--ac); outline-offset: var(--sp-1); }
 
 .facts {
   display: grid;
@@ -98,11 +66,7 @@
 }
 
 @media (max-width: 600px) {
-  .scenarioHead { align-items: start; }
-  .next { align-items: stretch; flex-direction: column; }
   .facts { grid-template-columns: minmax(0, 1fr); }
-  .stages { gap: var(--sp-3); }
-  .stages li { flex-basis: calc(50% - var(--sp-2)); }
   .form > button { width: 100%; white-space: normal; }
   .suggestions > button, .links a { min-height: var(--touch); }
   .mapTitle, .mapNote { padding-left: var(--sp-4); padding-right: var(--sp-4); }

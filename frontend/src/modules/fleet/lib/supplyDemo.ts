@@ -22,7 +22,7 @@ const ITEMS = [
   { name: "Кабель ВВГнг", unit: "м", ordered: 1000, initialStock: 600, dailyDemand: 100 },
 ];
 const BASE_TRIP = buildTrip({
-  id: "DEMO-REIS-001", orderId: "DEMO-IEK-001", clientId: "demo-ekt",
+  id: "KZ-1201", orderId: "ЗП-001", clientId: "demo-ekt",
   vehicleId: "veh-01", driverId: "drv-01", route: ["shymkent", "taraz", "almaty"],
   departAt: START, status: "planned",
   cargo: { name: "Пополнение Электрокомплекта: автоматы, УЗО, кабель", class: "general", weightT: 2, volumeM3: 8, pallets: 4, value: 0 },
@@ -59,7 +59,7 @@ export function getSupplyDemo(stage: DemoStage, progress = 0.15): SupplyDemoSnap
     runtime: {
       ...INITIAL.runtime, minutes: elapsedHours * 60, km: trip.plan.km * ratio,
       point: at.point, heading: at.heading, delay: delayHours * 60,
-      halted: stage === "delayed" || arrived, haltReason: stage === "delayed" ? "Демо: задержка на 2 дня" : arrived ? "На складе" : undefined,
+      halted: stage === "delayed" || arrived, haltReason: stage === "delayed" ? "Задержка на 2 дня" : arrived ? "На складе" : undefined,
       finished: arrived, telemetry: { ...INITIAL.runtime.telemetry, speed: stage === "moving" ? 65 : 0 },
     },
   };
@@ -75,7 +75,7 @@ export function getSupplyDemo(stage: DemoStage, progress = 0.15): SupplyDemoSnap
   });
   return {
     stage, stageLabel: DEMO_STAGES.find((item) => item.id === stage)!.label,
-    orderId: BASE_TRIP.orderId!, supplier: "IEK (демо)", warehouse: "Электрокомплект, Алматы (демо)",
+    orderId: BASE_TRIP.orderId!, supplier: "IEK", warehouse: "Электрокомплект, Алматы",
     trip, sim, eta: new Date(Date.parse(START) + (PLANNED_HOURS + delayHours) * 3_600_000).toISOString(),
     delayHours, elapsedHours, items,
     riskCount: stage === "received" ? 0 : items.filter((item) => item.shortage > 0).length,

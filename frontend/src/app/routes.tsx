@@ -4,7 +4,7 @@ import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
 import { CatalogsPage } from "../modules/catalogs";
 import { DataSourcesPage, RestIntegrationsPage } from "../modules/data";
-import { RoutesPage, SupplyDemoPage } from "../modules/fleet";
+import { RoutesPage, ShipmentsPage } from "../modules/fleet";
 import { InventoryPage } from "../modules/inventory";
 import { NotesPage } from "../modules/notes";
 import { OrdersPage } from "../modules/orders";
@@ -62,12 +62,12 @@ export const router = createBrowserRouter([
       },
       { path: "notes", element: <NotesPage /> },
       { path: "assistant", element: <AssistantPage /> },
-      { path: "shipments", element: <Placeholder title="Отправления" description="Раздел пока недоступен." /> },
+      { path: "shipments", element: <ShipmentsPage /> },
       { path: "documents", element: <Placeholder title="Документы" description="Раздел пока недоступен." /> },
       { path: "receiving", element: <Placeholder title="Приёмка" description="Раздел пока недоступен." /> },
       { path: "warehouse", element: <Navigate to="/inventory" replace /> },
       { path: "routes", element: <RoutesPage /> },
-      { path: "routes/demo", element: <SupplyDemoPage /> },
+      { path: "routes/demo", element: <Navigate to="/shipments" replace /> },
       { path: "clients", element: <Placeholder title="Клиенты" description="Раздел пока недоступен." /> },
       { path: "carriers", element: <Placeholder title="Перевозчики" description="Раздел пока недоступен." /> },
       { path: "ui-kit", element: <UiKitPage /> },
