@@ -26,6 +26,7 @@ function Loading({ label }: { label: string }) { return <div className={styles.s
 export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: boolean; onOpenFull?: () => void }) {
   const [offset, setOffset] = useState(0);
   const [dismissedHistoryErrorAt, setDismissedHistoryErrorAt] = useState(0);
+  const [dismissedError, setDismissedError] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const modalId = useId();
@@ -51,6 +52,8 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
   const initialLoading = !!state.activeId && conversation.isPending;
   const empty = !initialLoading && !chat?.messages.length;
   const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
+  useEffect(() => { if (!state.error) setDismissedError(""); }, [state.error]);
+  const resultErrorVisible = !!state.error && state.error !== dismissedError;
   async function send(text: string) {
     await workspace.send(text);
   }
@@ -129,8 +132,7 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
       {state.busy ? <p className={styles.note} role="status">Запрос выполняется. Результат ещё не подтверждён сервером.</p> : null}
       <div ref={tail} />
     </div>
-    {historyErrorVisible ? <Alert className={styles.historyNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.retryHistory} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : null}
-    {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
+    {historyErrorVisible ? <Alert className={styles.statusNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.noticeAction} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : resultErrorVisible ? <Alert className={styles.statusNotice} tone="danger" onDismiss={() => setDismissedError(state.error)} dismissLabel="Закрыть сообщение об ошибке диалога">Не удалось получить результат: {state.error} <button className={styles.noticeAction} type="button" disabled={state.busy} onClick={() => { if (state.retry) void workspace.send("", true); else void conversation.refetch(); }}>{state.retry ? "Повторить вопрос" : "Обновить диалог"}</button></Alert> : null}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
       <textarea value={question} onChange={(event) => workspace.setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>
