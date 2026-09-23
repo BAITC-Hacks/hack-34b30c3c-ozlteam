@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { tokenStore } from "../../../shared/api/client";
 import { fetchMe, login as loginRequest, logout as logoutRequest } from "../api/auth";
@@ -28,8 +29,16 @@ export function useLogin() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
   return useMutation({
     mutationFn: logoutRequest,
-    onSettled: () => queryClient.clear(),
+    onSettled: () => {
+      queryClient.clear();
+      void navigate("/login", {
+        replace: true,
+        state: { from: `${location.pathname}${location.search}${location.hash}` },
+      });
+    },
   });
 }
