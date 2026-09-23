@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, ErrorState, Modal, Table, Td, Th, Tr } from "../../../shared/ui";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import { applyPackage, getPackage, listPackages, retryPackage } from "../api/packages";
 import type { ImportPackage, PackagePage, PackageStatus } from "../api/packages";
 import type { Source } from "../types";
@@ -9,12 +10,14 @@ import { PackageImportForm } from "./PackageImportForm";
 import { PackageReadiness, PackageSkeleton } from "./PackageReadiness";
 import styles from "./PackageImports.module.css";
 
-const statusName: Record<PackageStatus, string> = { queued: "В очереди", parsing: "Проверяем файлы", validated: "Проверен, ожидает применения", applying: "Применяем данные", applied: "Применён", failed: "Не завершён" };
 const isRunning = (value: ImportPackage) => ["queued", "parsing", "applying"].includes(value.status);
-const dateText = (value: string) => new Date(value).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
-const errorText = (error: unknown) => error instanceof Error ? error.message : "Не удалось получить пакет. Попробуйте ещё раз.";
 
 export function PackageImportsPanel({ sources, onChanged }: { sources: Source[]; onChanged: () => void }) {
+  const { locale, t } = useI18n();
+  const numberLocale = locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU";
+  const statusName: Record<PackageStatus, string> = { queued: t("В очереди", "Кезекте", "Queued"), parsing: t("Проверяем файлы", "Файлдар тексерілуде", "Checking files"), validated: t("Проверен, ожидает применения", "Тексерілді, қолдануды күтуде", "Checked, awaiting application"), applying: t("Применяем данные", "Деректер қолданылуда", "Applying data"), applied: t("Применён", "Қолданылды", "Applied"), failed: t("Не завершён", "Аяқталмады", "Incomplete") };
+  const dateText = (value: string) => new Date(value).toLocaleString(numberLocale, { dateStyle: "short", timeStyle: "short" });
+  const errorText = (error: unknown) => error instanceof Error ? error.message : t("Не удалось получить пакет. Попробуйте ещё раз.", "Пакетті алу мүмкін болмады. Қайталап көріңіз.", "Could not load the package. Try again.");
   const [params, setParams] = useSearchParams();
   const packageId = params.get("package") ?? "";
   const rawOffset = Number(params.get("packages_offset") ?? 0);
@@ -42,7 +45,7 @@ export function PackageImportsPanel({ sources, onChanged }: { sources: Source[];
       .catch((caught: unknown) => { if (!controller.signal.aborted) setHistoryError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setHistoryLoading(false); });
     return () => controller.abort();
-  }, [offset, historyReload]);
+  }, [offset, historyReload, t]);
 
   useEffect(() => {
     setApplyOpen(false); setError(null); setValue(null);
@@ -68,7 +71,7 @@ export function PackageImportsPanel({ sources, onChanged }: { sources: Source[];
     }
     void poll();
     return () => { controller.abort(); if (timer !== undefined) window.clearTimeout(timer); };
-  }, [packageId, reload]);
+  }, [packageId, reload, t]);
 
   function select(id: string) {
     setParams((current) => {

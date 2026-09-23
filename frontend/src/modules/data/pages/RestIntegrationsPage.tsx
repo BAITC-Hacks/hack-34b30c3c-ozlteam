@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import { returnPath } from "../../../shared/navigation/returnPath";
 import {
   Alert,
@@ -27,12 +28,13 @@ import skeleton from "./DataSourcesPage.module.css";
 import styles from "./RestIntegrationsPage.module.css";
 
 function LoadingReports() {
+  const { t } = useI18n();
   return (
     <div
       className={skeleton.skeleton}
       role="status"
       aria-busy="true"
-      aria-label="Загружаем отчёты"
+      aria-label={t("Загружаем отчёты", "Есептер жүктелуде", "Loading reports")}
     >
       <div aria-hidden="true">
         <i />
@@ -49,6 +51,8 @@ function LoadingReports() {
 }
 
 export function RestIntegrationsPage() {
+  const { locale, t } = useI18n();
+  const dateLocale = locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU";
   const { data: user, isPending: userPending } = useCurrentUser();
   const canRead = Boolean(user?.permissions.includes("integrations.read"));
   const canWrite = Boolean(user?.permissions.includes("integrations.write"));
@@ -153,7 +157,7 @@ export function RestIntegrationsPage() {
   }
   const error = sources.error ?? kinds.error;
   const errorCopy = friendlyReportError(
-    error instanceof Error ? error.message : "Не удалось открыть отчёты",
+    error instanceof Error ? error.message : t("Не удалось открыть отчёты", "Есептерді ашу мүмкін болмады", "Could not open reports"),
   );
   const loading =
     userPending || (canRead && (sources.isPending || kinds.isPending));
@@ -161,11 +165,11 @@ export function RestIntegrationsPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Данные из 1С"
+        title={t("Данные из 1С", "1С деректері", "1C data")}
         subtitle={
           selection
-            ? "Подключите отчёт и проверьте данные перед загрузкой"
-            : "Ваши отчёты для расчёта закупок"
+            ? t("Подключите отчёт и проверьте данные перед загрузкой", "Есепті қосып, жүктемес бұрын деректерді тексеріңіз", "Connect a report and check its data before import")
+            : t("Ваши отчёты для расчёта закупок", "Сатып алуды есептеуге арналған есептеріңіз", "Your reports for purchasing calculations")
         }
         actions={
           <Button
@@ -177,15 +181,15 @@ export function RestIntegrationsPage() {
               selection ? selectReport(null) : navigate(back, { replace: true })
             }
           >
-            {selection ? "К отчётам" : "К источникам"}
+            {selection ? t("К отчётам", "Есептерге", "To reports") : t("К источникам", "Дереккөздерге", "To sources")}
           </Button>
         }
       />
       {loading ? (
         <LoadingReports />
       ) : !canRead ? (
-        <Alert tone="warning" title="Нужен доступ к данным">
-          Попросите администратора открыть вам раздел интеграции с 1С.
+        <Alert tone="warning" title={t("Нужен доступ к данным", "Деректерге қолжетімділік қажет", "Data access required")}>
+          {t("Попросите администратора открыть вам раздел интеграции с 1С.", "Әкімшіден 1С интеграция бөліміне қолжетімділік беруді сұраңыз.", "Ask an administrator to give you access to 1C integration.")}
         </Alert>
       ) : error ? (
         <Alert
@@ -199,7 +203,7 @@ export function RestIntegrationsPage() {
                 void kinds.refetch();
               }}
             >
-              Повторить
+              {t("Повторить", "Қайталау", "Retry")}
             </Button>
           }
         >
@@ -214,8 +218,8 @@ export function RestIntegrationsPage() {
                 <strong>{source.name}</strong>
                 <span>
                   {source.synced_at
-                    ? `Последняя загрузка: ${new Date(source.synced_at).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" })}`
-                    : "Данные ещё не загружались"}
+                    ? `${t("Последняя загрузка", "Соңғы жүктеме", "Last import")}: ${new Date(source.synced_at).toLocaleString(dateLocale, { dateStyle: "short", timeStyle: "short" })}`
+                    : t("Данные ещё не загружались", "Деректер әлі жүктелмеген", "No data imported yet")}
                 </span>
               </div>
               <Button
@@ -224,37 +228,36 @@ export function RestIntegrationsPage() {
                 disabled={busy}
                 onClick={openSources}
               >
-                Сменить
+                {t("Сменить", "Ауыстыру", "Change")}
               </Button>
             </div>
           ) : sources.data?.length ? (
             <Alert
               tone="warning"
-              title="Выберите вашу базу 1С"
+              title={t("Выберите вашу базу 1С", "1С базаңызды таңдаңыз", "Choose your 1C database")}
               action={
                 <Button variant="secondary" onClick={openSources}>
-                  Выбрать базу
+                  {t("Выбрать базу", "Базаны таңдау", "Choose database")}
                 </Button>
               }
             >
-              Выбранная база больше недоступна.
+              {t("Выбранная база больше недоступна.", "Таңдалған база енді қолжетімсіз.", "The selected database is no longer available.")}
             </Alert>
           ) : (
             <Card
-              title="Подключите вашу 1С"
-              subtitle="Добавьте базу, из которой будете загружать отчёты"
+              title={t("Подключите вашу 1С", "1С жүйесін қосыңыз", "Connect your 1C")}
+              subtitle={t("Добавьте базу, из которой будете загружать отчёты", "Есептер жүктелетін базаны қосыңыз", "Add the database you will import reports from")}
             >
               <div className={styles.empty}>
                 <p>
-                  Настройте подключение один раз. Затем достаточно выбрать отчёт
-                  и загрузить свежие данные.
+                  {t("Настройте подключение один раз. Затем достаточно выбрать отчёт и загрузить свежие данные.", "Қосылымды бір рет баптаңыз. Кейін есепті таңдап, жаңа деректерді жүктеу жеткілікті.", "Set up the connection once. Then choose a report and import fresh data.")}
                 </p>
                 <Button
                   variant="dark"
                   disabled={!canWrite}
                   onClick={openSources}
                 >
-                  Добавить базу 1С
+                  {t("Добавить базу 1С", "1С базасын қосу", "Add 1C database")}
                 </Button>
               </div>
             </Card>
@@ -266,17 +269,17 @@ export function RestIntegrationsPage() {
             ) : reports.error ? (
               <Alert
                 tone="danger"
-                title="Не удалось открыть список отчётов"
+                title={t("Не удалось открыть список отчётов", "Есептер тізімін ашу мүмкін болмады", "Could not open report list")}
                 action={
                   <Button
                     variant="secondary"
                     onClick={() => void reports.refetch()}
                   >
-                    Повторить
+                    {t("Повторить", "Қайталау", "Retry")}
                   </Button>
                 }
               >
-                Проверьте соединение и попробуйте ещё раз.
+                {t("Проверьте соединение и попробуйте ещё раз.", "Қосылымды тексеріп, қайталап көріңіз.", "Check the connection and try again.")}
               </Alert>
             ) : selection && kinds.data?.length ? (
               <div className={styles.editor}>
@@ -300,15 +303,15 @@ export function RestIntegrationsPage() {
                   />
                 ) : (
                   <EmptyState
-                    title="Отчёт не найден"
-                    text="Вернитесь к списку и выберите другой отчёт."
+                    title={t("Отчёт не найден", "Есеп табылмады", "Report not found")}
+                    text={t("Вернитесь к списку и выберите другой отчёт.", "Тізімге оралып, басқа есепті таңдаңыз.", "Return to the list and choose another report.")}
                   />
                 )}
               </div>
             ) : (
               <>
                 <div className={styles.listHeader}>
-                  <h2>Ваши отчёты</h2>
+                  <h2>{t("Ваши отчёты", "Есептеріңіз", "Your reports")}</h2>
                   {reports.data?.length ? (
                     <Button
                       variant="dark"
@@ -316,7 +319,7 @@ export function RestIntegrationsPage() {
                       disabled={!canWrite}
                       onClick={() => selectReport("new")}
                     >
-                      Добавить отчёт
+                      {t("Добавить отчёт", "Есеп қосу", "Add report")}
                     </Button>
                   ) : null}
                 </div>
@@ -328,7 +331,7 @@ export function RestIntegrationsPage() {
                         type="button"
                         key={report.id}
                         onClick={() => selectReport(report.id)}
-                        aria-label={`Открыть отчёт «${report.name}»`}
+                        aria-label={`${t("Открыть отчёт", "Есепті ашу", "Open report")} «${report.name}»`}
                       >
                         <span className={styles.reportIcon}>
                           <FileText
@@ -339,8 +342,8 @@ export function RestIntegrationsPage() {
                         </span>
                         <span className={styles.reportCopy}>
                           <strong>{report.name}</strong>
-                          <span>{reportKindTitle(report.kind)}</span>
-                          <small>{reportKindDescription(report.kind)}</small>
+                          <span>{reportKindTitle(report.kind, locale)}</span>
+                          <small>{reportKindDescription(report.kind, locale)}</small>
                         </span>
                         <ArrowRight
                           size={18}
@@ -352,14 +355,12 @@ export function RestIntegrationsPage() {
                   </div>
                 ) : (
                   <Card
-                    title="Добавьте первый отчёт"
-                    subtitle="Например, остатки товаров или отгрузки за период"
+                    title={t("Добавьте первый отчёт", "Алғашқы есепті қосыңыз", "Add your first report")}
+                    subtitle={t("Например, остатки товаров или отгрузки за период", "Мысалы, тауар қорлары немесе кезеңдегі жөнелтулер", "For example, stock balances or shipments for a period")}
                   >
                     <div className={styles.empty}>
                       <p>
-                        Выберите данные, укажите ссылку на отчёт и проверьте
-                        результат. Ссылку можно получить у специалиста, который
-                        обслуживает вашу 1С.
+                        {t("Выберите данные, укажите ссылку на отчёт и проверьте результат. Ссылку можно получить у специалиста, который обслуживает вашу 1С.", "Деректерді таңдап, есеп сілтемесін көрсетіңіз және нәтижені тексеріңіз. Сілтемені 1С жүйесіне қызмет көрсететін маманнан алуға болады.", "Choose the data, enter the report link and check the result. Your 1C specialist can provide the link.")}
                       </p>
                       <Button
                         variant="dark"
@@ -367,14 +368,13 @@ export function RestIntegrationsPage() {
                         disabled={!canWrite}
                         onClick={() => selectReport("new")}
                       >
-                        Добавить отчёт
+                        {t("Добавить отчёт", "Есеп қосу", "Add report")}
                       </Button>
                     </div>
                   </Card>
                 )}
                 <p className={styles.footnote}>
-                  Перед обновлением вы увидите полученные данные и сможете их
-                  проверить.
+                  {t("Перед обновлением вы увидите полученные данные и сможете их проверить.", "Жаңартудан бұрын алынған деректерді көріп, тексере аласыз.", "You can review the received data before updating.")}
                 </p>
               </>
             ))}
@@ -383,7 +383,7 @@ export function RestIntegrationsPage() {
 
       <Modal
         id="create-rest-source"
-        title={sources.data?.length ? "Ваша база 1С" : "Добавить базу 1С"}
+        title={sources.data?.length ? t("Ваша база 1С", "1С базаңыз", "Your 1C database") : t("Добавить базу 1С", "1С базасын қосу", "Add 1C database")}
         open={sourceOpen}
         onOpenChange={(open) => {
           if (!addSource.isPending) setSourceOpen(open);
@@ -395,7 +395,7 @@ export function RestIntegrationsPage() {
         <div className={styles.modalBody}>
           {sources.data?.length ? (
             <Select
-              label="Выберите базу"
+              label={t("Выберите базу", "Базаны таңдаңыз", "Choose database")}
               value={source?.id ?? ""}
               disabled={addSource.isPending}
               onChange={(event) => {
@@ -404,7 +404,7 @@ export function RestIntegrationsPage() {
               }}
             >
               <option value="" disabled>
-                Выберите базу
+                {t("Выберите базу", "Базаны таңдаңыз", "Choose database")}
               </option>
               {sources.data.map((item) => (
                 <option value={item.id} key={item.id}>
@@ -423,19 +423,18 @@ export function RestIntegrationsPage() {
               }}
             >
               {addSource.error ? (
-                <Alert tone="danger" title="Не удалось добавить базу">
-                  Попробуйте ещё раз. Если ошибка повторяется, обратитесь к
-                  администратору.
+                <Alert tone="danger" title={t("Не удалось добавить базу", "Базаны қосу мүмкін болмады", "Could not add database")}>
+                  {t("Попробуйте ещё раз. Если ошибка повторяется, обратитесь к администратору.", "Қайталап көріңіз. Қате қайталанса, әкімшіге хабарласыңыз.", "Try again. If the error persists, contact an administrator.")}
                 </Alert>
               ) : null}
               <Field
                 label={
                   sources.data?.length
-                    ? "Или добавьте другую базу"
-                    : "Как называется ваша база?"
+                    ? t("Или добавьте другую базу", "Немесе басқа база қосыңыз", "Or add another database")
+                    : t("Как называется ваша база?", "Базаңыз қалай аталады?", "What is your database called?")
                 }
-                placeholder="Например, 1С Электрокомплект"
-                hint="Название поможет отличать эту базу от других."
+                placeholder={t("Например, 1С Электрокомплект", "Мысалы, 1С Электрокомплект", "For example, 1C Elektrokomplekt")}
+                hint={t("Название поможет отличать эту базу от других.", "Атауы бұл базаны басқалардан ажыратуға көмектеседі.", "A name helps distinguish this database from others.")}
                 value={sourceName}
                 required
                 maxLength={200}
@@ -448,7 +447,7 @@ export function RestIntegrationsPage() {
                 disabled={!sourceName.trim()}
                 loading={addSource.isPending}
               >
-                Добавить базу
+                {t("Добавить базу", "База қосу", "Add database")}
               </Button>
             </form>
           ) : null}
