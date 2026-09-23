@@ -64,25 +64,20 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
     <aside className={styles.sidebar} aria-label="Настройки диалога">
     <div className={styles.toolbar}>
       <span className={styles.iconAction}>
-        <button className={styles.iconActionButton} type="button" aria-label="История диалогов" aria-haspopup="dialog" aria-expanded={historyOpen} onClick={() => setHistoryOpen(true)}><History size={18} strokeWidth={1.8} /></button>
-        <span className={styles.actionTooltip} role="tooltip">История диалогов</span>
+        <button className={styles.iconActionButton} type="button" title="История диалогов" aria-label="История диалогов" aria-haspopup="dialog" aria-expanded={historyOpen} onClick={() => setHistoryOpen(true)}><History size={18} strokeWidth={1.8} /></button>
       </span>
-      <span className={styles.chatTitle}>{chat?.title ?? "Новый диалог"}</span>
+      <span className={styles.chatTitle} title={chat?.title ?? "Новый диалог"}>{chat?.title ?? "Новый диалог"}</span>
       <span className={styles.iconAction}>
-        <button className={styles.iconActionButton} type="button" aria-label="Контекст вопроса" aria-haspopup="dialog" aria-expanded={contextOpen} onClick={() => setContextOpen(true)}><SlidersHorizontal size={18} strokeWidth={1.8} /></button>
-        <span className={styles.actionTooltip} role="tooltip">Контекст вопроса</span>
+        <button className={styles.iconActionButton} type="button" title="Контекст вопроса" aria-label="Контекст вопроса" aria-haspopup="dialog" aria-expanded={contextOpen} onClick={() => setContextOpen(true)}><SlidersHorizontal size={18} strokeWidth={1.8} /></button>
       </span>
+      <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" title="Новый диалог" aria-label="Новый диалог" disabled={state.busy} onClick={() => void workspace.newConversation()}><Plus size={18} strokeWidth={1.8} /></button>
+      </span>
+      {state.activeId ? <span className={styles.iconAction}>
+        <button className={styles.iconActionButton} type="button" title="Обновить диалог" aria-label="Обновить диалог" disabled={state.busy} onClick={() => void conversation.refetch()}><RefreshCw size={17} strokeWidth={1.8} /></button>
+      </span> : null}
       {compact ? <span className={styles.iconAction}>
-        <button className={styles.iconActionButton} type="button" aria-label="Новый диалог" disabled={state.busy} onClick={() => void workspace.newConversation()}><Plus size={18} strokeWidth={1.8} /></button>
-        <span className={styles.actionTooltip} role="tooltip">Новый диалог</span>
-      </span> : <Button variant="secondary" icon={<Plus size={16} />} disabled={state.busy} onClick={() => void workspace.newConversation()}>Новый</Button>}
-      {state.activeId ? compact ? <span className={styles.iconAction}>
-        <button className={styles.iconActionButton} type="button" aria-label="Обновить диалог" disabled={state.busy} onClick={() => void conversation.refetch()}><RefreshCw size={17} strokeWidth={1.8} /></button>
-        <span className={styles.actionTooltip} role="tooltip">Обновить диалог</span>
-      </span> : <Button variant="ghost" icon={<RefreshCw size={15} />} disabled={state.busy} onClick={() => void conversation.refetch()}>Обновить</Button> : null}
-      {compact ? <span className={styles.iconAction}>
-        <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
-        <span className={styles.actionTooltip} role="tooltip">Открыть помощника</span>
+        <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} title="Открыть помощника" aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
       </span> : null}
     </div>
     <div className={styles.contextBar}>
