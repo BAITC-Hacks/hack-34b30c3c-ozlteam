@@ -7,6 +7,7 @@ import { getPackages, getWarehouses } from "../api/workspace";
 import type { AssistantContext, ContextKey } from "../api/workspace";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { NovaOrb } from "./NovaOrb";
+import { AssistantAnswer } from "./AssistantAnswer";
 import { ProposalCard, safeSourceUrl } from "./ProposalCard";
 import styles from "./Workspace.module.css";
 import hero from "../pages/AssistantPage.module.css";
@@ -24,8 +25,8 @@ function Loading({ label }: { label: string }) { return <div className={styles.s
 
 export function AssistantWorkspace({ compact = false, decorated = true }: { compact?: boolean; decorated?: boolean }) {
   const [offset, setOffset] = useState(0);
-  const [question, setQuestion] = useState("");
   const workspace = useWorkspace(offset);
+  const question = workspace.draft;
   const { state, update, conversation, conversations, assistants } = workspace;
   const location = useLocation();
   const tail = useRef<HTMLDivElement>(null);
@@ -46,8 +47,7 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
   const initialLoading = !!state.activeId && conversation.isPending;
   const empty = !initialLoading && !chat?.messages.length;
   async function send(text: string) {
-    const success = await workspace.send(text);
-    if (success) setQuestion((current) => current === text ? "" : current);
+    await workspace.send(text);
   }
   function setContext(key: ContextKey, value: string) { const context = { ...state.context }; if (value) context[key] = value; else delete context[key]; update({ context, allowData: false }); }
   return <div className={`${styles.workspace} ${compact ? styles.compact : ""}`}>
@@ -83,7 +83,7 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     <div className={`${styles.messages} ${empty && !compact && decorated ? hero.roomDecorated : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
       {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p><Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
-        {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small><p>{message.content}</p>
+        {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
           {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{tool.name}</b> · {tool.status}<p>{tool.summary}</p></li>)}</ul></details> : null}
           {message.sources.length ? <div className={styles.sources}><b>Источники</b>{message.sources.map((source, index) => { const url = safeSourceUrl(source.url); return url ? <Link key={index} to={url}>{source.title}</Link> : <span key={index}>{source.title} (ссылка недоступна)</span>; })}</div> : null}
         </article>)}
@@ -94,7 +94,7 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     </div>
     {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
-      <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
+      <textarea value={question} onChange={(event) => workspace.setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>
     </form>
     <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p>
