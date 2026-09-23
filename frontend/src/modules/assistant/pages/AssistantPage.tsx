@@ -85,12 +85,12 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Қамба" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
+      <PageHeader title="Помощник" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
 
       <div className={styles.room}>
         {empty ? (
           <div className={styles.welcome}>
-            <div className={styles.orbStage} aria-label="Қамба — визуализация ИИ-помощника">
+            <div className={styles.orbStage} aria-label="Визуализация ИИ-помощника">
               <NovaOrb variant="hero" />
             </div>
             <h2 className={styles.hello}>
@@ -110,7 +110,7 @@ export function AssistantPage() {
             ))}
             {asking ? (
               <p className={styles.thinking} role="status">
-                <Spinner size="sm" /> Қамба отвечает…
+                <Spinner size="sm" /> Помощник отвечает…
               </p>
             ) : null}
             <div ref={tail} />
@@ -138,7 +138,7 @@ export function AssistantPage() {
                 void send(question);
               }
             }}
-            placeholder="Спросите Қамба"
+            placeholder="Спросите помощника"
             rows={1}
             maxLength={4000}
             aria-label="Вопрос ассистенту"

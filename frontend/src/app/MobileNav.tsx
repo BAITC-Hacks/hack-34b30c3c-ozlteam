@@ -152,12 +152,12 @@ export function MobileNav({
           className={({ isActive }) =>
             isActive ? `${styles.cell} ${styles.assistantCell} ${styles.activeAssistantCell}` : `${styles.cell} ${styles.assistantCell}`
           }
-          aria-label="Қамба — ИИ-помощник по закупкам"
+          aria-label="Помощник по закупкам"
         >
           <span className={styles.assistantOrb} aria-hidden="true">
-            <NovaOrb variant="mini" size={96} />
+            <NovaOrb variant="mini" size={80} />
           </span>
-          <span className={styles.assistantLabel}>Қамба</span>
+          <span className={styles.assistantLabel}>Помощник</span>
         </NavLink>
         {primary.slice(2).map((item) => (
           <NavLink

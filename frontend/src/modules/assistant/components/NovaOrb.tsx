@@ -22,21 +22,21 @@ export function NovaOrb({ variant = "hero", size, className }: NovaOrbProps) {
       <svg viewBox="0 0 300 300" fill="none" focusable="false" className={styles.art}>
         <defs>
           <radialGradient id={`${prefix}-body`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(117 97) rotate(62) scale(182)">
-            <stop stopColor="#103B69" />
-            <stop offset=".42" stopColor="#082139" />
-            <stop offset=".76" stopColor="#07121F" />
-            <stop offset="1" stopColor="#03080E" />
+            <stop stopColor="#EFFAFF" />
+            <stop offset=".42" stopColor="#B9E4FF" />
+            <stop offset=".76" stopColor="#70B7F2" />
+            <stop offset="1" stopColor="#2877C8" />
           </radialGradient>
           <radialGradient id={`${prefix}-void`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(150 152) rotate(90) scale(95)">
-            <stop stopColor="#020912" />
-            <stop offset=".65" stopColor="#041322" />
-            <stop offset="1" stopColor="#0C3560" stopOpacity=".15" />
+            <stop stopColor="#DDF3FF" />
+            <stop offset=".65" stopColor="#A9DAFA" />
+            <stop offset="1" stopColor="#71BBF1" stopOpacity=".15" />
           </radialGradient>
           <radialGradient id={`${prefix}-shadow`} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(150 149) rotate(90) scale(99)">
-            <stop stopColor="#020912" stopOpacity=".87" />
-            <stop offset=".4" stopColor="#03111F" stopOpacity=".7" />
-            <stop offset=".72" stopColor="#071D33" stopOpacity=".2" />
-            <stop offset="1" stopColor="#071D33" stopOpacity="0" />
+            <stop stopColor="#4B9BDC" stopOpacity=".18" />
+            <stop offset=".4" stopColor="#247BD0" stopOpacity=".13" />
+            <stop offset=".72" stopColor="#2A75BD" stopOpacity=".08" />
+            <stop offset="1" stopColor="#2A75BD" stopOpacity="0" />
           </radialGradient>
           <linearGradient id={`${prefix}-iris`} x1="39" y1="77" x2="272" y2="222" gradientUnits="userSpaceOnUse">
             <stop stopColor="#1457C8" stopOpacity=".06" />
