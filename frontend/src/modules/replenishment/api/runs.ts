@@ -15,8 +15,8 @@ export function getCatalog(kind: "warehouses" | "categories" | "suppliers", sign
   return apiRequest(`${base}/catalogs/${kind}?limit=200&active=true`, { signal });
 }
 
-export function getRuns(signal?: AbortSignal): Promise<RunPage> {
-  return apiRequest(`${base}/replenishment/runs?limit=30`, { signal });
+export function getRuns(offset: number, signal?: AbortSignal): Promise<RunPage> {
+  return apiRequest(`${base}/replenishment/runs?limit=30&offset=${offset}`, { signal });
 }
 
 export function getRun(id: string, signal?: AbortSignal): Promise<Run> {
@@ -41,9 +41,9 @@ export function getJob(id: string, signal?: AbortSignal): Promise<JobStatus> {
   return apiRequest(`${base}/jobs/${id}`, { signal });
 }
 
-export function createOrders(recommendationIds: string[]): Promise<CreatedOrder[]> {
+export function createOrders(recommendationIds: string[], idempotencyKey: string): Promise<CreatedOrder[]> {
   return apiRequest(`${base}/orders/from-recommendations`, {
     method: "POST",
-    body: { recommendation_ids: recommendationIds, idempotency_key: crypto.randomUUID() },
+    body: { recommendation_ids: recommendationIds, idempotency_key: idempotencyKey },
   });
 }

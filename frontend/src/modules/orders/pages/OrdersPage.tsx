@@ -82,15 +82,16 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
         <label>Статус<select value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></select></label>
         <label>Поиск на странице<input type="search" value={query} onChange={(event) => updateParam("q", event.target.value)} placeholder="Поставщик, товар или номер" /></label>
       </div>
-      {loading ? <OrderSkeleton /> : error ? <Alert tone="danger" title="Не удалось загрузить заказы" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{error}</Alert> : visible.length ? <>
+      {loading ? <OrderSkeleton /> : error ? <Alert tone="danger" title="Не удалось загрузить заказы" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{error}</Alert> : <>
+        {visible.length ?
         <Table><thead><Tr><Th>Поставщик</Th><Th>Создан</Th><Th numeric>Позиций</Th><Th>Статус</Th><Th>Заказ</Th></Tr></thead><tbody>{visible.map((order) => <Tr key={order.id}>
           <Td><strong>{order.supplier_name}</strong><small className={styles.secondary}>Редакция {order.revision}</small></Td>
           <Td>{dateTime(order.created_at)}</Td><Td numeric>{order.lines.length}</Td>
           <Td><Badge tone={order.status === "approved" ? "success" : "warning"}>{order.status === "approved" ? "Утверждён" : "Черновик"}</Badge></Td>
           <Td><button type="button" className={styles.textButton} onClick={() => onOpen(order.id)}>Открыть<span className="srOnly"> заказ {order.id}</span></button></Td>
-        </Tr>)}</tbody></Table>
-        <div className={styles.pager}><span>Показаны {offset + 1}–{offset + orders.length}</span><div><Button variant="secondary" size="sm" disabled={offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - 20)))}>Назад</Button><Button variant="secondary" size="sm" disabled={orders.length < 20} onClick={() => updateParam("offset", String(offset + 20))}>Далее</Button></div></div>
-      </> : <EmptyState title={query ? "Совпадений нет" : "Заказов пока нет"} text={query ? "Попробуйте изменить поиск." : "Создайте черновики из рекомендаций после расчёта пополнения."} />}
+        </Tr>)}</tbody></Table> : <EmptyState title={query ? "Совпадений нет" : offset > 0 ? "На этой странице заказов нет" : "Заказов пока нет"} text={query ? "Попробуйте изменить поиск или вернитесь на предыдущую страницу." : offset > 0 ? "Вернитесь на предыдущую страницу." : "Создайте черновики из рекомендаций после расчёта пополнения."} />}
+        {orders.length > 0 || offset > 0 ? <div className={styles.pager}><span>{orders.length ? `Показаны ${offset + 1}–${offset + orders.length}` : "На этой странице заказов нет"}</span><div><Button variant="secondary" size="sm" disabled={offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - 20)))}>Назад</Button><Button variant="secondary" size="sm" disabled={orders.length < 20} onClick={() => updateParam("offset", String(offset + 20))}>Далее</Button></div></div> : null}
+      </>}
     </Card>
   </div>;
 }
@@ -173,7 +174,7 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
         {order.comment ? <p className={styles.comment}>{order.comment}</p> : null}
       </Card>
       <Card title="Позиции заказа" subtitle={order.status === "draft" ? "Количество можно изменить, указав причину" : "Утверждённый состав сохранён без изменений"}>
-        <div className={styles.lines}>{order.lines.map((line) => <LineEditor key={`${line.id}:${order.version}`} order={order} line={line} onSaved={(updated) => { setOrder(updated); setError(null); }} />)}</div>
+        <div className={styles.lines}>{order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { setOrder(updated); setError(null); }} />)}</div>
       </Card>
       {order.status === "draft" ? <Card title="Утверждение" subtitle="После утверждения заказ и его строки станут неизменяемыми">
         {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}

@@ -1,5 +1,5 @@
 import { ArrowRight, Check, ClipboardList, Play, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
@@ -17,6 +17,8 @@ const urgency = {
 } as const;
 
 const today = new Date().toLocaleDateString("en-CA");
+const historyLimit = 30;
+const orderAttemptStorage = "hackalem.order-attempt";
 
 function errorText(error: unknown): string {
   if (error instanceof ApiError && error.status === 403) return "У вашей роли нет права на это действие. Войдите как закупщик или администратор.";
@@ -51,10 +53,13 @@ export function RunsPage() {
   const [categories, setCategories] = useState<CatalogOption[]>([]);
   const [suppliers, setSuppliers] = useState<CatalogOption[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [runsTotal, setRunsTotal] = useState(0);
+  const [runsLoadedOffset, setRunsLoadedOffset] = useState<number | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [run, setRun] = useState<Run | null>(null);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [page, setPage] = useState<SavedRecommendationPage | null>(null);
+  const [pageLoadedKey, setPageLoadedKey] = useState("");
   const [detail, setDetail] = useState<SavedRecommendationDetail | null>(null);
   const [loadingRows, setLoadingRows] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -65,11 +70,16 @@ export function RunsPage() {
   const [asOf, setAsOf] = useState(today);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
+  const orderAttempt = useRef<{ signature: string; key: string } | null>(null);
 
-  const runId = params.get("run") ?? runs[0]?.id ?? null;
+  const historyOffset = Math.max(0, Math.floor(Number(params.get("history_offset") || "0") || 0));
+  const visibleRuns = runsLoadedOffset === historyOffset ? runs : [];
+  const runId = params.get("run") ?? visibleRuns[0]?.id ?? null;
   const recommendationId = params.get("recommendation");
   const offset = Math.max(0, Math.floor(Number(params.get("offset") || "0") || 0));
   const urgencyFilter = params.get("urgency") ?? "";
+  const pageKey = `${runId ?? ""}:${offset}:${urgencyFilter}`;
+  const visiblePage = pageLoadedKey === pageKey ? page : null;
   const supplierNames = useMemo(() => new Map(suppliers.map((item) => [item.id, item.name])), [suppliers]);
 
   function updateParams(changes: Record<string, string | null>) {
@@ -85,18 +95,25 @@ export function RunsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([getCatalog("warehouses", controller.signal), getCatalog("categories", controller.signal), getCatalog("suppliers", controller.signal), getRuns(controller.signal)])
-      .then(([nextWarehouses, nextCategories, nextSuppliers, nextRuns]) => {
+    Promise.all([getCatalog("warehouses", controller.signal), getCatalog("categories", controller.signal), getCatalog("suppliers", controller.signal)])
+      .then(([nextWarehouses, nextCategories, nextSuppliers]) => {
         setWarehouses(nextWarehouses);
         setCategories(nextCategories);
         setSuppliers(nextSuppliers);
-        setRuns(nextRuns.items);
         setWarehouseId((current) => current || nextWarehouses[0]?.id || "");
       })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setCatalogLoading(false); });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getRuns(historyOffset, controller.signal)
+      .then((next) => { setRuns(next.items); setRunsTotal(next.total); setRunsLoadedOffset(historyOffset); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); });
+    return () => controller.abort();
+  }, [historyOffset]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -129,11 +146,13 @@ export function RunsPage() {
     const controller = new AbortController();
     setLoadingRows(true);
     getRecommendations(runId, offset, urgencyFilter, controller.signal)
-      .then(setPage)
+      .then((next) => { setPage(next); setPageLoadedKey(pageKey); })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoadingRows(false); });
     return () => controller.abort();
-  }, [runId, run?.id, run?.status, offset, urgencyFilter]);
+  }, [runId, run?.id, run?.status, offset, urgencyFilter, pageKey]);
+
+  useEffect(() => { setSelected(new Set()); setPreviewOpen(false); }, [runId, urgencyFilter, offset]);
 
   useEffect(() => {
     if (!recommendationId) { setDetail(null); return; }
@@ -154,17 +173,34 @@ export function RunsPage() {
     try {
       const next = await createRun({ warehouse_id: warehouseId, category_id: categoryId || null, as_of: asOf, idempotency_key: crypto.randomUUID(), parameters: { history_days: 1095 } });
       setRuns((current) => [next, ...current.filter((item) => item.id !== next.id)]);
-      updateParams({ run: next.id, recommendation: null, offset: null, urgency: null });
+      setRunsTotal((current) => current + 1);
+      if (historyOffset !== 0) setRunsLoadedOffset(null);
+      updateParams({ history_offset: null, run: next.id, recommendation: null, offset: null, urgency: null });
     } catch (caught) { setError(errorText(caught)); }
     finally { setBusy(null); }
   }
 
   async function submitOrders() {
-    if (!selected.size) return;
+    if (!selected.size || !visiblePage || loadingRows) return;
+    const ids = visiblePage.items.filter((row) => selected.has(row.id) && isOrderable(row)).map((row) => row.id).sort();
+    if (!ids.length) return;
+    const signature = ids.join(",");
+    let attempt = orderAttempt.current;
+    if (!attempt || attempt.signature !== signature) {
+      try {
+        const saved: unknown = JSON.parse(sessionStorage.getItem(orderAttemptStorage) ?? "null");
+        if (saved && typeof saved === "object" && "signature" in saved && "key" in saved && saved.signature === signature && typeof saved.key === "string") attempt = { signature, key: saved.key };
+      } catch { /* Браузер может запретить sessionStorage. */ }
+      if (!attempt || attempt.signature !== signature) attempt = { signature, key: crypto.randomUUID() };
+      orderAttempt.current = attempt;
+      try { sessionStorage.setItem(orderAttemptStorage, JSON.stringify(attempt)); } catch { /* Ключ остаётся в памяти вкладки. */ }
+    }
     setBusy("orders");
     setError(null);
     try {
-      const orders = await createOrders([...selected]);
+      const orders = await createOrders(ids, attempt.key);
+      orderAttempt.current = null;
+      try { sessionStorage.removeItem(orderAttemptStorage); } catch { /* Хранилище недоступно. */ }
       setPreviewOpen(false);
       setSelected(new Set());
       if (orders[0]) navigate(`/orders?id=${encodeURIComponent(orders[0].id)}`);
@@ -172,7 +208,7 @@ export function RunsPage() {
     finally { setBusy(null); }
   }
 
-  const rows = page?.items ?? [];
+  const rows = visiblePage?.items ?? [];
   const grouped = useMemo(() => {
     const groups = new Map<string, SavedRecommendation[]>();
     for (const row of rows) {
@@ -197,10 +233,13 @@ export function RunsPage() {
         {!warehouses.length ? <p className={styles.note}>Склады пока не загружены. Для работы с реальными данными сначала примените источник 1С; демонстрационный расчёт доступен отдельно.</p> : null}
       </Card>
 
-      {runs.length ? <Card title="История расчётов" subtitle="Выберите сохранённый результат">
-        <div className={styles.runList}>{runs.map((item) => <button type="button" key={item.id} className={`${styles.runItem} ${runId === item.id ? styles.activeRun : ""}`} onClick={() => updateParams({ run: item.id, recommendation: null, offset: null })} aria-current={runId === item.id ? "true" : undefined}>
+      {runsTotal || historyOffset || runsLoadedOffset !== historyOffset ? <Card title="История расчётов" subtitle="Выберите сохранённый результат">
+        {runsLoadedOffset !== historyOffset ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем историю"><i /><i /><i /></div> : null}
+        <div className={styles.runList}>{visibleRuns.map((item) => <button type="button" key={item.id} className={`${styles.runItem} ${runId === item.id ? styles.activeRun : ""}`} onClick={() => updateParams({ run: item.id, recommendation: null, offset: null })} aria-current={runId === item.id ? "true" : undefined}>
           <span>{item.as_of} · {warehouses.find((warehouse) => warehouse.id === item.warehouse_id)?.name ?? "Склад"}</span><small>{runLabel(item)}</small>
         </button>)}</div>
+        {runsLoadedOffset === historyOffset && !visibleRuns.length ? <p className={styles.note}>На этой странице расчётов нет.</p> : null}
+        {runsTotal > historyLimit || historyOffset > 0 ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={historyOffset === 0 || runsLoadedOffset !== historyOffset} onClick={() => updateParams({ history_offset: String(Math.max(0, historyOffset - historyLimit)), run: null, recommendation: null, offset: null })}>Назад</Button><span>{visibleRuns.length ? `${historyOffset + 1}–${historyOffset + visibleRuns.length}` : `${historyOffset + 1}`} из {runsTotal}</span><Button variant="secondary" size="sm" disabled={historyOffset + historyLimit >= runsTotal || runsLoadedOffset !== historyOffset} onClick={() => updateParams({ history_offset: String(historyOffset + historyLimit), run: null, recommendation: null, offset: null })}>Далее</Button></div> : null}
       </Card> : <EmptyState title="Расчётов пока нет" text="После загрузки данных выберите склад и запустите первый расчёт." />}
 
       {run?.status === "queued" || run?.status === "running" ? <Card title="Расчёт выполняется" subtitle="Страница обновит результат автоматически"><div className={styles.steps} role="status" aria-live="polite">{job?.steps.length ? job.steps.map((step) => <span key={step.name}><Check size={14} strokeWidth={1.8} aria-hidden="true" className={step.state === "done" ? styles.stepDone : ""} />{step.name}</span>) : <span><RefreshCw size={14} strokeWidth={1.8} aria-hidden="true" />Готовим данные и прогноз</span>}</div></Card> : null}
@@ -208,24 +247,24 @@ export function RunsPage() {
       {run?.warnings.length ? <Alert tone="warning" title="Замечания к данным">{run.warnings.join(" · ")}</Alert> : null}
 
       {run?.status === "done" ? <>
-        <Card title="Рекомендации" subtitle={page ? `${page.total} позиций · расчёт ${run.as_of}` : "Загружаем результат"}>
+        <Card title="Рекомендации" subtitle={visiblePage ? `${visiblePage.total} позиций · расчёт ${run.as_of}` : "Загружаем результат"}>
           <div className={styles.listControls}>
             <label>Срочность<select value={urgencyFilter} onChange={(event) => updateParams({ urgency: event.target.value, offset: null, recommendation: null })}><option value="">Все</option><option value="critical">Критично</option><option value="high">Высокий</option><option value="normal">Планово</option><option value="none">Без заказа</option></select></label>
-            <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!selected.size || busy !== null} onClick={() => setPreviewOpen(true)}>Создать черновики ({selected.size})</Button>
+            <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!visiblePage || loadingRows || !selected.size || busy !== null} onClick={() => setPreviewOpen(true)}>Создать черновики ({visiblePage ? selected.size : 0})</Button>
           </div>
-          {loadingRows && !page ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем рекомендации"><i /><i /><i /><i /></div> : null}
-          {page && !rows.length ? <EmptyState title="Позиций нет" text="Для выбранного фильтра рекомендаций не найдено." /> : null}
+          {!visiblePage ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем рекомендации"><i /><i /><i /><i /></div> : null}
+          {visiblePage && !rows.length ? <EmptyState title="Позиций нет" text="Для выбранного фильтра рекомендаций не найдено." /> : null}
           {grouped.map(([supplierId, supplierRows]) => <section className={styles.group} key={supplierId} aria-label={supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? "Поставщик"}>
             <h3>{supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? `Поставщик ${supplierId.slice(0, 8)}`}</h3>
             <Table><thead><Tr><Th>Выбор</Th><Th>Товар</Th><Th>Статус</Th><Th numeric>Заказать</Th><Th>Обоснование</Th></Tr></thead><tbody>{supplierRows.map((row) => <Tr key={row.id}>
-              <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id)} disabled={!isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
+              <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id)} disabled={loadingRows || !isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
               <Td><button type="button" className={styles.productLink} onClick={() => updateParams({ recommendation: row.id })}>{row.name}</button><small className={styles.sku}>{row.sku}</small></Td>
               <Td><Badge tone={row.status === "blocked" ? "danger" : urgency[row.urgency].tone}>{row.status === "blocked" ? "Нет данных" : urgency[row.urgency].label}</Badge></Td>
               <Td numeric>{quantity(row.recommended_quantity)} {row.unit}</Td>
               <Td className={styles.explanation}>{row.explanation}</Td>
             </Tr>)}</tbody></Table>
           </section>)}
-          {page && page.total > page.limit ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={offset === 0 || loadingRows} onClick={() => updateParams({ offset: String(Math.max(0, offset - page.limit)), recommendation: null })}>Назад</Button><span>{offset + 1}–{Math.min(offset + page.limit, page.total)} из {page.total}</span><Button variant="secondary" size="sm" disabled={offset + page.limit >= page.total || loadingRows} onClick={() => updateParams({ offset: String(offset + page.limit), recommendation: null })}>Далее</Button></div> : null}
+          {visiblePage && visiblePage.total > visiblePage.limit ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={offset === 0 || loadingRows} onClick={() => updateParams({ offset: String(Math.max(0, offset - visiblePage.limit)), recommendation: null })}>Назад</Button><span>{offset + 1}–{Math.min(offset + visiblePage.limit, visiblePage.total)} из {visiblePage.total}</span><Button variant="secondary" size="sm" disabled={offset + visiblePage.limit >= visiblePage.total || loadingRows} onClick={() => updateParams({ offset: String(offset + visiblePage.limit), recommendation: null })}>Далее</Button></div> : null}
         </Card>
 
         {recommendationId ? <Card title={detail?.name ?? "Обоснование позиции"} subtitle={detail ? `${detail.sku} · ${detail.unit}` : "Загружаем объяснение"}>
