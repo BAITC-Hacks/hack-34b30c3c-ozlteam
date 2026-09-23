@@ -1,12 +1,12 @@
 import { Check, FileUp, Plus, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Table, Td, Th, Tr } from "../../../shared/ui";
 import { applyImport, createSource, getImport, listImports, listSources, stageImport } from "../api/data";
-import type { ImportBatch, ImportDetail, Source } from "../types";
+import type { ImportBatch, ImportDetail, RowError, Source } from "../types";
 import styles from "./DataSourcesPage.module.css";
 
 const kinds = [
@@ -27,6 +27,23 @@ function errorText(error: unknown): string {
     if (error.status === 415) return "Поддерживаются CSV UTF-8 и XLSX.";
   }
   return error instanceof Error ? error.message : "Не удалось выполнить действие.";
+}
+
+function importIssueText(issue: RowError): string {
+  const location = [issue.sheet, issue.row > 0 ? `строка ${issue.row}` : null, issue.column ? `колонка «${issue.column}»` : null]
+    .filter(Boolean).join(" · ");
+  const message = issue.message === "Field required"
+    ? "Обязательное значение отсутствует. Проверьте заголовок колонки, сопоставление и ячейку."
+    : issue.message.startsWith("Input should be a valid integer")
+      ? "Ожидается целое число."
+      : issue.message.startsWith("Input should be a valid number") || issue.message.startsWith("Input should be a valid decimal")
+        ? "Ожидается число."
+        : issue.message.startsWith("Input should be a valid datetime")
+          ? "Ожидается дата и время с часовым поясом."
+          : issue.message.startsWith("Input should be a valid date")
+            ? "Ожидается дата."
+            : issue.message;
+  return location ? `${location}: ${message}` : message;
 }
 
 function DataSkeleton() {
@@ -84,6 +101,7 @@ export function DataSourcesPage() {
   const [sourceId, setSourceId] = useState("");
   const [kind, setKind] = useState<string>("categories");
   const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [mapping, setMapping] = useState("");
   const [reverseSign, setReverseSign] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -91,7 +109,14 @@ export function DataSourcesPage() {
   const sourceNames = useMemo(() => new Map(sources.map((source) => [source.id, source.name])), [sources]);
 
   function selectBatch(id: string | null) {
+    setApplyOpen(false);
+    setComplete(false);
     setParams((current) => { const next = new URLSearchParams(current); if (id) next.set("import", id); else next.delete("import"); return next; });
+  }
+
+  function closeApplyModal() {
+    setApplyOpen(false);
+    setComplete(false);
   }
 
   useEffect(() => {
@@ -101,6 +126,7 @@ export function DataSourcesPage() {
       setSources(nextSources);
       setBatches(nextBatches);
       setSourceId((current) => current || nextSources[0]?.id || "");
+      setError(null);
     }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -108,6 +134,8 @@ export function DataSourcesPage() {
 
   useEffect(() => {
     setDetail(null);
+    setComplete(false);
+    setApplyOpen(false);
     if (!batchId) return;
     const controller = new AbortController();
     setDetailLoading(true);
@@ -139,7 +167,8 @@ export function DataSourcesPage() {
     setBusy("stage"); setError(null); setNotice(null);
     try {
       const staged = await stageImport({ sourceId, kind, file, mapping: JSON.stringify(parsed), multiplier: reverseSign ? -1 : 1 });
-      setFile(null); setDetail(staged); selectBatch(staged.id); setReload((value) => value + 1);
+      setFile(null); if (fileInputRef.current) fileInputRef.current.value = "";
+      setDetail(staged); selectBatch(staged.id); setReload((value) => value + 1);
       setNotice(staged.status === "invalid" ? "Файл проверен: исправьте ошибки и загрузите его снова." : "Файл проверен. Просмотрите строки перед применением.");
     } catch (caught) { setError(errorText(caught)); }
     finally { setBusy(null); }
@@ -150,9 +179,9 @@ export function DataSourcesPage() {
     setBusy("apply"); setError(null);
     try {
       const applied = await applyImport(detail.id, complete);
-      setDetail(applied); setApplyOpen(false); setComplete(false); setReload((value) => value + 1);
+      setDetail(applied); closeApplyModal(); setReload((value) => value + 1);
       setNotice("Файл применён. Версия источника обновлена.");
-    } catch (caught) { setApplyOpen(false); setError(errorText(caught)); }
+    } catch (caught) { closeApplyModal(); setError(errorText(caught)); }
     finally { setBusy(null); }
   }
 
@@ -174,7 +203,7 @@ export function DataSourcesPage() {
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void upload(); }}>
             <label>Источник<select value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select></label>
             <label>Вид данных<select value={kind} onChange={(event) => setKind(event.target.value)}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label>Файл<input type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required /></label>
+            <label>Файл<input ref={fileInputRef} type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required /></label>
             <details className={styles.advanced}><summary>Дополнительные настройки</summary><div className={styles.advancedBody}>
               <label>Сопоставление колонок (JSON)<textarea value={mapping} onChange={(event) => setMapping(event.target.value)} rows={3} placeholder={'{"Исходная колонка":"external_id"}'} /></label>
               <label className={styles.check}><input type="checkbox" checked={reverseSign} onChange={(event) => setReverseSign(event.target.checked)} />Продажи в файле записаны отрицательным количеством</label>
@@ -189,14 +218,14 @@ export function DataSourcesPage() {
         {detailLoading && !detail ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем проверку" /> : null}
         {detail ? <div className={styles.detail}>
           <Badge tone={detail.status === "applied" ? "success" : detail.status === "invalid" ? "danger" : "warning"}>{statusName[detail.status] ?? detail.status}</Badge>
-          {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{issue.sheet ? `${issue.sheet} · ` : ""}строка {issue.row}{issue.column ? ` · ${issue.column}` : ""}: {issue.message}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
+          {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue)}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
           {detail.preview.length ? <div><h4>Первые строки</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>ID источника</Th><Th>Версия</Th><Th>Данные</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
           {detail.status === "validated" ? <Button variant="dark" icon={<Check size={16} strokeWidth={1.8} />} onClick={() => setApplyOpen(true)}>Применить проверенный файл</Button> : null}
           {detail.status === "invalid" ? <p className={styles.hint}>Этот файл нельзя применить. Исправьте строки и загрузите новую версию.</p> : null}
         </div> : null}
       </Card> : null}
     </>}
-    <Modal id="apply-import" title="Применить импорт" open={applyOpen} onOpenChange={setApplyOpen} footer={<><Button variant="secondary" onClick={() => setApplyOpen(false)}>Вернуться</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>Применить файл</Button></>}>
+    <Modal id="apply-import" title="Применить импорт" open={applyOpen} onOpenChange={(open) => { if (open) setApplyOpen(true); else closeApplyModal(); }} footer={<><Button variant="secondary" onClick={closeApplyModal}>Вернуться</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>Применить файл</Button></>}>
       <ActionPreview items={[`${detail?.row_count ?? 0} проверенных строк попадут в рабочие данные`, "Версия источника изменится; рекомендации можно будет пересчитать"]} note="Если это последняя часть согласованной выгрузки, отметьте её полной." />
       <label className={styles.check}><input type="checkbox" checked={complete} onChange={(event) => setComplete(event.target.checked)} />Это последняя часть выгрузки — разрешить расчёт</label>
     </Modal>

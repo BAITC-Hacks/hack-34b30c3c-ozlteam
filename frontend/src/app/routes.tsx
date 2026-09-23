@@ -2,12 +2,14 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
+import { CatalogsPage } from "../modules/catalogs";
 import { DataSourcesPage } from "../modules/data";
 import { RoutesPage } from "../modules/fleet";
 import { InventoryPage } from "../modules/inventory";
 import { NotesPage } from "../modules/notes";
 import { OrdersPage } from "../modules/orders";
-import { ReplenishmentPage, RunsPage } from "../modules/replenishment";
+import { OverviewPage } from "../modules/overview";
+import { RecommendationDetailPage, ReplenishmentPage, RunsPage } from "../modules/replenishment";
 import { UiKitPage } from "../modules/ui-kit";
 import { AppLayout } from "./AppLayout";
 import { PageHeader } from "./PageHeader";
@@ -31,11 +33,12 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Navigate to="/recommendations" replace /> },
+      { index: true, element: <OverviewPage /> },
       {
         path: "recommendations",
         element: <RunsPage />,
       },
+      { path: "recommendations/:recommendationId", element: <RecommendationDetailPage /> },
       { path: "recommendations/demo", element: <ReplenishmentPage /> },
       {
         path: "orders",
@@ -51,7 +54,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "data/catalogs",
-        element: <Placeholder title="Справочники" description="Товары, категории, поставщики и сроки поставки будут доступны здесь." />,
+        element: <CatalogsPage />,
       },
       { path: "notes", element: <NotesPage /> },
       { path: "assistant", element: <AssistantPage /> },

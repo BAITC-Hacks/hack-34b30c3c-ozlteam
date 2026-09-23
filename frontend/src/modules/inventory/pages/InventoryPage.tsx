@@ -1,10 +1,10 @@
 import { RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
-import { Button, Card, EmptyState, ErrorState, Table, Td, Th, Tr } from "../../../shared/ui";
+import { Button, Card, EmptyState, ErrorState, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
 import { getCatalogRecord, listCatalog, listInventory } from "../api/inventory";
 import type { CatalogRow, InboundRow, InventoryKind, StockoutRow, StockRow } from "../api/inventory";
 import styles from "./InventoryPage.module.css";
@@ -57,6 +57,8 @@ export function InventoryPage() {
   const [productSearch, setProductSearch] = useState("");
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [rows, setRows] = useState<StockRow[] | InboundRow[] | StockoutRow[]>([]);
+  const productDetails = useRef(new Map<string, CatalogRow>());
+  const [productDetailsVersion, setProductDetailsVersion] = useState(0);
   const [loadedKey, setLoadedKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,12 @@ export function InventoryPage() {
             try { found = [await getCatalogRecord("products", productId, controller.signal), ...found]; }
             catch { /* Сохранённый фильтр останется доступен по UUID. */ }
           }
-          if (!controller.signal.aborted) { setProducts(found); setCatalogError(null); }
+          if (!controller.signal.aborted) {
+            found.forEach((product) => productDetails.current.set(product.id, product));
+            setProductDetailsVersion((value) => value + 1);
+            setProducts(found);
+            setCatalogError(null);
+          }
         })
         .catch((caught: unknown) => { if (!controller.signal.aborted) setCatalogError(describeError(caught)); });
     }, productSearch ? 250 : 0);
@@ -107,7 +114,32 @@ export function InventoryPage() {
     return () => controller.abort();
   }, [tab, warehouseId, productId, offset, reload, dataKey]);
 
-  const productById = useMemo(() => new Map(products.map((item) => [item.id, item])), [products]);
+  useEffect(() => {
+    if (loadedKey !== dataKey) return;
+    const knownIds = new Set(products.map((item) => item.id));
+    const missingIds = [...new Set(rows.map((row) => row.product_id))]
+      .filter((id) => !knownIds.has(id) && !productDetails.current.has(id));
+    if (missingIds.length === 0) return;
+
+    const controller = new AbortController();
+    let next = 0;
+    async function loadMissingProducts() {
+      while (next < missingIds.length && !controller.signal.aborted) {
+        const id = missingIds[next++];
+        try {
+          const product = await getCatalogRecord("products", id, controller.signal);
+          if (!controller.signal.aborted) {
+            productDetails.current.set(id, product);
+            setProductDetailsVersion((value) => value + 1);
+          }
+        } catch { /* Если запись недоступна, оставляем её UUID до следующего обновления. */ }
+      }
+    }
+    void Promise.all(Array.from({ length: Math.min(4, missingIds.length) }, () => loadMissingProducts()));
+    return () => controller.abort();
+  }, [rows, products, loadedKey, dataKey, reload]);
+
+  const productById = useMemo(() => new Map([...productDetails.current, ...products.map((item) => [item.id, item] as const)]), [products, productDetailsVersion]);
   const warehouseById = useMemo(() => new Map(warehouses.map((item) => [item.id, item.name])), [warehouses]);
   const supplierById = useMemo(() => new Map(suppliers.map((item) => [item.id, item.name])), [suppliers]);
 
@@ -144,14 +176,14 @@ export function InventoryPage() {
     </Card>
 
     <Card title={title.title} subtitle={title.description}>
-      <div className={styles.tabs} role="tablist" aria-label="Вид данных">
-        {kinds.map((item) => <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={tab === item.id ? styles.activeTab : undefined} onClick={() => updateParam("tab", item.id)}>{item.title}</button>)}
-      </div>
-      {error ? <ErrorState title="Не удалось загрузить запасы" text={error} onRetry={() => setReload((value) => value + 1)} /> : (loading || loadedKey !== dataKey) && !hasRows ? <InventorySkeleton /> : !hasRows ? <EmptyState title="Данных пока нет" text="Измените фильтры или загрузите данные из 1С." /> : <div aria-busy={loading}>
+      <Tabs items={kinds.map((item) => ({ id: item.id, label: item.title }))} value={tab} onValueChange={(value) => updateParam("tab", value)} ariaLabel="Вид данных" />
+      {error ? <ErrorState title="Не удалось загрузить запасы" text={error} onRetry={() => setReload((value) => value + 1)} /> : (loading || loadedKey !== dataKey) && !hasRows ? <InventorySkeleton /> : <div aria-busy={loading}>
+        {!hasRows ? <EmptyState title="Данных пока нет" text="Измените фильтры или загрузите данные из 1С." /> : <>
         {tab === "stocks" ? <Table><thead><Tr><Th>Товар</Th><Th>Склад</Th><Th numeric>Остаток</Th><Th numeric>Резерв</Th><Th>Снимок</Th></Tr></thead><tbody>{(rows as StockRow[]).map((row) => <Tr key={row.id}><Td><strong>{productLabel(row.product_id)}</strong></Td><Td>{warehouseLabel(row.warehouse_id)}</Td><Td numeric>{formatQuantity(row.quantity)} {unit(row.product_id)}</Td><Td numeric>{formatQuantity(row.reserved)} {unit(row.product_id)}</Td><Td>{formatDate(row.as_of)}</Td></Tr>)}</tbody></Table> : null}
         {tab === "inbound" ? <Table><thead><Tr><Th>Товар</Th><Th>Склад</Th><Th>Поставщик</Th><Th numeric>Количество</Th><Th>Ожидается</Th><Th>Статус</Th></Tr></thead><tbody>{(rows as InboundRow[]).map((row) => <Tr key={row.id}><Td><strong>{productLabel(row.product_id)}</strong><small className={styles.secondary}>Документ {row.document_id}</small></Td><Td>{warehouseLabel(row.warehouse_id)}</Td><Td>{row.supplier_id ? supplierById.get(row.supplier_id) ?? row.supplier_id : "—"}</Td><Td numeric>{formatQuantity(row.quantity)} {unit(row.product_id)}</Td><Td>{formatDate(row.expected_date)}</Td><Td>{inboundStatus(row.status)}</Td></Tr>)}</tbody></Table> : null}
         {tab === "stockouts" ? <Table><thead><Tr><Th>Товар</Th><Th>Склад</Th><Th>Начало</Th><Th>Конец</Th><Th>Статус записи</Th></Tr></thead><tbody>{(rows as StockoutRow[]).map((row) => <Tr key={row.id}><Td><strong>{productLabel(row.product_id)}</strong></Td><Td>{warehouseLabel(row.warehouse_id)}</Td><Td>{formatDate(row.start)}</Td><Td>{row.end ? formatDate(row.end) : "Не указан"}</Td><Td>{row.active ? "Учитывается" : "Неактивна"}</Td></Tr>)}</tbody></Table> : null}
-        <div className={styles.pager}><span>Записи {offset + 1}–{offset + rows.length}{loading ? " · обновляем" : ""}</span><div><Button variant="secondary" size="sm" disabled={loading || offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - PAGE_SIZE)))}>Назад</Button><Button variant="secondary" size="sm" disabled={loading || rows.length < PAGE_SIZE} onClick={() => updateParam("offset", String(offset + PAGE_SIZE))}>Далее</Button></div></div>
+        </>}
+        <div className={styles.pager}><span>{hasRows ? `Записи ${offset + 1}–${offset + rows.length}` : "Записей на странице нет"}{loading ? " · обновляем" : ""}</span><div><Button variant="secondary" size="sm" disabled={loading || offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - PAGE_SIZE)))}>Назад</Button><Button variant="secondary" size="sm" disabled={loading || !hasRows || rows.length < PAGE_SIZE} onClick={() => updateParam("offset", String(offset + PAGE_SIZE))}>Далее</Button></div></div>
       </div>}
     </Card>
   </div>;

@@ -16,9 +16,22 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+function returnPath(state: unknown): string {
+  const from = state && typeof state === "object" && "from" in state ? state.from : null;
+  if (typeof from !== "string" || !from.startsWith("/") || from.startsWith("//")) return "/";
+  try {
+    const url = new URL(from, window.location.origin);
+    if (url.origin !== window.location.origin || url.pathname === "/login") return "/";
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const from = returnPath(location.state);
   const { data: user } = useCurrentUser();
   const login = useLogin();
 
@@ -34,13 +47,12 @@ export function LoginPage() {
   });
 
   if (tokenStore.get() !== null && user) {
-    const from = (location.state as { from?: string } | null)?.from ?? "/";
     return <Navigate to={from} replace />;
   }
 
   const onSubmit = handleSubmit((values) => {
     login.mutate(values, {
-      onSuccess: () => navigate("/", { replace: true }),
+      onSuccess: () => navigate(from, { replace: true }),
     });
   });
 

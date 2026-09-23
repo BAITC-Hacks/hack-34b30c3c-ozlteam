@@ -1,6 +1,7 @@
 /* Плавающий блок: без рамки, тень --sh-1, радиус --r. */
 
 .card {
+  min-width: 0;
   background: var(--panel);
   border-radius: var(--r);
   box-shadow: var(--sh-1);
