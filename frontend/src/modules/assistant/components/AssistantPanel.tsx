@@ -56,7 +56,7 @@ export function AssistantPanel() {
     <form className={styles.composer} onSubmit={submit}>
       <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => {
         if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(question); }
-      }} rows={2} maxLength={4000} placeholder="Задайте вопрос…" aria-label="Вопрос ассистенту" />
+      }} rows={1} maxLength={4000} placeholder="Задайте вопрос…" aria-label="Вопрос ассистенту" />
       <button type="submit" disabled={asking || !question.trim()} aria-label="Отправить вопрос"><ArrowUp size={18} strokeWidth={1.8} /></button>
     </form>
   </div>;

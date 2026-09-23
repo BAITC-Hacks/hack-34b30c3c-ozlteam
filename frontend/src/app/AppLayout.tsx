@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
-import { Button } from "../shared/ui";
+import { Button, ConfirmModal } from "../shared/ui";
 import { useCurrentUser, useLogout } from "../modules/auth";
 import styles from "./AppLayout.module.css";
+import { FloatingAssistant } from "./FloatingAssistant";
 import { MobileNav } from "./MobileNav";
 
 interface NavItem {
@@ -21,7 +22,7 @@ const WORK: NavItem[] = [
   { to: "/recommendations", label: "Расчёты", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
   { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
-  { to: "/assistant", label: "Помощник по закупкам", icon: <Sparkles size={17} strokeWidth={1.8} /> },
+  { to: "/assistant", label: "ИИ Помощник", icon: <Sparkles size={17} strokeWidth={1.8} /> },
 ];
 
 const DATA: NavItem[] = [
@@ -32,6 +33,15 @@ const DATA: NavItem[] = [
 
 const MOBILE_PRIMARY = WORK.slice(0, 3);
 const MOBILE_REST = [WORK[3], ...DATA];
+const SIDEBAR_MODE_KEY = "hackalem.sidebar-mode";
+
+function initialSidebarOpen(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_MODE_KEY) !== "compact";
+  } catch {
+    return true;
+  }
+}
 
 function initials(fullName: string): string {
   return fullName
@@ -61,6 +71,8 @@ function Section({
             className={`${styles.link} ${styles.disabled}`}
             role="link"
             aria-disabled="true"
+            aria-label={item.label}
+            title={item.label}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -71,6 +83,8 @@ function Section({
             to={item.to}
             end={item.to === "/" || item.to === "/data"}
             className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
+            aria-label={item.label}
+            title={item.label}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -85,7 +99,8 @@ function Section({
 export function AppLayout() {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(initialSidebarOpen);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const navigation = useRef<HTMLElement>(null);
   const [navigationHasPrevious, setNavigationHasPrevious] = useState(false);
   const [navigationHasMore, setNavigationHasMore] = useState(false);
@@ -104,22 +119,31 @@ export function AppLayout() {
     return () => observer.disconnect();
   }, [sidebarOpen, updateNavigationFade]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_MODE_KEY, sidebarOpen ? "full" : "compact");
+    } catch {
+      // Меню продолжит работать, даже если браузер запретил хранилище.
+    }
+  }, [sidebarOpen]);
+
   return (
     <div className={styles.app}>
-      <div className={styles.sidebarSlot} data-hidden={sidebarOpen ? undefined : ""}>
-        <aside className={styles.side} aria-hidden={sidebarOpen ? undefined : true}>
+      <div className={styles.sidebarSlot} data-collapsed={sidebarOpen ? undefined : ""}>
+        <aside className={styles.side}>
           <div className={styles.brand}>
             <span className={styles.mark} aria-hidden="true">
               <Container size={19} strokeWidth={1.8} />
             </span>
-            <span>Поток ИИ</span>
+            <span className={styles.brandName}>Поток ИИ</span>
             <Button
               className={styles.hideMenu}
               variant="ghost"
               size="sm"
-              aria-label="Скрыть меню"
-              icon={<PanelLeftClose size={15} strokeWidth={1.8} />}
-              onClick={() => setSidebarOpen(false)}
+              aria-label={sidebarOpen ? "Свернуть меню" : "Развернуть меню"}
+              title={sidebarOpen ? "Свернуть меню" : "Развернуть меню"}
+              icon={sidebarOpen ? <PanelLeftClose size={18} strokeWidth={1.8} /> : <PanelLeftOpen size={18} strokeWidth={1.8} />}
+              onClick={() => setSidebarOpen((open) => !open)}
             />
           </div>
 
@@ -153,26 +177,17 @@ export function AppLayout() {
               aria-label="Выйти"
               icon={<LogOut size={15} strokeWidth={1.8} />}
               loading={logout.isPending}
-              onClick={() => logout.mutate()}
+              onClick={() => setLogoutConfirmOpen(true)}
             />
           </div>
         </aside>
       </div>
 
-      <Button
-        className={styles.showMenu}
-        variant="secondary"
-        aria-label="Показать меню"
-        aria-hidden={sidebarOpen ? true : undefined}
-        tabIndex={sidebarOpen ? -1 : undefined}
-        data-visible={sidebarOpen ? undefined : ""}
-        icon={<PanelLeftOpen size={17} strokeWidth={1.8} />}
-        onClick={() => setSidebarOpen(true)}
-      />
-
-      <main className={`${styles.main} ${sidebarOpen ? "" : styles.sidebarHidden}`}>
+      <main className={styles.main}>
         <Outlet />
       </main>
+
+      <FloatingAssistant />
 
       <MobileNav
         primary={MOBILE_PRIMARY}
@@ -180,9 +195,22 @@ export function AppLayout() {
         userName={user?.full_name ?? "Гость"}
         userEmail={user?.email ?? ""}
         initials={user ? initials(user.full_name) : "—"}
-        onLogout={() => logout.mutate()}
+        onLogout={() => setLogoutConfirmOpen(true)}
         loggingOut={logout.isPending}
       />
+
+      <ConfirmModal
+        id="confirm-logout"
+        title="Выйти из аккаунта?"
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        confirmLabel="Выйти"
+        cancelLabel="Остаться"
+        confirmVariant="danger"
+        onConfirm={() => logout.mutateAsync().catch(() => undefined)}
+      >
+        Вы точно хотите выйти? Для продолжения работы понадобится войти снова.
+      </ConfirmModal>
     </div>
   );
 }

@@ -292,8 +292,18 @@
     min-height: calc(100dvh - var(--mobile-bar-h) - 42px - env(safe-area-inset-bottom, 0px));
   }
 
-  .note {
-    display: none;
+  .room:has(.thread) .note {
+    order: 1;
+    padding: 0 var(--sp-3);
+    color: var(--ink);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    text-align: left;
+  }
+
+  .room:has(.thread) .composer {
+    order: 2;
+    margin-top: 0;
   }
 }
 

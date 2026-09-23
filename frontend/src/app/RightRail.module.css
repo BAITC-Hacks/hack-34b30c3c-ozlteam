@@ -182,8 +182,6 @@
   padding: 6px 0;
 }
 
-.assistantSlot[hidden] { display: none; }
-
 .actionRow {
   min-width: 0;
   display: grid;
@@ -257,7 +255,6 @@
 }
 .skeleton span i:last-child { width: 65%; }
 
-.agentRow,
 .noticeRow,
 .fileRow,
 .taskRow {
@@ -268,14 +265,12 @@
   padding: 12px var(--sp-4);
 }
 
-.agentRow + .agentRow,
 .noticeRow + .noticeRow,
 .fileRow + .fileRow,
 .taskRow + .taskRow {
   border-top: 1px solid var(--hair);
 }
 
-.agentRow,
 .fileRow {
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
@@ -286,7 +281,6 @@
   align-items: start;
 }
 
-.agentIcon,
 .fileIcon {
   width: 36px;
   height: 36px;
@@ -295,15 +289,6 @@
   place-items: center;
   flex: none;
 }
-
-.agentIcon {
-  color: var(--ac-ink);
-  background: var(--ac-soft);
-}
-
-.builder { background: var(--k-build); }
-.lawyer { background: var(--k-law); }
-.financier { background: var(--k-fin); }
 
 .fileIcon {
   color: var(--ac-ink);
