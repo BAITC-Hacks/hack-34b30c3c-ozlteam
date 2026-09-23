@@ -1,4 +1,4 @@
-import { ArrowRight, ClipboardList, Database, RefreshCw, ShoppingCart } from "lucide-react";
+import { ArrowRight, Boxes, ClipboardList, Database, RefreshCw, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -41,7 +41,7 @@ function Snapshot({ overview, warehouseName }: { overview: Overview; warehouseNa
 
   const incomplete = overview.source_versions.filter((source) => !source.complete).length;
   return <div className={styles.snapshotGrid}>
-    <Card title="Последний успешный расчёт" subtitle="Риски и избыток на одном сохранённом срезе" actions={<Button variant="ghost" size="sm" icon={<ArrowRight size={15} />} onClick={() => navigate(`/recommendations?run=${run.id}`)}>Открыть</Button>}>
+    <Card title="Последний успешный расчёт" subtitle="Риски и избыток на одном сохранённом срезе" actions={<Button variant="ghost" size="sm" icon={<ArrowRight size={15} />} onClick={() => navigate(`/recommendations?${new URLSearchParams({ warehouse: run.warehouse_id, run: run.id })}`)}>Открыть</Button>}>
       <dl className={styles.meta}>
         <div><dt>Дата среза</dt><dd>{new Intl.DateTimeFormat("ru-RU", { dateStyle: "long" }).format(new Date(`${run.as_of}T12:00:00`))}</dd></div>
         <div><dt>Склад</dt><dd>{warehouseName}</dd></div>
@@ -125,7 +125,8 @@ export function OverviewPage() {
       <div className={styles.nextSteps}>
         <h2>Продолжить работу</h2>
         <div className={styles.actions}>
-          <Button variant="secondary" icon={<ClipboardList size={16} />} onClick={() => navigate("/recommendations")}>Расчёты</Button>
+          <Button variant="secondary" icon={<ClipboardList size={16} />} onClick={() => navigate(warehouseId ? `/recommendations?${new URLSearchParams({ warehouse: warehouseId })}` : "/recommendations")}>Расчёты</Button>
+          <Button variant="secondary" icon={<Boxes size={16} />} onClick={() => navigate(warehouseId ? `/inventory?${new URLSearchParams({ warehouse: warehouseId })}` : "/inventory")}>Остатки склада</Button>
           <Button variant="secondary" icon={<ShoppingCart size={16} />} onClick={() => navigate("/orders")}>Заказы поставщикам</Button>
           <Button variant="secondary" icon={<Database size={16} />} onClick={() => navigate("/data")}>Источники данных</Button>
         </div>

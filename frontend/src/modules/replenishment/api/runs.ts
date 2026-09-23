@@ -21,8 +21,10 @@ export async function getCatalog(kind: "warehouses" | "categories" | "suppliers"
   }
 }
 
-export function getRuns(offset: number, signal?: AbortSignal): Promise<RunPage> {
-  return apiRequest(`${base}/replenishment/runs?limit=30&offset=${offset}`, { signal });
+export function getRuns(offset: number, signal?: AbortSignal, warehouseId = ""): Promise<RunPage> {
+  const params = new URLSearchParams({ limit: "30", offset: String(offset) });
+  if (warehouseId) params.set("warehouse_id", warehouseId);
+  return apiRequest(`${base}/replenishment/runs?${params}`, { signal });
 }
 
 export function getRun(id: string, signal?: AbortSignal): Promise<Run> {

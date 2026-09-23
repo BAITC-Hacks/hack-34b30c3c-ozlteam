@@ -8,8 +8,15 @@
 .controls input { height: var(--ctl); min-width: 160px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; }
 .controls input:focus-visible { outline: 2px solid var(--ac); background: var(--panel); }
 .controls button { min-height: var(--ctl); }
+.runOptions { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
+.runOptions summary { width: fit-content; cursor: pointer; }
+.runOptions label { display: grid; gap: var(--sp-1); width: min(100%, 220px); margin-top: var(--sp-3); }
+.runOptions input { width: 100%; height: var(--ctl); padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; }
+.runOptions input:focus-visible { outline: 2px solid var(--ac); background: var(--panel); }
+.runOptions p { margin-top: var(--sp-2); font-size: var(--fs-xs); }
 .note { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
 .runList { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.historyFilter { width: min(100%, 280px); margin-bottom: var(--sp-3); }
 .runItem { display: grid; gap: var(--sp-1); min-width: 200px; padding: var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); text-align: left; cursor: pointer; }
 .runItem small { color: var(--mut); font-size: var(--fs-xs); }
 .runItem:hover { background: var(--ac-soft); }

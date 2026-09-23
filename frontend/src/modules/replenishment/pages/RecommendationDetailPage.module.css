@@ -3,6 +3,7 @@
 .hero strong { font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .hero small { font-size: var(--fs-body); letter-spacing: normal; font-weight: 500; }
 .summary { margin-top: var(--sp-3); max-width: 85ch; color: var(--mut); }
+.relatedLinks { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
 .facts { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-sm); }
 .facts b { color: var(--ink); font-weight: 600; }
 .formula { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-2); }

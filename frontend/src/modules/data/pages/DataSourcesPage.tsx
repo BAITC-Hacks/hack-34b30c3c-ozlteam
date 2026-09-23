@@ -1,4 +1,4 @@
-import { Check, FileUp, Plus, RefreshCw } from "lucide-react";
+import { Check, FileUp, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -16,6 +16,23 @@ const kinds = [
 ] as const;
 
 const kindName = new Map<string, string>(kinds);
+type ImportField = { name: string; label: string };
+type KindFormat = { required: ImportField[]; optional: ImportField[]; note: string };
+const fields = (names: string): ImportField[] => names.split(" ").map((name) => ({ name, label: name }));
+const common = fields("external_id revision");
+const commonOptional = fields("source_updated_at");
+const formats: Record<string, KindFormat> = {
+  categories: { required: [...common, ...fields("name")], optional: [...commonOptional, ...fields("review_days safety_days active")], note: "Сначала загрузите категории. external_id — устойчивый ID категории в источнике." },
+  suppliers: { required: [...common, ...fields("name")], optional: [...commonOptional, ...fields("active")], note: "Поставщик нужен до загрузки товара, который на него ссылается." },
+  warehouses: { required: [...common, ...fields("name")], optional: [...commonOptional, ...fields("organization_external_id active")], note: "Склад нужен до загрузки продаж, остатков и поставок." },
+  products: { required: [...common, ...fields("sku name unit")], optional: [...commonOptional, ...fields("code category_external_id supplier_external_id characteristic_external_id pack_size min_order_qty lead_time_days active")], note: "Артикул sku и код code не заменяют устойчивый external_id. Количество — в базовой единице unit." },
+  sales: { required: [...common, ...fields("product_external_id warehouse_external_id date document_id line_id quantity")], optional: [...commonOptional, ...fields("document_date price client_id status")], note: "date: ГГГГ-ММ-ДД; возврат — отрицательное количество. client_id допускается только обезличенный." },
+  stocks: { required: [...common, ...fields("product_external_id warehouse_external_id as_of quantity")], optional: [...commonOptional, ...fields("reserved")], note: "as_of — дата и время с часовым поясом, например 2026-09-23T09:00:00+05:00." },
+  inbound: { required: [...common, ...fields("product_external_id warehouse_external_id document_id expected_date quantity")], optional: [...commonOptional, ...fields("supplier_external_id status")], note: "expected_date: ГГГГ-ММ-ДД; quantity — ещё не полученное количество." },
+  stockouts: { required: [...common, ...fields("product_external_id warehouse_external_id start")], optional: [...commonOptional, ...fields("end active")], note: "start и end: ГГГГ-ММ-ДД. Загружайте только подтверждённые интервалы отсутствия." },
+  growth: { required: [...common, ...fields("start end rate")], optional: [...commonOptional, ...fields("product_external_id category_external_id mode active")], note: "Укажите ровно одно: product_external_id или category_external_id. rate=0.1 означает 10%." },
+};
+type MappingRow = { id: number; source: string; target: string };
 const statusName: Record<string, string> = { validated: "Проверен", invalid: "Есть ошибки", applied: "Применён" };
 const PAGE_SIZE = 20;
 const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
@@ -123,12 +140,22 @@ export function DataSourcesPage() {
   const [kind, setKind] = useState<string>("categories");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [mapping, setMapping] = useState("");
+  const [mappingRows, setMappingRows] = useState<MappingRow[]>([]);
+  const nextMappingId = useRef(0);
   const [reverseSign, setReverseSign] = useState(false);
   const [complete, setComplete] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const sourceNames = useMemo(() => new Map(sources.map((source) => [source.id, source.name])), [sources]);
   const selectedSource = sources.find((source) => source.id === selectedSourceId);
+  const format = formats[kind];
+
+  function changeMapping(id: number, changes: Partial<MappingRow>) {
+    setMappingRows((rows) => rows.map((row) => row.id === id ? { ...row, ...changes } : row));
+  }
+
+  function addMapping() {
+    setMappingRows((rows) => [...rows, { id: nextMappingId.current++, source: "", target: "" }]);
+  }
 
   function viewBatches(id: string) {
     setExchangePage(0);
@@ -203,15 +230,22 @@ export function DataSourcesPage() {
 
   async function upload() {
     if (!sourceId || !file) return;
-    let parsed: unknown;
-    try { parsed = JSON.parse(mapping.trim() || "{}"); }
-    catch { setError("Сопоставление колонок должно быть JSON-словарём."); return; }
-    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object" || Object.entries(parsed).some(([key, value]) => !key || typeof value !== "string")) {
-      setError("Сопоставление колонок должно быть JSON-словарём строк."); return;
+    const pairs = mappingRows.map((row) => ({ source: row.source.trim(), target: row.target }));
+    if (pairs.some((row) => !row.source || !row.target)) {
+      setError("Заполните оба поля каждой пары сопоставления или удалите пустую строку."); return;
     }
+    if (new Set(pairs.map((row) => row.source)).size !== pairs.length || new Set(pairs.map((row) => row.target)).size !== pairs.length) {
+      setError("Каждую исходную колонку и каждое поле результата можно выбрать только один раз."); return;
+    }
+    if (pairs.length) {
+      const targets = new Set(pairs.map((row) => row.target));
+      const missing = format.required.filter((field) => !targets.has(field.name)).map((field) => field.name);
+      if (missing.length) { setError(`Добавьте обязательные поля в сопоставление: ${missing.join(", ")}.`); return; }
+    }
+    const mapping = Object.fromEntries(pairs.map(({ source, target }) => [source, target]));
     setBusy("stage"); setError(null); setNotice(null);
     try {
-      const staged = await stageImport({ sourceId, kind, file, mapping: JSON.stringify(parsed), multiplier: reverseSign ? -1 : 1 });
+      const staged = await stageImport({ sourceId, kind, file, mapping: JSON.stringify(mapping), multiplier: reverseSign ? -1 : 1 });
       setFile(null); if (fileInputRef.current) fileInputRef.current.value = "";
       setDetail(staged); selectBatch(staged.id); setImportPage(0); setReload((value) => value + 1);
       setNotice(staged.status === "invalid" ? "Файл проверен: исправьте ошибки и загрузите его снова." : "Файл проверен. Просмотрите строки перед применением.");
@@ -225,13 +259,13 @@ export function DataSourcesPage() {
     try {
       const applied = await applyImport(detail.id, complete);
       setDetail(applied); closeApplyModal(); setReload((value) => value + 1);
-      setNotice("Файл применён. Версия источника обновлена.");
-    } catch (caught) { closeApplyModal(); setError(errorText(caught)); }
+      setNotice(complete ? "Данные применены. Пакет отмечен завершённым; расчёт для полного источника разрешён." : "Данные применены. Пакет остаётся незавершённым до загрузки последней согласованной части.");
+    } catch (caught) { setError(errorText(caught)); }
     finally { setBusy(null); }
   }
 
   return <div className={styles.page}>
-    <PageHeader title="Источники данных" subtitle="Проверка выгрузок 1С перед расчётом пополнения" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
+    <PageHeader title="Источники данных" subtitle="Проверка нормализованных файлов перед расчётом пополнения" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
     {error ? <Alert tone="danger" title="Действие не выполнено" onDismiss={() => setError(null)}>{error}</Alert> : null}
     {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
     {loading && !sources.length && !batches.length ? <DataSkeleton /> : <>
@@ -248,7 +282,13 @@ export function DataSourcesPage() {
         <Card title="Загрузить файл" subtitle="CSV UTF-8 или XLSX · до 25 МиБ и 10 000 строк">
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void upload(); }}>
             <Select label="Источник" wrapperClassName={styles.selectField} value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</Select>
-            <Select label="Вид данных" wrapperClassName={styles.selectField} value={kind} onChange={(event) => setKind(event.target.value)}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select>
+            <Select label="Вид данных" wrapperClassName={styles.selectField} value={kind} onChange={(event) => { setKind(event.target.value); setMappingRows([]); }}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select>
+            <div className={styles.formatGuide}>
+              <strong>Формат: {kindName.get(kind)}</strong>
+              <p>Обязательные колонки: <code>{format.required.map((field) => field.name).join(", ")}</code></p>
+              <p>Дополнительные: <code>{format.optional.map((field) => field.name).join(", ")}</code></p>
+              <p>{format.note}</p>
+            </div>
             <label>Файл
               <span className={styles.fileControl}>
                 <span className={styles.fileChoose}>Выбрать файл</span>
@@ -257,7 +297,16 @@ export function DataSourcesPage() {
               </span>
             </label>
             <details className={styles.advanced}><summary>Дополнительные настройки</summary><div className={styles.advancedBody}>
-              <label>Сопоставление колонок (JSON)<textarea value={mapping} onChange={(event) => setMapping(event.target.value)} rows={3} placeholder={'{"Исходная колонка":"external_id"}'} /></label>
+              <div className={styles.mappingEditor}>
+                <strong>Сопоставление колонок</strong>
+                <p className={styles.mappingHint}>Если заголовки файла уже совпадают с полями выше, оставьте список пустым. Если добавили хотя бы одну пару, перечислите <b>все колонки файла, которые хотите сохранить</b>: остальные сервер пропустит. Это переименование колонок, не сопоставление товаров.</p>
+                {mappingRows.map((row) => <div className={styles.mappingRow} key={row.id}>
+                  <label>Заголовок в файле<input value={row.source} onChange={(event) => changeMapping(row.id, { source: event.target.value })} placeholder="Например, Код записи" /></label>
+                  <Select label="Поле результата" wrapperClassName={styles.selectField} value={row.target} onChange={(event) => changeMapping(row.id, { target: event.target.value })}><option value="">Выберите поле</option>{[...format.required, ...format.optional].map((field) => <option key={field.name} value={field.name}>{field.label}</option>)}</Select>
+                  <Button type="button" variant="ghost" size="sm" icon={<Trash2 size={15} />} aria-label={`Удалить сопоставление ${row.source || row.id}`} onClick={() => setMappingRows((rows) => rows.filter((item) => item.id !== row.id))}>Удалить</Button>
+                </div>)}
+                <Button type="button" variant="secondary" size="sm" icon={<Plus size={15} />} onClick={addMapping}>Добавить колонку</Button>
+              </div>
               <label className={styles.check}><input type="checkbox" checked={reverseSign} onChange={(event) => setReverseSign(event.target.checked)} />Продажи в файле записаны отрицательным количеством</label>
             </div></details>
             <Button type="submit" variant="primary" icon={<FileUp size={16} strokeWidth={1.8} />} loading={busy === "stage"} disabled={!sourceId || !file || busy !== null}>Загрузить и проверить</Button>
@@ -271,13 +320,15 @@ export function DataSourcesPage() {
         {detail ? <div className={styles.detail}>
           <Badge tone={detail.status === "applied" ? "success" : detail.status === "invalid" ? "danger" : "warning"}>{statusName[detail.status] ?? detail.status}</Badge>
           {detail.errors.length ? <div><h4>Ошибки ({detail.errors.length})</h4><ul className={styles.errorList}>{detail.errors.slice(0, 20).map((issue, index) => <li key={`${issue.row}-${issue.column}-${index}`}>{importIssueText(issue)}</li>)}</ul>{detail.errors.length > 20 ? <p>Показаны первые 20 ошибок.</p> : null}</div> : null}
-          {detail.preview.length ? <div><h4>Первые строки</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>ID источника</Th><Th>Версия</Th><Th>Данные</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
+          {detail.preview.length ? <div><h4>Предпросмотр: первые {detail.preview.length} из {detail.row_count} строк</h4><div className={styles.tableWrap}><Table><thead><Tr><Th>ID источника</Th><Th>Версия</Th><Th>Данные</Th></Tr></thead><tbody>{detail.preview.slice(0, 20).map((row, index) => <Tr key={`${String(row.external_id)}-${index}`}><Td>{String(row.external_id ?? "—")}</Td><Td>{String(row.revision ?? "—")}</Td><Td>{previewLabel(row)}</Td></Tr>)}</tbody></Table></div></div> : null}
+          {detail.status === "applied" ? <p className={styles.hint}>Данные применены {formatDate(detail.applied_at)}. Полноту всего источника смотрите в таблице выше.</p> : null}
           {detail.status === "validated" ? <Button variant="dark" icon={<Check size={16} strokeWidth={1.8} />} onClick={() => setApplyOpen(true)}>Применить проверенный файл</Button> : null}
           {detail.status === "invalid" ? <p className={styles.hint}>Этот файл нельзя применить. Исправьте строки и загрузите новую версию.</p> : null}
         </div> : null}
       </Card> : null}
     </>}
-    <Modal id="apply-import" title="Применить импорт" open={applyOpen} onOpenChange={(open) => { if (open) setApplyOpen(true); else closeApplyModal(); }} footer={<><Button variant="secondary" onClick={closeApplyModal}>Вернуться</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>Применить файл</Button></>}>
+    <Modal id="apply-import" title="Применить импорт" open={applyOpen} closeOnEscape={busy !== "apply"} closeOnBackdrop={busy !== "apply"} showClose={busy !== "apply"} onOpenChange={(open) => { if (busy === "apply") return; if (open) setApplyOpen(true); else closeApplyModal(); }} footer={<><Button variant="secondary" disabled={busy === "apply"} onClick={closeApplyModal}>Вернуться</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>Применить файл</Button></>}>
+      {error ? <Alert tone="danger" title="Не удалось применить файл">{error}</Alert> : null}
       <ActionPreview items={[`${detail?.row_count ?? 0} проверенных строк попадут в рабочие данные`, "Версия источника изменится; рекомендации можно будет пересчитать"]} note="Если это последняя часть согласованной выгрузки, отметьте её полной." />
       <label className={styles.check}><input type="checkbox" checked={complete} onChange={(event) => setComplete(event.target.checked)} />Это последняя часть выгрузки — разрешить расчёт</label>
     </Modal>

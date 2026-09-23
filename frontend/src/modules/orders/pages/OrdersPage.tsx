@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
@@ -114,7 +114,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   </div>;
 }
 
-function LineEditor({ order, line, onSaved, onEditingChange }: { order: SupplierOrder; line: OrderLine; onSaved: (order: SupplierOrder) => void; onEditingChange: (lineId: string, editing: boolean) => void }) {
+function LineEditor({ order, line, onSaved, onEditingChange, onExplain }: { order: SupplierOrder; line: OrderLine; onSaved: (order: SupplierOrder) => void; onEditingChange: (lineId: string, editing: boolean) => void; onExplain: (recommendationId: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(line.quantity);
   const [reason, setReason] = useState("");
@@ -143,7 +143,7 @@ function LineEditor({ order, line, onSaved, onEditingChange }: { order: Supplier
   }
 
   return <div className={styles.line}>
-    <div className={styles.lineHead}><div><strong>{line.name}</strong><span className={styles.secondary}>{line.sku} · {line.unit}</span></div><div className={styles.lineValue}><strong>{quantity(line.quantity)} {line.unit}</strong><span className={styles.secondary}>Рекомендовано {quantity(line.recommended_quantity)}</span></div></div>
+    <div className={styles.lineHead}><div><strong>{line.name}</strong><span className={styles.secondary}>{line.sku} · {line.unit}</span><button type="button" className={styles.textButton} onClick={() => onExplain(line.recommendation_id)}>Почему рекомендовано</button></div><div className={styles.lineValue}><strong>{quantity(line.quantity)} {line.unit}</strong><span className={styles.secondary}>Рекомендовано {quantity(line.recommended_quantity)}</span></div></div>
     {line.reason ? <p className={styles.lineReason}>Причина: {line.reason}</p> : null}
     {order.status === "draft" ? deleting ? <div className={styles.editor}>
       <label className={styles.wideField}>Причина удаления<input value={reason} maxLength={4000} onChange={(event) => setReason(event.target.value)} placeholder="Почему исключаем позицию из заказа" /></label>
@@ -161,6 +161,8 @@ function LineEditor({ order, line, onSaved, onEditingChange }: { order: Supplier
 }
 
 function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; onOpen: (id: string) => void }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [order, setOrder] = useState<SupplierOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -270,7 +272,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
         </div> : <div className={styles.commentRow}><p className={styles.comment}>{order.comment || "Комментарий не добавлен"}</p>{order.status === "draft" ? <Button size="sm" variant="ghost" onClick={() => setCommentEditing(true)}>Изменить комментарий</Button> : null}</div>}
       </Card>
       <Card title="Позиции заказа" subtitle={order.status === "draft" ? "Количество можно изменить, указав причину" : "Утверждённый состав сохранён без изменений"}>
-        <div className={styles.lines}>{order.lines.length ? order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { acceptOrder(updated); setEditingLineIds((current) => { const next = new Set(current); next.delete(line.id); return next; }); }} onEditingChange={(lineId, editing) => { setEditingLineIds((current) => { const next = new Set(current); if (editing) next.add(lineId); else next.delete(lineId); return next; }); if (editing) setPreview(false); }} />) : <EmptyState title="Все позиции исключены" text="Удалённые строки и причины остаются в истории заказа." />}</div>
+        <div className={styles.lines}>{order.lines.length ? order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { acceptOrder(updated); setEditingLineIds((current) => { const next = new Set(current); next.delete(line.id); return next; }); }} onEditingChange={(lineId, editing) => { setEditingLineIds((current) => { const next = new Set(current); if (editing) next.add(lineId); else next.delete(lineId); return next; }); if (editing) setPreview(false); }} onExplain={(recommendationId) => navigate(`/recommendations/${recommendationId}?${new URLSearchParams({ from: `${location.pathname}${location.search}${location.hash}` })}`)} />) : <EmptyState title="Все позиции исключены" text="Удалённые строки и причины остаются в истории заказа." />}</div>
       </Card>
       {order.status === "draft" ? <Card title="Утверждение" subtitle="После утверждения заказ и его строки станут неизменяемыми">
         {editingLineIds.size || commentEditing ? <p className={styles.pendingEdit}>Сохраните или отмените изменения перед утверждением.</p> : null}
@@ -285,7 +287,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
       </Card> : null}
       <Card title="История действий" subtitle="Изменения и причины по этому заказу">
         {auditError ? <Alert tone="danger" action={<Button size="sm" variant="secondary" onClick={() => setAuditRetry((value) => value + 1)}>Повторить</Button>}>{auditError}</Alert> : null}
-        {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}{item.action === "line_deleted" && item.data.before ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} {String((item.data.before as Record<string, unknown>).unit)}</p> : null}</div>)}</div> : !auditError ? <p className={styles.secondary}>Действий пока нет.</p> : null}
+        {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)} · сотрудник {item.actor_id}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}{item.action === "line_deleted" && item.data.before ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} {String((item.data.before as Record<string, unknown>).unit)}</p> : null}</div>)}</div> : !auditError ? <p className={styles.secondary}>Действий пока нет.</p> : null}
         {auditHasMore && !auditLoading && !auditError ? <Button size="sm" variant="ghost" onClick={() => setAuditOffset((value) => value + 50)}>Показать ещё</Button> : null}
       </Card>
     </> : null}

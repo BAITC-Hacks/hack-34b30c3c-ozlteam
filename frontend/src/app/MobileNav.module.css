@@ -14,6 +14,7 @@
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    overflow: visible;
     background: color-mix(in srgb, var(--panel) 86%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--line);
@@ -52,6 +53,69 @@
 
   .activeCell {
     color: var(--ac-ink);
+  }
+
+  .assistantCell {
+    position: relative;
+    padding: 0 1px 4px;
+    justify-content: flex-end;
+    color: var(--ac-ink);
+    white-space: nowrap;
+  }
+
+  .assistantOrb {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--panel);
+    border-radius: 50%;
+    background: var(--ac);
+    box-shadow: var(--sh-2);
+    pointer-events: none;
+    transition: background var(--t-hover), transform var(--t-press);
+  }
+
+  .assistantOrb::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border: 1px dashed var(--ac);
+    border-radius: 50%;
+    opacity: .65;
+    animation: assistantOrbit 12s linear infinite;
+  }
+
+  .assistantCore {
+    display: grid;
+    place-items: center;
+    color: var(--panel);
+  }
+
+  .assistantLabel {
+    position: relative;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .assistantCell:active .assistantOrb {
+    transform: translateX(-50%) scale(.96);
+  }
+
+  .activeAssistantCell .assistantOrb {
+    background: var(--ac-ink);
+  }
+
+  .assistantCell:focus-visible {
+    outline-offset: 4px;
+  }
+
+  @keyframes assistantOrbit {
+    to { transform: rotate(360deg); }
   }
 
   .scrim {
@@ -215,5 +279,11 @@
   .sheet,
   .scrim {
     transition-duration: 1ms;
+  }
+
+  .assistantOrb,
+  .assistantOrb::before {
+    transition: none;
+    animation: none;
   }
 }

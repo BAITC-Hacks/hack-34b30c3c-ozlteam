@@ -1,6 +1,6 @@
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
@@ -10,6 +10,14 @@ import type { AnyCatalogRecord, CatalogKind, CategoryRecord, ProductRecord, Ware
 import styles from "./CatalogsPage.module.css";
 
 const PAGE_SIZE = 50;
+function recommendationReturn(input: string | null): string | null {
+  if (!input || !input.startsWith("/") || input.startsWith("//")) return null;
+  try {
+    const url = new URL(input, window.location.origin);
+    return url.origin === window.location.origin && /^\/recommendations\/[0-9a-f-]{36}$/i.test(url.pathname)
+      ? `${url.pathname}${url.search}${url.hash}` : null;
+  } catch { return null; }
+}
 const kinds: { id: CatalogKind; label: string }[] = [
   { id: "products", label: "Товары" },
   { id: "categories", label: "Категории" },
@@ -69,6 +77,7 @@ function RecordFields({ record, kind, category, supplier }: { record: AnyCatalog
 }
 
 export function CatalogsPage() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const kind = kinds.find((item) => item.id === params.get("tab"))?.id ?? "products";
   const q = (params.get("q") ?? "").slice(0, 200);
@@ -155,6 +164,8 @@ export function CatalogsPage() {
   }
 
   function closeDetail() {
+    const back = recommendationReturn(params.get("from"));
+    if (back) { navigate(back, { replace: true }); return; }
     const next = new URLSearchParams(params);
     next.delete("id");
     setParams(next, { replace: true });
@@ -176,7 +187,7 @@ export function CatalogsPage() {
 
   return <div className={styles.page}>
     <PageHeader title={id ? "Запись справочника" : "Справочники"} subtitle={id ? "Данные из последней загрузки 1С" : "Товары, категории, поставщики и склады из 1С"} actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
-    {id ? <Card title={record?.name ?? "Карточка справочника"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={closeDetail}>К списку</Button>}>
+    {id ? <Card title={record?.name ?? "Карточка справочника"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={closeDetail}>{recommendationReturn(params.get("from")) ? "К рекомендации" : "К списку"}</Button>}>
       {detailError ? <ErrorState title="Не удалось открыть запись" text={detailError} onRetry={() => setReload((value) => value + 1)} /> : detailLoading || !record ? <CatalogSkeleton detail /> : <RecordFields record={record} kind={kind} category={category} supplier={supplier} />}
     </Card> : <Card title="Данные 1С" subtitle="Поиск по названию, для товаров также по артикулу">
       <Tabs items={kinds} value={kind} onValueChange={(value) => updateParam("tab", value)} ariaLabel="Справочник" />
