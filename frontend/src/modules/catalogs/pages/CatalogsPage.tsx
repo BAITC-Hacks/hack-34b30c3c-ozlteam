@@ -1,10 +1,10 @@
 import { ArrowLeft, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
-import { Button, Card, EmptyState, ErrorState, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
+import { Button, Card, EmptyState, ErrorState, Select, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
 import { getCatalog, listCatalog } from "../api/catalogs";
 import type { AnyCatalogRecord, CatalogKind, CategoryRecord, ProductRecord, WarehouseRecord } from "../api/catalogs";
 import styles from "./CatalogsPage.module.css";
@@ -77,6 +77,7 @@ export function CatalogsPage() {
   const offset = Number.isInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
   const id = params.get("id") ?? "";
   const [search, setSearch] = useState(q);
+  const searchTimer = useRef<number | null>(null);
   const [rows, setRows] = useState<AnyCatalogRecord[]>([]);
   const [listKey, setListKey] = useState("");
   const [loading, setLoading] = useState(true);
@@ -92,16 +93,20 @@ export function CatalogsPage() {
   useEffect(() => { setSearch(q); }, [q]);
 
   useEffect(() => {
-    if (search === q) return;
+    if (id || search === q) return;
     const timer = window.setTimeout(() => {
-      const next = new URLSearchParams(params);
-      if (search.trim()) next.set("q", search.trim()); else next.delete("q");
-      next.delete("offset");
-      next.delete("id");
-      setParams(next, { replace: true });
+      searchTimer.current = null;
+      setParams((current) => {
+        if (current.has("id")) return current;
+        const next = new URLSearchParams(current);
+        if (search.trim()) next.set("q", search.trim()); else next.delete("q");
+        next.delete("offset");
+        return next;
+      }, { replace: true });
     }, 300);
-    return () => window.clearTimeout(timer);
-  }, [search, q, params, setParams]);
+    searchTimer.current = timer;
+    return () => { window.clearTimeout(timer); if (searchTimer.current === timer) searchTimer.current = null; };
+  }, [search, q, id, setParams]);
 
   useEffect(() => {
     if (id) return;
@@ -155,6 +160,17 @@ export function CatalogsPage() {
     setParams(next, { replace: true });
   }
 
+  function openDetail(recordId: string) {
+    if (searchTimer.current !== null) window.clearTimeout(searchTimer.current);
+    searchTimer.current = null;
+    const next = new URLSearchParams(params);
+    const pendingSearch = search.trim();
+    if (pendingSearch) next.set("q", pendingSearch); else next.delete("q");
+    if (pendingSearch !== q) next.delete("offset");
+    next.set("id", recordId);
+    setParams(next);
+  }
+
   const visibleRows = listKey === key ? rows.slice(0, PAGE_SIZE) : [];
   const hasNext = listKey === key && rows.length > PAGE_SIZE;
 
@@ -166,14 +182,14 @@ export function CatalogsPage() {
       <Tabs items={kinds} value={kind} onValueChange={(value) => updateParam("tab", value)} ariaLabel="Справочник" />
       <div className={styles.filters}>
         <label>Поиск<input type="search" value={search} maxLength={200} placeholder={kind === "products" ? "Название или артикул" : "Название"} onChange={(event) => setSearch(event.target.value)} /></label>
-        <label>Статус<select value={active} onChange={(event) => updateParam("active", event.target.value)}><option value="">Все</option><option value="true">Активные</option><option value="false">Неактивные</option></select></label>
+        <Select label="Статус" value={active} onChange={(event) => updateParam("active", event.target.value)}><option value="">Все</option><option value="true">Активные</option><option value="false">Неактивные</option></Select>
       </div>
       {error ? <ErrorState title="Не удалось загрузить справочник" text={error} onRetry={() => setReload((value) => value + 1)} /> : loading && listKey !== key ? <CatalogSkeleton /> : <div aria-busy={loading}>
         {visibleRows.length === 0 ? <EmptyState title="Записей пока нет" text={q || active ? "Измените поиск или фильтр статуса." : "Загрузите справочники из 1С."} /> : <Table><thead><Tr><Th>Название</Th>{kind === "products" ? <><Th>Артикул</Th><Th numeric>Упаковка</Th><Th numeric>Мин. заказ</Th><Th numeric>Срок</Th></> : null}{kind === "categories" ? <><Th numeric>Проверка</Th><Th numeric>Страховой запас</Th></> : null}{kind === "warehouses" ? <Th>Организация 1С</Th> : null}<Th>Статус</Th><Th numeric>Версия</Th></Tr></thead><tbody>{visibleRows.map((row) => {
           const product = kind === "products" ? row as ProductRecord : null;
           const categoryRow = kind === "categories" ? row as CategoryRecord : null;
           const warehouse = kind === "warehouses" ? row as WarehouseRecord : null;
-          return <Tr key={row.id}><Td><button type="button" className={styles.recordLink} onClick={() => updateParam("id", row.id)}>{row.name}</button></Td>{product ? <><Td>{product.sku}</Td><Td numeric>{quantity(product.pack_size)} {product.unit}</Td><Td numeric>{quantity(product.min_order_qty)} {product.unit}</Td><Td numeric>{product.lead_time_days === null ? "—" : `${product.lead_time_days} дн.`}</Td></> : null}{categoryRow ? <><Td numeric>{categoryRow.review_days} дн.</Td><Td numeric>{categoryRow.safety_days} дн.</Td></> : null}{warehouse ? <Td>{warehouse.organization_external_id ?? "—"}</Td> : null}<Td>{row.active ? "Активен" : "Неактивен"}</Td><Td numeric>{row.source_revision}</Td></Tr>;
+          return <Tr key={row.id}><Td><button type="button" className={styles.recordLink} onClick={() => openDetail(row.id)}>{row.name}</button></Td>{product ? <><Td>{product.sku}</Td><Td numeric>{quantity(product.pack_size)} {product.unit}</Td><Td numeric>{quantity(product.min_order_qty)} {product.unit}</Td><Td numeric>{product.lead_time_days === null ? "—" : `${product.lead_time_days} дн.`}</Td></> : null}{categoryRow ? <><Td numeric>{categoryRow.review_days} дн.</Td><Td numeric>{categoryRow.safety_days} дн.</Td></> : null}{warehouse ? <Td>{warehouse.organization_external_id ?? "—"}</Td> : null}<Td>{row.active ? "Активен" : "Неактивен"}</Td><Td numeric>{row.source_revision}</Td></Tr>;
         })}</tbody></Table>}
         <div className={styles.pager}><span>{visibleRows.length ? `Записи ${offset + 1}–${offset + visibleRows.length}` : `Записи с ${offset + 1}`}{loading ? " · обновляем" : ""}</span><div><Button variant="secondary" size="sm" disabled={loading || offset === 0} onClick={() => updateParam("offset", String(Math.max(0, offset - PAGE_SIZE)))}>Назад</Button><Button variant="secondary" size="sm" disabled={loading || !hasNext} onClick={() => updateParam("offset", String(offset + PAGE_SIZE))}>Далее</Button></div></div>
       </div>}

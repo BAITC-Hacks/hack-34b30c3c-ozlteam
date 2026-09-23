@@ -35,7 +35,7 @@ export interface RunPage {
 
 /** Сводка относится к одному последнему успешному срезу, а не к сумме расчётов. */
 export interface ReplenishmentOverview {
-  latest_run: Run | null;
+  latest_run: Pick<Run, "id" | "warehouse_id" | "as_of" | "completed_at" | "algorithm_version"> | null;
   deficit_count: number;
   excess_count: number;
   blocked_count: number;

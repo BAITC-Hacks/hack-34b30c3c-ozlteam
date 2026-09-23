@@ -3,8 +3,10 @@
 .overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap-cards); }
 .overviewNote { grid-column: 1 / -1; margin-top: calc(var(--sp-2) * -1); color: var(--mut); font-size: var(--fs-xs); }
 .controls label, .listControls label { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
-.controls select, .controls input, .listControls select { height: var(--ctl); min-width: 160px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; }
-.controls select:focus-visible, .controls input:focus-visible, .listControls select:focus-visible { outline: 2px solid var(--ac); background: var(--panel); }
+.selectControl { min-width: 160px; }
+.selectControl > span:first-child { color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
+.controls input { height: var(--ctl); min-width: 160px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; }
+.controls input:focus-visible { outline: 2px solid var(--ac); background: var(--panel); }
 .controls button { min-height: var(--ctl); }
 .note { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
 .runList { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
