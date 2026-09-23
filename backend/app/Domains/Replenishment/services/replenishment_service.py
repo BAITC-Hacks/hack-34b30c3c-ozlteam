@@ -10,6 +10,10 @@ from app.Domains.Replenishment.repositories.calculation_repository import (
     CalculationRepository,
     SqlAlchemyCalculationRepository,
 )
+from app.Domains.Replenishment.resources.calculation import (
+    RecommendationDetailOut,
+    RecommendationOut,
+)
 from app.Domains.Replenishment.services.engine import ALGORITHM_VERSION
 
 CALCULATE_REPLENISHMENT = "calculate_replenishment"
@@ -75,9 +79,13 @@ class ReplenishmentService:
         run = await self.get(identifier)
         if run.status != "done":
             raise DomainError("Результат расчёта ещё не готов", 409, "calculation_not_ready")
-        items, total = await self.repository.recommendations(
+        rows, total = await self.repository.recommendations(
             identifier, limit, offset, supplier_id, urgency
         )
+        items = [
+            RecommendationOut.model_validate(row).model_copy(update={"order_id": order_id})
+            for row, order_id in rows
+        ]
         groups = defaultdict(list)
         for item in items:
             groups[item.supplier_id].append(item)
@@ -92,10 +100,13 @@ class ReplenishmentService:
         }
 
     async def recommendation(self, identifier: UUID):
-        recommendation = await self.repository.get_recommendation(identifier)
-        if recommendation is None:
+        row = await self.repository.get_recommendation(identifier)
+        if row is None:
             raise DomainError("Рекомендация не найдена", 404, "recommendation_not_found")
-        return recommendation
+        recommendation, order_id = row
+        return RecommendationDetailOut.model_validate(recommendation).model_copy(
+            update={"order_id": order_id}
+        )
 
     async def overview(self, warehouse_id: UUID | None, draft_order_count: int):
         run = await self.repository.latest_success(warehouse_id)

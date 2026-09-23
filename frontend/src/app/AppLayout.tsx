@@ -67,7 +67,7 @@ function Section({
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === "/"}
+            end={item.to === "/" || item.to === "/data"}
             className={({ isActive }) => (isActive ? `${styles.link} ${styles.active}` : styles.link)}
           >
             {item.icon}

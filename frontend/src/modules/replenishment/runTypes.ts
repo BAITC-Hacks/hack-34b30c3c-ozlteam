@@ -46,6 +46,7 @@ export interface ReplenishmentOverview {
 
 export interface SavedRecommendation {
   id: string;
+  order_id: string | null;
   run_id: string;
   product_id: string;
   supplier_id: string | null;

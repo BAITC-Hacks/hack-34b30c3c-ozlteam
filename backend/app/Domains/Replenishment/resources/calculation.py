@@ -120,6 +120,11 @@ class RecommendationOut(BaseModel):
     status: Literal["ready", "blocked"]
     urgency: Literal["none", "normal", "high", "critical"]
     explanation: str
+    order_id: UUID | None = Field(
+        default=None,
+        description="Заказ, которому уже распределена рекомендация; null — ещё не распределена. "
+        "После удаления строки черновика распределение сохраняется."
+    )
 
 
 class RecommendationDetailOut(RecommendationOut):

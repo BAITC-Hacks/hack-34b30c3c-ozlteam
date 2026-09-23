@@ -31,7 +31,7 @@ function quantity(value: string): string {
 }
 
 function isOrderable(row: SavedRecommendation): boolean {
-  return row.status === "ready" && row.supplier_id !== null && Number(row.recommended_quantity) > 0;
+  return row.order_id === null && row.status === "ready" && row.supplier_id !== null && Number(row.recommended_quantity) > 0;
 }
 
 function runLabel(run: Run): string {
@@ -78,6 +78,8 @@ export function RunsPage() {
   const [asOf, setAsOf] = useState(today);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [conflictIds, setConflictIds] = useState<string[]>([]);
   const orderAttempt = useRef<{ signature: string; key: string } | null>(null);
   const activeRunId = useRef<string | null>(null);
 
@@ -89,6 +91,8 @@ export function RunsPage() {
   const urgencyFilter = params.get("urgency") ?? "";
   const pageKey = `${runId ?? ""}:${offset}:${urgencyFilter}`;
   const visiblePage = pageLoadedKey === pageKey ? page : null;
+  const selectedOrderableCount = visiblePage?.items.filter((row) => selected.has(row.id) && isOrderable(row)).length ?? 0;
+  const conflictOrders = visiblePage?.items.filter((row) => conflictIds.includes(row.id) && row.order_id) ?? [];
   const supplierNames = useMemo(() => new Map(suppliers.map((item) => [item.id, item.name])), [suppliers]);
 
   function updateParams(changes: Record<string, string | null>) {
@@ -185,13 +189,13 @@ export function RunsPage() {
     setRecommendationsError(null);
     setLoadingRows(true);
     getRecommendations(runId, offset, urgencyFilter, controller.signal)
-      .then((next) => { setPage(next); setPageLoadedKey(pageKey); })
+      .then((next) => { setPage(next); setPageLoadedKey(pageKey); setSelected((current) => new Set([...current].filter((id) => next.items.some((row) => row.id === id && isOrderable(row))))); })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setRecommendationsError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoadingRows(false); });
     return () => controller.abort();
   }, [runId, run?.id, run?.status, offset, urgencyFilter, pageKey, recommendationsRetry]);
 
-  useEffect(() => { setSelected(new Set()); setPreviewOpen(false); }, [runId, urgencyFilter, offset]);
+  useEffect(() => { setSelected(new Set()); setPreviewOpen(false); setOrderError(null); setConflictIds([]); }, [runId, urgencyFilter, offset]);
 
   useEffect(() => {
     if (!recommendationId) { setDetail(null); return; }
@@ -219,7 +223,7 @@ export function RunsPage() {
   }
 
   async function submitOrders() {
-    if (!selected.size || !visiblePage || loadingRows) return;
+    if (!selectedOrderableCount || !visiblePage || loadingRows) return;
     const ids = visiblePage.items.filter((row) => selected.has(row.id) && isOrderable(row)).map((row) => row.id).sort();
     if (!ids.length) return;
     const signature = ids.join(",");
@@ -234,15 +238,24 @@ export function RunsPage() {
       try { sessionStorage.setItem(orderAttemptStorage, JSON.stringify(attempt)); } catch { /* Ключ остаётся в памяти вкладки. */ }
     }
     setBusy("orders");
-    setError(null);
+    setOrderError(null);
     try {
       const orders = await createOrders(ids, attempt.key);
       orderAttempt.current = null;
       try { sessionStorage.removeItem(orderAttemptStorage); } catch { /* Хранилище недоступно. */ }
       setPreviewOpen(false);
+      setConflictIds([]);
       setSelected(new Set());
       if (orders[0]) navigate(`/orders?id=${encodeURIComponent(orders[0].id)}`);
-    } catch (caught) { setError(errorText(caught)); }
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 409) {
+        setOrderError("Не удалось создать заказ: часть рекомендаций уже включена в заказ или данные изменились. Список обновляется; проверьте выбор.");
+        setConflictIds(ids);
+        orderAttempt.current = null;
+        try { sessionStorage.removeItem(orderAttemptStorage); } catch { /* Хранилище недоступно. */ }
+        setRecommendationsRetry((current) => current + 1);
+      } else setOrderError(errorText(caught));
+    }
     finally { setBusy(null); }
   }
 
@@ -298,7 +311,7 @@ export function RunsPage() {
         <Card title="Рекомендации" subtitle={visiblePage ? `${visiblePage.total} позиций · расчёт ${run.as_of}` : recommendationsError ? "Результат временно недоступен" : "Загружаем результат"}>
           <div className={styles.listControls}>
             <Select label="Срочность" wrapperClassName={styles.selectControl} value={urgencyFilter} onChange={(event) => updateParams({ urgency: event.target.value, offset: null, recommendation: null })}><option value="">Все</option><option value="critical">Критично</option><option value="high">Высокий</option><option value="normal">Планово</option><option value="none">Без заказа</option></Select>
-            <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!visiblePage || loadingRows || !selected.size || busy !== null} onClick={() => setPreviewOpen(true)}>Создать черновики ({visiblePage ? selected.size : 0})</Button>
+            <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!visiblePage || loadingRows || !selectedOrderableCount || busy !== null} onClick={() => { setOrderError(null); setConflictIds([]); setPreviewOpen(true); }}>Создать черновики ({selectedOrderableCount})</Button>
           </div>
           {!visiblePage && !recommendationsError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем рекомендации"><i /><i /><i /><i /></div> : null}
           {recommendationsError ? <div><Alert tone="danger" title="Не удалось загрузить рекомендации">{recommendationsError}</Alert><Button variant="secondary" size="sm" onClick={() => setRecommendationsRetry((current) => current + 1)}>Повторить</Button></div> : null}
@@ -306,9 +319,9 @@ export function RunsPage() {
           {grouped.map(([supplierId, supplierRows]) => <section className={styles.group} key={supplierId} aria-label={supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? "Поставщик"}>
             <h3>{supplierId === "none" ? "Без поставщика" : supplierNames.get(supplierId) ?? `Поставщик ${supplierId.slice(0, 8)}`}</h3>
             <Table><thead><Tr><Th>Выбор</Th><Th>Товар</Th><Th>Статус</Th><Th numeric>Заказать</Th><Th>Обоснование</Th></Tr></thead><tbody>{supplierRows.map((row) => <Tr key={row.id}>
-              <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id)} disabled={loadingRows || !isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
+              <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id) && isOrderable(row)} disabled={loadingRows || !isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
               <Td><button type="button" className={styles.productLink} onClick={() => navigate(`/recommendations/${row.id}?${new URLSearchParams({ from: `${location.pathname}${location.search}${location.hash}` })}`)}>{row.name}</button><small className={styles.sku}>{row.sku}</small></Td>
-              <Td><Badge tone={row.status === "blocked" ? "danger" : urgency[row.urgency].tone}>{row.status === "blocked" ? "Нет данных" : urgency[row.urgency].label}</Badge></Td>
+              <Td>{row.order_id ? <><Badge tone="info">В заказе</Badge><button type="button" className={styles.orderLink} onClick={() => navigate(`/orders?id=${encodeURIComponent(row.order_id!)}`)}>Открыть заказ</button></> : <Badge tone={row.status === "blocked" ? "danger" : urgency[row.urgency].tone}>{row.status === "blocked" ? "Нет данных" : urgency[row.urgency].label}</Badge>}</Td>
               <Td numeric>{quantity(row.recommended_quantity)} {row.unit}</Td>
               <Td className={styles.explanation}>{row.explanation}</Td>
             </Tr>)}</tbody></Table>
@@ -328,8 +341,9 @@ export function RunsPage() {
       </> : null}
     </>}
 
-    <Modal id="create-orders" title="Создать черновики заказов" open={previewOpen} onOpenChange={setPreviewOpen} size="md" footer={<><Button variant="secondary" onClick={() => setPreviewOpen(false)}>Вернуться</Button><Button variant="primary" loading={busy === "orders"} onClick={() => void submitOrders()}>Создать черновики</Button></>}>
-      <ActionPreview items={[`Выбрано рекомендаций: ${selected.size}. Система сгруппирует их по поставщику и складу`, "После создания количество можно исправить с указанием причины"]} note="Заказы останутся черновиками. Поставщикам ничего не отправляется." />
+    <Modal id="create-orders" title="Создать черновики заказов" open={previewOpen} onOpenChange={(open) => { setPreviewOpen(open); if (!open) { setOrderError(null); setConflictIds([]); } }} size="md" footer={<><Button variant="secondary" disabled={busy === "orders"} onClick={() => setPreviewOpen(false)}>Вернуться</Button><Button variant="primary" loading={busy === "orders"} disabled={!selectedOrderableCount || busy === "orders"} onClick={() => void submitOrders()}>Создать черновики</Button></>}>
+      {orderError ? <Alert tone="danger" title="Заказ не создан">{orderError}{conflictOrders.length ? <div className={styles.conflictLinks}>{conflictOrders.map((row) => <button type="button" className={styles.orderLink} key={row.id} onClick={() => navigate(`/orders?id=${encodeURIComponent(row.order_id!)}`)}>{row.name}: открыть заказ</button>)}</div> : null}</Alert> : null}
+      <ActionPreview items={[`Выбрано рекомендаций: ${selectedOrderableCount}. Система сгруппирует их по поставщику и складу`, "После создания количество можно исправить с указанием причины"]} note="Заказы останутся черновиками. Поставщикам ничего не отправляется." />
     </Modal>
   </div>;
 }

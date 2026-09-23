@@ -72,6 +72,7 @@ async def get_run(run_id: UUID, service: Service, user: Reader):
     summary="Рекомендации расчёта с группировкой по поставщику",
     description="Право replenishment.read. Группы содержат только строки текущей страницы. "
     "Поставщик null означает проблему данных; status=blocked запрещает заказ. "
+    "order_id содержит ID заказа, которому уже распределена рекомендация, либо null. "
     "409 — расчёт не завершён. Сортировка: поставщик, артикул, ID.",
 )
 async def list_recommendations(
@@ -91,7 +92,8 @@ async def list_recommendations(
     response_model=RecommendationDetailOut,
     summary="Обоснование позиции: история, прогноз, выбросы и формула",
     description="Право replenishment.read. Числа сохранены вместе с результатом и не "
-    "пересчитываются при изменении справочников. Количества — десятичные строки.",
+    "пересчитываются при изменении справочников. Количества — десятичные строки. "
+    "order_id показывает уже созданный заказ или null.",
 )
 async def get_recommendation(recommendation_id: UUID, service: Service, user: Reader):
     return await service.recommendation(recommendation_id)

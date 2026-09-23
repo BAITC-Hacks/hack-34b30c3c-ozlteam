@@ -111,6 +111,7 @@ export function RecommendationDetailPage() {
       <Card title="Рекомендация" subtitle="Количество для пополнения склада">
         <div className={styles.hero}><strong>{qty(detail.recommended_quantity)} <small>{detail.unit}</small></strong><Badge tone={detail.status === "blocked" ? "danger" : detail.urgency === "critical" ? "danger" : detail.urgency === "high" ? "warning" : "neutral"}>{detail.status === "blocked" ? "Расчёт заблокирован" : detail.urgency === "critical" ? "Критично" : detail.urgency === "high" ? "Высокая срочность" : detail.urgency === "none" ? "Заказ не нужен" : "Планово"}</Badge></div>
         <p className={styles.summary}>{explanation(detail.explanation)}</p>
+        {detail.order_id ? <Alert tone="info" title="Рекомендация уже включена в заказ" action={<Button variant="secondary" size="sm" onClick={() => navigate(`/orders?id=${encodeURIComponent(detail.order_id!)}`)}>Открыть заказ</Button>}>Повторно создать заказ по этой рекомендации нельзя.</Alert> : null}
         <div className={styles.facts}><span>Срок поставки: <b>{display(breakdown.lead_time_days)} дн.</b></span><span>Горизонт: <b>{display(horizon)} дн.</b></span><span>Дефицит ожидается: <b>{date(String(breakdown.shortage_date ?? ""))}</b></span><span>Дата расчёта: <b>{date(run?.as_of)}</b></span></div>
       </Card>
 

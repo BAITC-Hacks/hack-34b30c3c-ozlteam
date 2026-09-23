@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.Domains.Procurement.models.order import OrderAllocation
 from app.Domains.Replenishment.models.calculation import CalculationRun, Recommendation
 
 
@@ -16,8 +17,10 @@ class CalculationRepository(Protocol):
     async def runs(self, limit: int, offset: int, warehouse_id=None) -> tuple[list, int]: ...
     async def recommendations(
         self, run_id: UUID, limit: int, offset: int, supplier_id=None, urgency=None
-    ) -> tuple[list, int]: ...
-    async def get_recommendation(self, identifier: UUID) -> Recommendation | None: ...
+    ) -> tuple[list[tuple[Recommendation, UUID | None]], int]: ...
+    async def get_recommendation(
+        self, identifier: UUID
+    ) -> tuple[Recommendation, UUID | None] | None: ...
     async def lock_recommendations(self, identifiers: list[UUID]) -> list: ...
     async def latest_success(self, warehouse_id=None) -> CalculationRun | None: ...
     async def overview_counts(self, run_id: UUID) -> dict: ...
@@ -78,8 +81,9 @@ class SqlAlchemyCalculationRepository:
         total = await self.session.scalar(
             select(func.count()).select_from(Recommendation).where(*conditions)
         )
-        rows = await self.session.scalars(
-            select(Recommendation)
+        rows = await self.session.execute(
+            select(Recommendation, OrderAllocation.order_id)
+            .outerjoin(OrderAllocation, OrderAllocation.recommendation_id == Recommendation.id)
             .where(*conditions)
             .order_by(Recommendation.supplier_id, Recommendation.sku, Recommendation.id)
             .limit(limit)
@@ -87,8 +91,15 @@ class SqlAlchemyCalculationRepository:
         )
         return list(rows), total or 0
 
-    async def get_recommendation(self, identifier: UUID) -> Recommendation | None:
-        return await self.session.get(Recommendation, identifier)
+    async def get_recommendation(
+        self, identifier: UUID
+    ) -> tuple[Recommendation, UUID | None] | None:
+        row = await self.session.execute(
+            select(Recommendation, OrderAllocation.order_id)
+            .outerjoin(OrderAllocation, OrderAllocation.recommendation_id == Recommendation.id)
+            .where(Recommendation.id == identifier)
+        )
+        return row.first()
 
     async def lock_recommendations(self, identifiers: list[UUID]) -> list:
         return list(

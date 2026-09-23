@@ -87,6 +87,7 @@ export function MobileNav({
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/data"}
               className={({ isActive }) =>
                 isActive ? `${styles.sheetLink} ${styles.activeLink}` : styles.sheetLink
               }

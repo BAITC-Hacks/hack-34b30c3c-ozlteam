@@ -23,6 +23,10 @@
 .group h3 { margin-bottom: var(--sp-2); font-size: var(--fs-body); font-weight: 600; }
 .group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ac); }
 .productLink { display: block; padding: 0; border: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.orderLink { display: block; margin-top: var(--sp-2); padding: 0; border: 0; background: none; color: var(--ac-ink); font: inherit; font-size: var(--fs-xs); text-align: left; cursor: pointer; }
+.orderLink:hover { text-decoration: underline; }
+.orderLink:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.conflictLinks { display: grid; gap: var(--sp-1); margin-top: var(--sp-3); }
 .sku { display: block; margin-top: var(--sp-1); color: var(--faint); font-size: var(--fs-xs); }
 .explanation { max-width: 42ch; color: var(--mut); font-size: var(--fs-xs); }
 .pagination { display: flex; align-items: center; justify-content: end; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-sm); }
