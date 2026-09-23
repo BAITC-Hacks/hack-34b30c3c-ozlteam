@@ -65,35 +65,68 @@
 
   .assistantOrb {
     position: absolute;
-    bottom: 22px;
+    bottom: 28px;
     left: 50%;
-    width: 50px;
-    height: 50px;
+    width: 62px;
+    height: 62px;
     transform: translateX(-50%);
     display: grid;
     place-items: center;
-    border: 3px solid var(--panel);
-    border-radius: 50%;
-    background: var(--ac);
-    box-shadow: var(--sh-2);
+    perspective: 160px;
+    transform-style: preserve-3d;
     pointer-events: none;
-    transition: background var(--t-hover), transform var(--t-press);
+    transition: transform var(--t-press);
   }
 
-  .assistantOrb::before {
+  .assistantSphere {
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--panel) 75%, var(--ac));
+    /* Направленный свет даёт объём самому шару, сохраняя один синий акцент. */
+    background: radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--panel) 75%, var(--ac)) 0%, var(--ac) 37%, var(--ac-ink) 88%);
+    box-shadow: inset -5px -7px 9px color-mix(in srgb, var(--ac-ink) 70%, transparent), inset 3px 3px 8px color-mix(in srgb, var(--panel) 55%, transparent), var(--sh-2);
+    transform: translateZ(5px);
+  }
+
+  .assistantOrbit {
+    position: absolute;
+    inset: -3px;
+    border: 1px solid color-mix(in srgb, var(--ac) 70%, transparent);
+    border-radius: 50%;
+    transform-style: preserve-3d;
+  }
+
+  .assistantOrbit::after {
     content: "";
     position: absolute;
-    inset: -6px;
-    border: 1px dashed var(--ac);
+    top: -3px;
+    left: calc(50% - 3px);
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    opacity: .65;
-    animation: assistantOrbit 12s linear infinite;
+    background: var(--ac);
+    box-shadow: 0 0 7px var(--ac);
+  }
+
+  .assistantOrbitOne {
+    border-style: dashed;
+    animation: assistantOrbitOne 8s linear infinite;
+  }
+
+  .assistantOrbitTwo {
+    inset: -6px 1px;
+    opacity: .8;
+    animation: assistantOrbitTwo 11s linear infinite;
   }
 
   .assistantCore {
+    position: relative;
+    z-index: 1;
     display: grid;
     place-items: center;
     color: var(--panel);
+    transform: translateZ(8px);
   }
 
   .assistantLabel {
@@ -106,16 +139,22 @@
     transform: translateX(-50%) scale(.96);
   }
 
-  .activeAssistantCell .assistantOrb {
-    background: var(--ac-ink);
+  .activeAssistantCell .assistantSphere {
+    filter: saturate(1.25);
   }
 
   .assistantCell:focus-visible {
     outline-offset: 4px;
   }
 
-  @keyframes assistantOrbit {
-    to { transform: rotate(360deg); }
+  @keyframes assistantOrbitOne {
+    from { transform: rotateX(68deg) rotateZ(0deg); }
+    to { transform: rotateX(68deg) rotateZ(360deg); }
+  }
+
+  @keyframes assistantOrbitTwo {
+    from { transform: rotateY(68deg) rotateZ(0deg); }
+    to { transform: rotateY(68deg) rotateZ(-360deg); }
   }
 
   .scrim {
@@ -282,7 +321,7 @@
   }
 
   .assistantOrb,
-  .assistantOrb::before {
+  .assistantOrbit {
     transition: none;
     animation: none;
   }

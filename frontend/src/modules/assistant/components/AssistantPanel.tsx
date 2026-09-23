@@ -45,11 +45,11 @@ export function AssistantPanel() {
     <div className={styles.messages} role="log" aria-label="Диалог с ассистентом">
       {turns.length === 0 ? <div className={styles.empty}>
         <Bot size={24} strokeWidth={1.8} aria-hidden="true" />
-        <b>Спросите помощника</b>
+        <b>Спросите Нову</b>
         <p>Помогу разобраться с расчётом пополнения и заказами. Ответы проверяйте перед применением.</p>
         <button type="button" onClick={() => void send("Что проверить перед утверждением заказа поставщику?")}>Что проверить в заказе?</button>
       </div> : turns.map((turn, index) => <div key={index} className={turn.role === "user" ? styles.mine : styles.theirs}>{turn.content}</div>)}
-      {asking ? <p className={styles.pending} role="status">Помощник отвечает…</p> : null}
+      {asking ? <p className={styles.pending} role="status">Нова отвечает…</p> : null}
       {error ? <div className={styles.error} role="alert"><p>Не удалось получить ответ: {error}</p><button type="button" disabled={asking} onClick={() => void send(turns[turns.length - 1]?.content ?? "", true)}>Повторить вопрос</button></div> : null}
       <div ref={tail} />
     </div>

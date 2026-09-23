@@ -84,7 +84,7 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Помощник по закупкам" subtitle="Спросите о данных, расчётах и заказах своими словами." />
+      <PageHeader title="Нова" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
 
       <div className={styles.room}>
         {empty ? (
@@ -124,7 +124,7 @@ export function AssistantPage() {
             ))}
             {asking ? (
               <p className={styles.thinking} role="status">
-                <Spinner size="sm" /> Помощник отвечает…
+                <Spinner size="sm" /> Нова отвечает…
               </p>
             ) : null}
             <div ref={tail} />
@@ -152,7 +152,7 @@ export function AssistantPage() {
                 void send(question);
               }
             }}
-            placeholder="Спросите помощника"
+            placeholder="Спросите Нову"
             rows={1}
             maxLength={4000}
             aria-label="Вопрос ассистенту"

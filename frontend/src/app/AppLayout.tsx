@@ -21,7 +21,7 @@ const WORK: NavItem[] = [
   { to: "/recommendations", label: "Расчёты", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
   { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
-  { to: "/assistant", label: "Помощник по закупкам", icon: <Sparkles size={17} strokeWidth={1.8} /> },
+  { to: "/assistant", label: "Нова — помощник по закупкам", icon: <Sparkles size={17} strokeWidth={1.8} /> },
 ];
 
 const DATA: NavItem[] = [

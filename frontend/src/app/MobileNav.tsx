@@ -151,14 +151,17 @@ export function MobileNav({
           className={({ isActive }) =>
             isActive ? `${styles.cell} ${styles.assistantCell} ${styles.activeAssistantCell}` : `${styles.cell} ${styles.assistantCell}`
           }
-          aria-label="Спросить ИИ"
+          aria-label="Нова — ИИ-помощник по закупкам"
         >
           <span className={styles.assistantOrb} aria-hidden="true">
+            <span className={`${styles.assistantOrbit} ${styles.assistantOrbitOne}`} />
+            <span className={`${styles.assistantOrbit} ${styles.assistantOrbitTwo}`} />
+            <span className={styles.assistantSphere} />
             <span className={styles.assistantCore}>
               <Sparkles size={23} strokeWidth={1.8} />
             </span>
           </span>
-          <span className={styles.assistantLabel}>Спросить ИИ</span>
+          <span className={styles.assistantLabel}>Нова</span>
         </NavLink>
         {primary.slice(2).map((item) => (
           <NavLink
