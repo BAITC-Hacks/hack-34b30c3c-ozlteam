@@ -86,7 +86,6 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
       <span className={styles.iconAction}>
         <button className={styles.iconActionButton} type="button" title={t('История диалогов', 'Диалогтар тарихы', 'Conversation history')} aria-label={t('История диалогов', 'Диалогтар тарихы', 'Conversation history')} aria-haspopup="dialog" aria-expanded={historyOpen} onClick={() => setHistoryOpen(true)}><History size={18} strokeWidth={1.8} /></button>
       </span>
-      <span className={styles.chatTitle} title={chat?.title ?? t('Новый диалог', 'Жаңа диалог', 'New conversation')}>{chat?.title ?? t('Новый диалог', 'Жаңа диалог', 'New conversation')}</span>
       <span className={styles.iconAction}>
         <button className={styles.iconActionButton} type="button" title={t('Контекст вопроса', 'Сұрақ контексті', 'Question context')} aria-label={t('Контекст вопроса', 'Сұрақ контексті', 'Question context')} aria-haspopup="dialog" aria-expanded={contextOpen} onClick={() => setContextOpen(true)}><SlidersHorizontal size={18} strokeWidth={1.8} /></button>
       </span>
@@ -96,6 +95,7 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
       {state.activeId ? <span className={styles.iconAction}>
         <button className={styles.iconActionButton} type="button" title={t('Обновить диалог', 'Диалогты жаңарту', 'Refresh conversation')} aria-label={t('Обновить диалог', 'Диалогты жаңарту', 'Refresh conversation')} disabled={state.busy} onClick={() => void conversation.refetch()}><RefreshCw size={17} strokeWidth={1.8} /></button>
       </span> : null}
+      <span className={styles.chatTitle} title={chat?.title ?? t('Новый диалог', 'Жаңа диалог', 'New conversation')}>{chat?.title ?? t('Новый диалог', 'Жаңа диалог', 'New conversation')}</span>
       {compact ? <span className={styles.iconAction}>
         <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} title={t('Открыть помощника', 'Көмекшіні ашу', 'Open assistant')} aria-label={t('Открыть помощника', 'Көмекшіні ашу', 'Open assistant')}><Maximize2 size={17} strokeWidth={1.8} /></Link>
       </span> : null}
