@@ -3,16 +3,19 @@ import { useCurrentUser } from "../../auth";
 import { ApiError } from "../../../shared/api/client";
 import { createConversation, decideProposal, getAssistants, getConversation, getConversations, getMessages, sendMessage } from "../api/workspace";
 import type { AssistantContext, Conversation, Proposal, SendInput } from "../api/workspace";
+import { clearSubmittedDraft, moveDraft, readDraft, writeDraft, type Drafts } from "../lib/drafts";
 
 interface WorkspaceState {
   activeId: string; assistantId: string; context: AssistantContext; allowData: boolean;
   busy: boolean; error: string; retry: { id: string; input: SendInput } | null;
+  drafts: Drafts;
+  freshAnswer: { id: string; receivedAt: number } | null;
 }
 function initialState(userId: string): WorkspaceState {
   let activeId = "";
   try { activeId = sessionStorage.getItem(`assistant.active.${userId}`) ?? ""; } catch { /* ID only, no private chat content. */ }
   if (!/^[\da-f-]{36}$/i.test(activeId)) activeId = "";
-  return { activeId, assistantId: "auto", context: {}, allowData: false, busy: false, error: "", retry: null };
+  return { activeId, assistantId: "auto", context: {}, allowData: false, busy: false, error: "", retry: null, drafts: {}, freshAnswer: null };
 }
 function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 409) return "Данные или предложение изменились. Обновите диалог и проверьте актуальный результат перед повторным действием.";
@@ -25,15 +28,24 @@ export function useWorkspace(offset = 0) {
   const userId = user?.id ?? "";
   const client = useQueryClient();
   const key = ["assistant", userId, "workspace"];
-  const { data: state } = useQuery({ queryKey: key, queryFn: () => initialState(userId), initialData: () => initialState(userId), enabled: false });
-  function update(patch: Partial<WorkspaceState>) { client.setQueryData<WorkspaceState>(key, (current) => ({ ...(current ?? initialState(userId)), ...patch })); }
+  const { data: state } = useQuery({ queryKey: key, queryFn: () => initialState(userId), initialData: () => initialState(userId), enabled: false, gcTime: Infinity });
+  function update(patch: Partial<WorkspaceState> | ((current: WorkspaceState) => Partial<WorkspaceState>)) {
+    client.setQueryData<WorkspaceState>(key, (stored) => {
+      const current = { ...initialState(userId), ...stored };
+      return { ...current, ...(typeof patch === "function" ? patch(current) : patch) };
+    });
+  }
+  const draft = readDraft(state.drafts ?? {}, state.activeId);
+  function setDraft(content: string) {
+    update((current) => ({ drafts: writeDraft(current.drafts, state.activeId, content) }));
+  }
   const assistants = useQuery({ queryKey: ["assistant", userId, "helpers"], queryFn: ({ signal }) => getAssistants(signal), enabled: !!userId, retry: false });
   const conversations = useQuery({ queryKey: ["assistant", userId, "conversations", offset], queryFn: ({ signal }) => getConversations(offset, signal), enabled: !!userId, retry: false });
   const conversationKey = (id: string) => ["assistant", userId, "conversation", id];
   const conversation = useQuery({ queryKey: conversationKey(state.activeId), queryFn: ({ signal }) => getConversation(state.activeId, signal), enabled: !!userId && !!state.activeId, retry: false, refetchOnWindowFocus: false });
   function select(id: string) {
     if (state.busy) return;
-    update({ activeId: id, error: "", retry: null, allowData: false });
+    update({ activeId: id, error: "", retry: null, allowData: false, freshAnswer: null });
     try { sessionStorage.setItem(`assistant.active.${userId}`, id); } catch { /* Optional navigation persistence. */ }
   }
   function save(result: Conversation) {
@@ -45,7 +57,7 @@ export function useWorkspace(offset = 0) {
     update({ busy: true, error: "" });
     try {
       const added = await createConversation();
-      update({ activeId: added.id, retry: null, context: {}, allowData: false });
+      update({ activeId: added.id, retry: null, context: {}, allowData: false, freshAnswer: null });
       try { sessionStorage.setItem(`assistant.active.${userId}`, added.id); } catch { /* Optional ID persistence. */ }
       save({ ...added, messages: [], proposals: [], has_older_messages: false });
     } catch (error) { update({ error: errorMessage(error) }); }
@@ -64,7 +76,7 @@ export function useWorkspace(offset = 0) {
         let id = state.activeId;
         if (!id) {
           const added = await createConversation(); id = added.id;
-          update({ activeId: id });
+          update((current) => ({ activeId: id, drafts: moveDraft(current.drafts, "", id) }));
           try { sessionStorage.setItem(`assistant.active.${userId}`, id); } catch { /* Optional ID persistence. */ }
           save({ ...added, messages: [], proposals: [], has_older_messages: false });
         }
@@ -72,8 +84,17 @@ export function useWorkspace(offset = 0) {
       }
       update({ retry: attempt });
       await client.cancelQueries({ queryKey: conversationKey(attempt.id) });
-      save(await sendMessage(attempt.id, attempt.input));
-      update({ retry: null });
+      const result = await sendMessage(attempt.id, attempt.input);
+      const answer = result.messages.filter((message) => message.role === "assistant").at(-1);
+      const cached = client.getQueryData<Conversation>(conversationKey(attempt.id));
+      const fresh = answer && !cached?.messages.some((message) => message.id === answer.id)
+        ? { id: answer.id, receivedAt: Date.now() } : null;
+      const submitted = attempt;
+      update((current) => ({
+        retry: null, freshAnswer: fresh,
+        drafts: clearSubmittedDraft(current.drafts, submitted.id, submitted.input.content),
+      }));
+      save(result);
       return true;
     } catch (error) {
       update({ error: errorMessage(error) });
@@ -99,5 +120,5 @@ export function useWorkspace(offset = 0) {
     } catch (error) { update({ error: errorMessage(error) }); }
     finally { update({ busy: false }); }
   }
-  return { userId, state, update, assistants, conversations, conversation, select, newConversation, send, decide, older };
+  return { userId, state, update, draft, setDraft, assistants, conversations, conversation, select, newConversation, send, decide, older };
 }
