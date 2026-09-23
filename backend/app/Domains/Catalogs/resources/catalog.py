@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 
 class CatalogResource(BaseModel):
@@ -41,6 +41,10 @@ class ProductResource(CatalogResource):
     pack_size: Decimal
     min_order_qty: Decimal
     lead_time_days: int | None
+    data_quality: dict[str, JsonValue] = Field(
+        default_factory=dict,
+        description="Готовность: status, reasons, происхождение. Статус blocked запрещает заказ.",
+    )
 
 
 CatalogOutput = ProductResource | CategoryResource | WarehouseResource | SupplierResource

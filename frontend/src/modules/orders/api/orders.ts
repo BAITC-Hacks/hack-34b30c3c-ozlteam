@@ -3,9 +3,10 @@ import type { OrderAudit, OrderHandoff, SupplierOrder } from "../types";
 
 const base = "/v1/orders";
 
-export function listOrders(status: string, offset: number, signal: AbortSignal) {
+export function listOrders(status: string, offset: number, signal: AbortSignal, supplierId?: string | null) {
   const query = new URLSearchParams({ limit: "20", offset: String(offset) });
   if (status === "draft" || status === "approved") query.set("status", status);
+  if (supplierId) query.set("supplier_id", supplierId);
   return apiRequest<SupplierOrder[]>(`${base}?${query}`, { signal });
 }
 

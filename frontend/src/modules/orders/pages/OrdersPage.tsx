@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
@@ -46,6 +46,9 @@ function OrderSkeleton({ detail = false }: { detail?: boolean }) {
 function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   const [params, setParams] = useSearchParams();
   const status = params.get("status") ?? "all";
+  const supplierId = params.get("supplier_id");
+  const from = params.get("from");
+  const supplierReturn = from?.startsWith("/data/catalogs?") ? from : `/data/catalogs?${new URLSearchParams({ tab: "suppliers", id: supplierId ?? "" })}`;
   const query = params.get("q") ?? "";
   const offset = Math.max(0, Number(params.get("offset") ?? 0) || 0);
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
@@ -57,11 +60,11 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    listOrders(status, offset, controller.signal).then(setOrders).catch((caught: unknown) => {
+    listOrders(status, offset, controller.signal, supplierId).then(setOrders).catch((caught: unknown) => {
       if (!controller.signal.aborted) setError(explainError(caught));
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [status, offset, reload]);
+  }, [status, offset, supplierId, reload]);
 
   const visible = useMemo(() => orders.filter((order) =>
     `${order.supplier_name} ${order.id} ${order.lines.map((line) => `${line.sku} ${line.name}`).join(" ")}`
@@ -72,13 +75,14 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     const next = new URLSearchParams(params);
     if (value && value !== "all") next.set(name, value);
     else next.delete(name);
-    if (name === "status") next.delete("offset");
+    if (name === "status" || name === "supplier_id") next.delete("offset");
     setParams(next);
   }
 
   return <div className={styles.page}>
     <PageHeader title="Заказы поставщикам" subtitle="Черновики, утверждение и экспорт для учётной системы" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
     <Card title="Список заказов" subtitle="Каждый заказ относится к одному поставщику и складу">
+      {supplierId ? <Alert tone="info" title="Заказы выбранного поставщика" action={<Button variant="ghost" size="sm" onClick={() => updateParam("supplier_id", "")}>Все поставщики</Button>}>Фильтр сохраняется при смене статуса и страницы. <Link to={supplierReturn}>Вернуться в справочник</Link></Alert> : null}
       <div className={styles.filters}>
         <Select label="Статус" value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></Select>
         <label>Поиск на странице<input type="search" value={query} onChange={(event) => updateParam("q", event.target.value)} placeholder="Поставщик, товар или номер" /></label>

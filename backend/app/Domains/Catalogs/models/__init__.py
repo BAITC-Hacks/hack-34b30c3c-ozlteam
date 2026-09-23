@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, UniqueConstraint, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 from app.core.database import Base
@@ -58,4 +59,7 @@ class Product(SourceRecord, Base):
     pack_size: Mapped[Decimal] = mapped_column(Numeric(20, 6), default=1)
     min_order_qty: Mapped[Decimal] = mapped_column(Numeric(20, 6), default=0)
     lead_time_days: Mapped[int | None]
+    data_quality: Mapped[dict] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
     active: Mapped[bool] = mapped_column(default=True)

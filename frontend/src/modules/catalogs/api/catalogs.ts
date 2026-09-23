@@ -24,6 +24,15 @@ export interface ProductRecord extends CatalogRecord {
   pack_size: string;
   min_order_qty: string;
   lead_time_days: number | null;
+  data_quality?: {
+    origin?: string;
+    status?: "ready" | "limited" | "blocked";
+    reasons?: string[];
+    history_start?: string;
+    supplier_terms_known?: boolean;
+    supplier_terms_semantics?: "minimum" | "pack" | null;
+    [key: string]: unknown;
+  };
 }
 
 export interface CategoryRecord extends CatalogRecord {
@@ -39,12 +48,14 @@ export type AnyCatalogRecord = ProductRecord | CategoryRecord | WarehouseRecord 
 
 export function listCatalog(
   kind: CatalogKind,
-  filters: { q: string; active: string; offset: number; limit: number },
+  filters: { q: string; active: string; offset: number; limit: number; supplier_id?: string; source_id?: string },
   signal?: AbortSignal,
 ): Promise<AnyCatalogRecord[]> {
   const query = new URLSearchParams({ limit: String(filters.limit), offset: String(filters.offset) });
   if (filters.q) query.set("q", filters.q);
   if (filters.active) query.set("active", filters.active);
+  if (filters.supplier_id) query.set("supplier_id", filters.supplier_id);
+  if (filters.source_id) query.set("source_id", filters.source_id);
   return apiRequest(`/v1/catalogs/${kind}?${query}`, { signal });
 }
 

@@ -7,6 +7,7 @@ import { ApiError } from "../../../shared/api/client";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { applyImport, createSource, getImport, listImports, listSources, stageImport } from "../api/data";
 import type { ImportBatch, ImportDetail, RowError, Source } from "../types";
+import { PackageImportsPanel } from "../components/PackageImportsPanel";
 import styles from "./DataSourcesPage.module.css";
 
 const kinds = [
@@ -189,6 +190,7 @@ export function DataSourcesPage() {
     <PageHeader title="Источники данных" subtitle="Проверка выгрузок 1С перед расчётом пополнения" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
     {error ? <Alert tone="danger" title="Действие не выполнено" onDismiss={() => setError(null)}>{error}</Alert> : null}
     {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
+    <PackageImportsPanel sources={sources} onChanged={() => setReload((value) => value + 1)} />
     {loading && !sources.length && !batches.length ? <DataSkeleton /> : <>
       <SourceList sources={sources} />
       <div className={styles.forms}>

@@ -19,14 +19,21 @@ class CatalogRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def list(self, kind, limit=50, offset=0, query=None, active=None):
+    async def list(
+        self, kind, limit=50, offset=0, query=None, active=None, source_id=None, supplier_id=None
+    ):
         model = MODELS[kind]
         stmt = select(model)
+        if source_id is not None:
+            stmt = stmt.where(model.source_id == source_id)
+        if supplier_id is not None and kind == "products":
+            stmt = stmt.where(Product.supplier_id == supplier_id)
         if query:
             escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             conditions = [model.name.ilike(f"%{escaped}%", escape="\\")]
             if kind == "products":
                 conditions.append(model.sku.ilike(f"%{escaped}%", escape="\\"))
+                conditions.append(model.code.ilike(f"%{escaped}%", escape="\\"))
             stmt = stmt.where(or_(*conditions))
         if active is not None:
             stmt = stmt.where(model.active == active)

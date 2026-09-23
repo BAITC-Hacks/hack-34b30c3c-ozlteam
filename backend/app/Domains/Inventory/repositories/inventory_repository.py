@@ -4,6 +4,7 @@ from sqlalchemy import or_, select
 
 from app.Domains.Catalogs.models import Category, Product, Supplier, Warehouse
 from app.Domains.Integrations1C.models import IntegrationSource
+from app.Domains.Inventory.business_time import BUSINESS_TIMEZONE
 from app.Domains.Inventory.models import (
     GrowthForecast,
     InboundShipment,
@@ -67,7 +68,7 @@ class InventoryRepository:
         products = list((await self.session.execute(query.order_by(Product.id))).all())
         product_ids = [p.id for p, _, _ in products]
         category_ids = list({p.category_id for p, _, _ in products if p.category_id is not None})
-        cutoff = datetime.combine(as_of + timedelta(days=1), time.min, UTC)
+        cutoff = datetime.combine(as_of + timedelta(days=1), time.min, BUSINESS_TIMEZONE)
         sales = list(
             await self.session.scalars(
                 select(Sale)

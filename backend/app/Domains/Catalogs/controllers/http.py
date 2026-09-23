@@ -47,8 +47,12 @@ async def list_catalog(
     offset: int = Query(0, ge=0),
     q: str | None = Query(None, max_length=200),
     active: bool | None = None,
+    source_id: UUID | None = Query(None, description="Источник справочника (база 1С)"),
+    supplier_id: UUID | None = Query(
+        None, description="Товары выбранного поставщика; только для products"
+    ),
 ):
-    return await service.list(kind, limit, offset, q, active)
+    return await service.list(kind, limit, offset, q, active, source_id, supplier_id)
 
 
 @router.get("/{kind}/{record_id}", response_model=CatalogOutput, summary="Объект справочника")

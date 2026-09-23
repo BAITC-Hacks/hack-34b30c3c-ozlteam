@@ -22,6 +22,12 @@ CALCULATE_REPLENISHMENT = "calculate_replenishment"
 # Visible progress of every job kind. The order is the order the worker completes them in,
 # and the arq task is registered under the same name as the kind.
 JOB_STEPS: dict[str, tuple[str, ...]] = {
+    "parse_import_package": (
+        "Читаю исходные книги",
+        "Сопоставляю и проверяю данные",
+        "Сохраняю проверенный пакет",
+    ),
+    "apply_import_package": ("Применяю проверенные порции", "Завершаю источник данных"),
     PARSE_DOCUMENT: ("Читаю документ", "Спрашиваю модель", "Собираю ответ"),
     CALCULATE_REPLENISHMENT: (
         "Фиксирую данные",
