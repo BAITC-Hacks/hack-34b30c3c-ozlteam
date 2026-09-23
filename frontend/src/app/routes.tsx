@@ -4,6 +4,7 @@ import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
 import { RoutesPage } from "../modules/fleet";
 import { NotesPage } from "../modules/notes";
+import { ReplenishmentPage } from "../modules/replenishment";
 import { UiKitPage } from "../modules/ui-kit";
 import { AppLayout } from "./AppLayout";
 import { PageHeader } from "./PageHeader";
@@ -27,13 +28,10 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      {
-        index: true,
-        element: <Placeholder title="Обзор" description="Сводка по запасам и заказам появится после подключения данных." />,
-      },
+      { index: true, element: <Navigate to="/recommendations" replace /> },
       {
         path: "recommendations",
-        element: <Placeholder title="Рекомендации" description="Здесь можно будет запустить расчёт потребности и проверить его результаты." />,
+        element: <ReplenishmentPage />,
       },
       {
         path: "orders",

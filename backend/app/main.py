@@ -16,6 +16,7 @@ from app.Domains.Files.controllers.http import router as files_router
 from app.Domains.Jobs.controllers.http import router as jobs_router
 from app.Domains.Notes.controllers.http import router as notes_router
 from app.Domains.Notes.services.note_service import NoteNotFound
+from app.Domains.Replenishment.controllers.http import router as replenishment_router
 from app.Domains.Security.controllers.http import router as security_router
 
 
@@ -46,6 +47,7 @@ app.include_router(security_router, prefix="/api/v1")
 app.include_router(files_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(replenishment_router, prefix="/api/v1")
 
 
 @app.exception_handler(RequestValidationError)

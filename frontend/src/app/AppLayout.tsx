@@ -36,7 +36,6 @@ interface NavItem {
 }
 
 const WORK: NavItem[] = [
-  { to: "/", label: "Обзор", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
   { to: "/recommendations", label: "Рекомендации", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
   { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },

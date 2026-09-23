@@ -2,10 +2,10 @@
 
 Read `CONTEXT.md` first: what the product is, who it serves, what is decided and what is still open.
 The industry changed on 21.09.2026 — the team is now on track 05, Logistics, and the construction
-material in the prototype no longer applies. Cases are not published yet. The shell, roles, mock
-data and the assistant prompt are already adapted to logistics; the scaffold, design system and UI
-kit carry over unchanged. Subject-matter background lives in `docs/logistic`, including a registry
-of trade documents and which of them have a legally prescribed form.
+material in the prototype no longer applies. The selected case is supplier replenishment for
+Elektrokomplekt. Read `docs/TEAM_HANDOFF.md` and `docs/replenishment-case.md` before product work;
+the replenishment demo uses synthetic data. The shell, design system and UI kit carry over unchanged.
+Earlier trade-document research in `docs/logistic` is background, not the current case.
 
 Before substantial work read `.agents/skills/task-delegation/SKILL.md`. Proactively delegate useful independent subtasks, with a clear plan and file ownership; the main agent integrates and verifies the result. No additional permission is needed for delegation.
 
