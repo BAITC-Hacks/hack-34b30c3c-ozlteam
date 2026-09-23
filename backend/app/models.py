@@ -13,7 +13,7 @@ from app.Domains.DataImports.models.packages import (
     ImportPackageEvidence,
 )
 from app.Domains.Files.models.file import File
-from app.Domains.Integrations1C.models import ExchangeBatch, IntegrationSource
+from app.Domains.Integrations1C.models import ExchangeBatch, IntegrationSource, RestReport
 from app.Domains.Inventory.models import (
     GrowthForecast,
     InboundShipment,
@@ -54,6 +54,7 @@ __all__ = [
     "ImportPackageEvidence",
     "ExchangeBatch",
     "IntegrationSource",
+    "RestReport",
     "GrowthForecast",
     "InboundShipment",
     "InventorySnapshot",

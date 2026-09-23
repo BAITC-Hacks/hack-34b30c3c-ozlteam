@@ -66,6 +66,10 @@ services:
   api:
     <<: *python
     build: ./backend
+    environment:
+      <<: *database-env
+      ONEC_ALLOWED_ORIGINS: ${ONEC_ALLOWED_ORIGINS:-}
+      ONEC_AUTH_EKT: ${ONEC_AUTH_EKT:-}
     ports:
       - "127.0.0.1:${API_PORT:-7575}:8000"
     volumes:

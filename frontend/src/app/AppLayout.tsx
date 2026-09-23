@@ -1,4 +1,4 @@
-import { BookOpen, Boxes, ClipboardList, Container, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart, Sparkles } from "lucide-react";
+import { BookOpen, Boxes, ClipboardList, Container, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Plug, ShoppingCart, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -26,6 +26,7 @@ const WORK: NavItem[] = [
 
 const DATA: NavItem[] = [
   { to: "/data", label: "Источники данных", mobileLabel: "Данные", icon: <Database size={17} strokeWidth={1.8} /> },
+  { to: "/data/integrations", label: "Интеграция с 1С", icon: <Plug size={17} strokeWidth={1.8} /> },
   { to: "/data/catalogs", label: "Справочники", icon: <BookOpen size={17} strokeWidth={1.8} /> },
 ];
 

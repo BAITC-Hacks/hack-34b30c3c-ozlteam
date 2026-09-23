@@ -1,6 +1,6 @@
 import { Check, FileUp, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
@@ -116,6 +116,8 @@ function previewLabel(row: Record<string, unknown>): string {
 }
 
 export function DataSourcesPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const batchId = params.get("import");
   const [sources, setSources] = useState<Source[]>([]);
@@ -268,7 +270,7 @@ export function DataSourcesPage() {
   }
 
   return <div className={styles.page}>
-    <PageHeader title="Источники данных" subtitle="Проверка нормализованных файлов перед расчётом пополнения" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
+    <PageHeader title="Источники данных" subtitle="Проверка нормализованных файлов перед расчётом пополнения" actions={<><Button variant="secondary" size="sm" onClick={() => navigate("/data/integrations", { state: { from: `${location.pathname}${location.search}${location.hash}` } })}>Интеграция с 1С</Button><Button variant="secondary" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button></>} />
     {error ? <Alert tone="danger" title="Действие не выполнено" onDismiss={() => setError(null)}>{error}</Alert> : null}
     {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
     <PackageImportsPanel sources={sources} onChanged={() => setReload((value) => value + 1)} />

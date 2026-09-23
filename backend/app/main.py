@@ -18,6 +18,7 @@ from app.Domains.DataImports.controllers.http import router as imports_router
 from app.Domains.DataImports.controllers.packages import router as packages_router
 from app.Domains.Files.controllers.http import router as files_router
 from app.Domains.Integrations1C.controllers.http import router as integrations_router
+from app.Domains.Integrations1C.controllers.reports import router as rest_reports_router
 from app.Domains.Inventory.controllers.http import router as inventory_router
 from app.Domains.Jobs.controllers.http import router as jobs_router
 from app.Domains.Notes.controllers.http import router as notes_router
@@ -65,6 +66,7 @@ app.include_router(catalogs_router, prefix="/api/v1")
 app.include_router(packages_router, prefix="/api/v1")
 app.include_router(imports_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
+app.include_router(rest_reports_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")
 app.include_router(orders_router, prefix="/api/v1")
 app.include_router(replenishment_router, prefix="/api/v1")

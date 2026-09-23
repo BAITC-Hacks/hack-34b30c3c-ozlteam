@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
 import { CatalogsPage } from "../modules/catalogs";
-import { DataSourcesPage } from "../modules/data";
+import { DataSourcesPage, RestIntegrationsPage } from "../modules/data";
 import { RoutesPage } from "../modules/fleet";
 import { InventoryPage } from "../modules/inventory";
 import { NotesPage } from "../modules/notes";
@@ -51,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: "data",
         element: <DataSourcesPage />,
+      },
+      {
+        path: "data/integrations",
+        element: <RestIntegrationsPage />,
       },
       {
         path: "data/catalogs",

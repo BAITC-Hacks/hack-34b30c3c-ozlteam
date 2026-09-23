@@ -112,6 +112,7 @@ OpenAI/NVIDIA и общий AI-ассистент доступны как инф
 | Область | Подтверждённая реализация / граница | Где проверять |
 | --- | --- | --- |
 | Нормализованный импорт и обмен | CSV/XLSX/API, preview/ошибки, применение, версии, повтор пакета, complete | `Domains/DataImports`, `Domains/Integrations1C`, [backend-data](docs/backend-data.md) |
+| Конструктор REST-отчётов 1С | `/data/integrations`: профили в PostgreSQL, сопоставление JSON-полей девяти типов, получение и staging с явным применением. Реальная база партнёра не подключена | [REST-отчёты](docs/onec-rest-reports.md) |
 | Справочники и факты | Товары, склады, поставщики, категории, продажи, остатки, путь, stockout, рост | `Domains/Catalogs`, `Domains/Inventory` |
 | Серверный расчёт | Снимок, worker, история, объяснения и ограничения | `Domains/Replenishment`, [backend-replenishment](docs/backend-replenishment.md) |
 | Заказы | Черновики, правка, утверждение, CSV/XLSX, пакет/подтверждение для 1С | `Domains/Procurement`, [backend-procurement](docs/backend-procurement.md) |
