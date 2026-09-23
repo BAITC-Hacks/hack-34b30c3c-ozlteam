@@ -3,7 +3,7 @@ import { useCurrentUser } from "../../auth";
 import { ApiError } from "../../../shared/api/client";
 import { createConversation, decideProposal, getAssistants, getConversation, getConversations, getMessages, sendMessage } from "../api/workspace";
 import type { AssistantContext, Conversation, Proposal, SendInput } from "../api/workspace";
-import { clearSubmittedDraft, moveDraft, readDraft, writeDraft, type Drafts } from "../lib/drafts";
+import { clearSubmittedDraft, moveDraft, readDraft, restoreFailedDraft, writeDraft, type Drafts } from "../lib/drafts";
 
 interface WorkspaceState {
   activeId: string; assistantId: string; context: AssistantContext; allowData: boolean;
@@ -71,11 +71,15 @@ export function useWorkspace(offset = 0) {
       update({ busy: false, error: "Разрешение на чтение данных отозвано. Этот повтор использовал исходное разрешение: обновите диалог, чтобы проверить результат, или задайте новый вопрос без доступа к данным." });
       return false;
     }
+    let draftId = attempt?.id ?? state.activeId;
+    const submittedText = attempt?.input.content ?? content;
+    update((current) => ({ drafts: clearSubmittedDraft(current.drafts, draftId, submittedText) }));
     try {
       if (!attempt) {
         let id = state.activeId;
         if (!id) {
           const added = await createConversation(); id = added.id;
+          draftId = id;
           update((current) => ({ activeId: id, drafts: moveDraft(current.drafts, "", id) }));
           try { sessionStorage.setItem(`assistant.active.${userId}`, id); } catch { /* Optional ID persistence. */ }
           save({ ...added, messages: [], proposals: [], has_older_messages: false });
@@ -89,15 +93,14 @@ export function useWorkspace(offset = 0) {
       const cached = client.getQueryData<Conversation>(conversationKey(attempt.id));
       const fresh = answer && !cached?.messages.some((message) => message.id === answer.id)
         ? { id: answer.id, receivedAt: Date.now() } : null;
-      const submitted = attempt;
-      update((current) => ({
-        retry: null, freshAnswer: fresh,
-        drafts: clearSubmittedDraft(current.drafts, submitted.id, submitted.input.content),
-      }));
+      update({ retry: null, freshAnswer: fresh });
       save(result);
       return true;
     } catch (error) {
-      update({ error: errorMessage(error) });
+      update((current) => ({
+        error: errorMessage(error),
+        drafts: restoreFailedDraft(current.drafts, draftId, submittedText),
+      }));
       if (attempt) void client.invalidateQueries({ queryKey: conversationKey(attempt.id) });
       return false;
     } finally { update({ busy: false }); }
