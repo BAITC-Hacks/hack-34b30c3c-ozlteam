@@ -26,6 +26,8 @@ Team Git shorthand: a user message `ПУШ` means publish the current work to Gi
 synchronize the current branch from Git. Before every push, fetch and integrate the latest remote
 changes, then resolve conflicts while preserving all three collaborators' work. Check Git status
 and remote changes regularly during shared work; never discard another collaborator's changes.
+After completing a change task, auto-push if you have reviewed and approved the entire diff and
+relevant checks pass; do not auto-push read-only, unfinished or explicitly local-only work.
 
 - Development starts with `make dev` (uses `.env.local` via `scripts/dev.sh`). Follow README.md for checks.
 - Preserve hot reload and source bind mounts. Dependency changes require updating lock files.
