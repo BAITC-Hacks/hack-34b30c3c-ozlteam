@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Доступ из браузера: список origin через запятую.
     cors_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
 
+    # REST 1С: разрешённые оператором origin через запятую. Пусто — запросы запрещены.
+    onec_allowed_origins: str = ""
+
     # Фоновые задачи.
     redis_url: str = "redis://redis:6379/0"
 

@@ -21,12 +21,27 @@ class ImportService:
         self.repository = repository
 
     async def stage(self, source_id, filename, content, kind, mapping, multiplier, user_id):
-        source = await self.repository.source(source_id, lock=True)
-        if source is None:
-            raise DomainError("Источник не найден", status_code=404, code="source_not_found")
         rows, errors, count = await asyncio.to_thread(
             parse_file, filename, content, kind, mapping, multiplier
         )
+        return await self.stage_rows(
+            source_id,
+            filename,
+            kind,
+            rows,
+            errors,
+            count,
+            hashlib.sha256(content).hexdigest(),
+            user_id,
+        )
+
+    async def stage_rows(
+        self, source_id, filename, kind, rows, errors, count, content_hash, user_id
+    ):
+        """Stage validated normalized rows from a file or REST adapter, without raw payloads."""
+        source = await self.repository.source(source_id, lock=True)
+        if source is None:
+            raise DomainError("Источник не найден", status_code=404, code="source_not_found")
         seen = set()
         for entry in rows:
             data = entry["data"]
@@ -56,7 +71,7 @@ class ImportService:
             source_id=source_id,
             filename=Path(filename).name[:255],
             kind=kind,
-            file_hash=hashlib.sha256(content).hexdigest(),
+            file_hash=content_hash,
             base_revision=source.revision,
             status="invalid" if errors else "validated",
             rows=rows,
