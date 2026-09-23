@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.database import engine
 from app.core.errors import DomainError
 from app.core.security_middleware import MaxBodySizeMiddleware, SecurityHeadersMiddleware
+from app.Domains.Ai.controllers.conversations import router as agent_router
 from app.Domains.Ai.controllers.http import router as ai_router
 from app.Domains.Catalogs.controllers.http import router as catalogs_router
 from app.Domains.DataImports.controllers.http import router as imports_router
@@ -62,6 +63,7 @@ app.include_router(security_router, prefix="/api/v1")
 app.include_router(files_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(agent_router, prefix="/api/v1")
 app.include_router(catalogs_router, prefix="/api/v1")
 app.include_router(packages_router, prefix="/api/v1")
 app.include_router(imports_router, prefix="/api/v1")
