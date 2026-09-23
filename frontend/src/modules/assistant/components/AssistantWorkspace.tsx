@@ -44,11 +44,12 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     if (Object.keys(context).length) update({ context, allowData: false });
   }, [workspace.userId, location.pathname, location.search, state.busy]);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
-  useEffect(() => { if (latestMessageId) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId]);
+  const pending = state.pendingMessage?.conversationId === state.activeId ? state.pendingMessage : null;
+  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id]);
   const chat = conversation.data;
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
   const initialLoading = !!state.activeId && conversation.isPending;
-  const empty = !initialLoading && !chat?.messages.length;
+  const empty = !initialLoading && !chat?.messages.length && !pending;
   async function send(text: string) {
     await workspace.send(text);
   }
@@ -110,7 +111,8 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
         </article>)}
       </>}
       {chat?.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} busy={state.busy} onDecision={(item, decision) => void workspace.decide(item, decision)} />)}
-      {state.busy ? <p className={styles.note} role="status">Запрос выполняется. Результат ещё не подтверждён сервером.</p> : null}
+      {pending && !chat?.messages.some((message) => message.id === pending.existingMessageId) ? <article className={styles.mine} aria-label="Отправленный вопрос"><small>Вы</small><p>{pending.content}</p></article> : null}
+      {state.busy ? <p className={styles.note} role="status">{pending ? "Помощник готовит ответ…" : "Запрос выполняется. Результат ещё не подтверждён сервером."}</p> : null}
       <div ref={tail} />
     </div>
     {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}

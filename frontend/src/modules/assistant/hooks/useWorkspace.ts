@@ -10,12 +10,13 @@ interface WorkspaceState {
   busy: boolean; error: string; retry: { id: string; input: SendInput } | null;
   drafts: Drafts;
   freshAnswer: { id: string; receivedAt: number } | null;
+  pendingMessage: { id: string; conversationId: string; content: string; existingMessageId?: string } | null;
 }
 function initialState(userId: string): WorkspaceState {
   let activeId = "";
   try { activeId = sessionStorage.getItem(`assistant.active.${userId}`) ?? ""; } catch { /* ID only, no private chat content. */ }
   if (!/^[\da-f-]{36}$/i.test(activeId)) activeId = "";
-  return { activeId, assistantId: "auto", context: {}, allowData: false, busy: false, error: "", retry: null, drafts: {}, freshAnswer: null };
+  return { activeId, assistantId: "auto", context: {}, allowData: false, busy: false, error: "", retry: null, drafts: {}, freshAnswer: null, pendingMessage: null };
 }
 function errorMessage(error: unknown) {
   if (error instanceof ApiError && error.status === 409) return "Данные или предложение изменились. Обновите диалог и проверьте актуальный результат перед повторным действием.";
@@ -73,18 +74,23 @@ export function useWorkspace(offset = 0) {
     }
     let draftId = attempt?.id ?? state.activeId;
     const submittedText = attempt?.input.content ?? content;
-    update((current) => ({ drafts: clearSubmittedDraft(current.drafts, draftId, submittedText) }));
+    const requestId = attempt?.input.client_request_id ?? crypto.randomUUID();
+    const cachedUser = attempt ? client.getQueryData<Conversation>(conversationKey(attempt.id))?.messages.filter((message) => message.role === "user").at(-1) : undefined;
+    update((current) => ({
+      drafts: clearSubmittedDraft(current.drafts, draftId, submittedText),
+      pendingMessage: { id: requestId, conversationId: draftId, content: submittedText.trim(), existingMessageId: cachedUser?.content === submittedText.trim() ? cachedUser.id : undefined },
+    }));
     try {
       if (!attempt) {
         let id = state.activeId;
         if (!id) {
           const added = await createConversation(); id = added.id;
           draftId = id;
-          update((current) => ({ activeId: id, drafts: moveDraft(current.drafts, "", id) }));
+          update((current) => ({ activeId: id, drafts: moveDraft(current.drafts, "", id), pendingMessage: current.pendingMessage ? { ...current.pendingMessage, conversationId: id } : null }));
           try { sessionStorage.setItem(`assistant.active.${userId}`, id); } catch { /* Optional ID persistence. */ }
           save({ ...added, messages: [], proposals: [], has_older_messages: false });
         }
-        attempt = { id, input: { content: content.trim(), client_request_id: crypto.randomUUID(), assistant_id: state.assistantId, context: { ...state.context }, allow_business_data: state.allowData } };
+        attempt = { id, input: { content: content.trim(), client_request_id: requestId, assistant_id: state.assistantId, context: { ...state.context }, allow_business_data: state.allowData } };
       }
       update({ retry: attempt });
       await client.cancelQueries({ queryKey: conversationKey(attempt.id) });
@@ -93,12 +99,13 @@ export function useWorkspace(offset = 0) {
       const cached = client.getQueryData<Conversation>(conversationKey(attempt.id));
       const fresh = answer && !cached?.messages.some((message) => message.id === answer.id)
         ? { id: answer.id, receivedAt: Date.now() } : null;
-      update({ retry: null, freshAnswer: fresh });
       save(result);
+      update({ retry: null, freshAnswer: fresh, pendingMessage: null });
       return true;
     } catch (error) {
       update((current) => ({
         error: errorMessage(error),
+        pendingMessage: null,
         drafts: restoreFailedDraft(current.drafts, draftId, submittedText),
       }));
       if (attempt) void client.invalidateQueries({ queryKey: conversationKey(attempt.id) });
