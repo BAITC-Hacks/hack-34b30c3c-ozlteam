@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
-import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Table, Td, Th, Tr } from "../../../shared/ui";
+import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { applyImport, createSource, getImport, listImports, listSources, stageImport } from "../api/data";
 import type { ImportBatch, ImportDetail, RowError, Source } from "../types";
 import styles from "./DataSourcesPage.module.css";
@@ -195,14 +195,14 @@ export function DataSourcesPage() {
         <Card title="Зарегистрировать источник" subtitle="Регистрация базы 1С не устанавливает соединение с ней">
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void addSource(); }}>
             <label>Название<input value={sourceName} maxLength={200} required onChange={(event) => setSourceName(event.target.value)} placeholder="Например, 1С Алматы" /></label>
-            <label>Тип<select value={sourceSystem} onChange={(event) => setSourceSystem(event.target.value as "1c" | "file")}><option value="file">Файловые выгрузки</option><option value="1c">База 1С</option></select></label>
+            <Select label="Тип" wrapperClassName={styles.selectField} value={sourceSystem} onChange={(event) => setSourceSystem(event.target.value as "1c" | "file")}><option value="file">Файловые выгрузки</option><option value="1c">База 1С</option></Select>
             <Button type="submit" variant="secondary" icon={<Plus size={16} strokeWidth={1.8} />} loading={busy === "source"} disabled={!sourceName.trim() || busy !== null}>Добавить источник</Button>
           </form>
         </Card>
         <Card title="Загрузить файл" subtitle="CSV UTF-8 или XLSX · до 25 МиБ и 10 000 строк">
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void upload(); }}>
-            <label>Источник<select value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select></label>
-            <label>Вид данных<select value={kind} onChange={(event) => setKind(event.target.value)}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <Select label="Источник" wrapperClassName={styles.selectField} value={sourceId} onChange={(event) => setSourceId(event.target.value)} required><option value="">Выберите источник</option>{sources.map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</Select>
+            <Select label="Вид данных" wrapperClassName={styles.selectField} value={kind} onChange={(event) => setKind(event.target.value)}>{kinds.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select>
             <label>Файл
               <span className={styles.fileControl}>
                 <span className={styles.fileChoose}>Выбрать файл</span>

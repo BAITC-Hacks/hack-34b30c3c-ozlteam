@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
-import { Alert, Badge, Button, Card, EmptyState, Tile } from "../../../shared/ui";
+import { Alert, Badge, Button, Card, EmptyState, Select, Tile } from "../../../shared/ui";
 import { getOverview, getOverviewWarehouses } from "../api/overview";
 import type { Overview, WarehouseOption } from "../api/overview";
 import styles from "./OverviewPage.module.css";
@@ -104,12 +104,11 @@ export function OverviewPage() {
     <PageHeader title="Обзор закупок" subtitle="Что требует внимания по последнему расчёту" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} loading={refreshing} onClick={() => setRetry((value) => value + 1)}>Обновить</Button>} />
 
     <div className={styles.toolbar}>
-      <label htmlFor="overview-warehouse">Склад</label>
-      <select id="overview-warehouse" value={warehouseId} onChange={(event) => {
+      <Select label="Склад" wrapperClassName={styles.warehouseSelect} id="overview-warehouse" value={warehouseId} onChange={(event) => {
         const next = new URLSearchParams(params);
         if (event.target.value) next.set("warehouse", event.target.value); else next.delete("warehouse");
         setParams(next);
-      }}><option value="">Последний расчёт по всем складам</option>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}</select>
+      }}><option value="">Последний расчёт по всем складам</option>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}</Select>
       {warehouseError ? <span className={styles.muted}>Названия складов недоступны; обзор всё ещё можно обновить.</span> : null}
     </div>
 

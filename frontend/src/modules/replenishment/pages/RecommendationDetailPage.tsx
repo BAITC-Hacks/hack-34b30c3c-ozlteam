@@ -18,7 +18,11 @@ const fields = [
 ] as const;
 
 function number(value: number | string | null | undefined): number { return Number(value ?? 0) || 0; }
-function qty(value: number | string | null | undefined): string { return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(number(value)); }
+function qty(value: number | string | null | undefined): string {
+  const amount = number(value);
+  if (amount !== 0 && Math.abs(amount) < 1e-12) return String(value);
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 12 }).format(amount);
+}
 function date(value: string | null | undefined): string { return value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("ru-RU") : "—"; }
 function display(value: number | string | null | undefined): string { return value == null || value === "" ? "—" : /^-?\d+(\.\d+)?$/.test(String(value)) ? qty(value) : String(value); }
 function explanation(value: string): string { return value.replace(/\b\d+\.\d{4,}\b/g, (match) => qty(match)); }
@@ -43,7 +47,7 @@ function monthlyHistory(history: SavedRecommendationDetail["details"]["history"]
     item.stockout ||= row.stockout;
     months.set(key, item);
   }
-  return [...months.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-24);
+  return [...months.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function Chart({ points, secondLabel }: { points: Point[]; secondLabel?: string }) {
@@ -81,6 +85,7 @@ export function RecommendationDetailPage() {
   const [retry, setRetry] = useState(0);
   const back = returnPath(params.get("from"));
   const history = useMemo(() => monthlyHistory(detail?.details.history ?? []), [detail]);
+  const chartHistory = useMemo(() => history.slice(-24), [history]);
   const forecast = useMemo(() => detail?.details.forecast.map((point) => ({ date: point.date, value: number(point.quantity) })) ?? [], [detail]);
 
   useEffect(() => {
@@ -117,8 +122,9 @@ export function RecommendationDetailPage() {
       </Card>
 
       <div className={styles.twoColumns}>
-        <Card title="История спроса" subtitle={`Фактические продажи и скорректированный спрос · ${detail.details.history.length} дн.`}>
-          <Chart points={history} secondLabel="Спрос после корректировок" />
+        <Card title="История спроса" subtitle={`Фактические продажи и скорректированный спрос · ${detail.details.history.length} дн. за ${history.length} мес.`}>
+          <Chart points={chartHistory} secondLabel="Спрос после корректировок" />
+          {history.length > chartHistory.length ? <p className={styles.muted}>На графике последние {chartHistory.length} из {history.length} мес.; таблица ниже содержит всю историю.</p> : null}
           <div className={styles.facts}><span>Продано: <b>{display(breakdown.raw_sales)} {detail.unit}</b></span><span>После корректировок: <b>{display(breakdown.corrected_sales)} {detail.unit}</b></span><span>Упущенный спрос: <b>{display(breakdown.lost_demand)} {detail.unit}</b></span><span>Дней без товара: <b>{detail.details.history.filter((point) => point.stockout).length}</b></span></div>
           <details className={styles.disclosure}><summary>Показать месяцы</summary><Table><thead><Tr><Th>Месяц</Th><Th numeric>Продажи</Th><Th numeric>Спрос</Th><Th>Дефицит</Th></Tr></thead><tbody>{history.map((point) => <Tr key={point.date}><Td>{point.date}</Td><Td numeric>{qty(point.value)}</Td><Td numeric>{qty(point.secondary)}</Td><Td>{point.stockout ? "Был" : "Нет"}</Td></Tr>)}</tbody></Table></details>
         </Card>

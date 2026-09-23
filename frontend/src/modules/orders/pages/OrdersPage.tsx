@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
-import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Table, Td, Th, Tr } from "../../../shared/ui";
+import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
 import { approveOrder, editOrderLine, exportOrder, getOrder, listOrders, listWarehouses } from "../api/orders";
 import type { OrderLine, SupplierOrder } from "../types";
@@ -79,7 +79,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     <PageHeader title="Заказы поставщикам" subtitle="Черновики, утверждение и экспорт для учётной системы" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
     <Card title="Список заказов" subtitle="Каждый заказ относится к одному поставщику и складу">
       <div className={styles.filters}>
-        <label>Статус<select value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></select></label>
+        <Select label="Статус" value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></Select>
         <label>Поиск на странице<input type="search" value={query} onChange={(event) => updateParam("q", event.target.value)} placeholder="Поставщик, товар или номер" /></label>
       </div>
       {loading ? <OrderSkeleton /> : error ? <Alert tone="danger" title="Не удалось загрузить заказы" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{error}</Alert> : <>

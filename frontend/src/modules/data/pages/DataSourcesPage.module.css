@@ -1,8 +1,10 @@
-.page { display: grid; gap: var(--gap-blocks); min-width: 0; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap-blocks); min-width: 0; }
 .forms { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--gap-cards); align-items: start; }
-.form { display: grid; gap: var(--sp-3); }
+.form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); min-width: 0; }
+.form label, .advancedBody, .advancedBody label { min-width: 0; }
 .form label, .advancedBody label { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
-.form input, .form select, .form textarea { width: 100%; min-height: var(--ctl); padding: var(--sp-2) var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
+.form input, .form textarea { width: 100%; min-height: var(--ctl); padding: var(--sp-2) var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
+.selectField > span:first-child { color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
 .fileControl { position: relative; display: flex; align-items: center; gap: var(--sp-3); min-width: 0; min-height: var(--touch); padding: var(--sp-2); border-radius: var(--r-s); background: var(--sunken); cursor: pointer; }
 .fileChoose { flex: none; display: inline-flex; align-items: center; min-height: var(--ctl); padding: 0 var(--sp-3); border-radius: var(--r-xs); background: var(--panel); color: var(--ink); font-size: var(--fs-sm); font-weight: 600; }
 .fileName { min-width: 0; overflow: hidden; color: var(--mut); font-size: var(--fs-sm); text-overflow: ellipsis; white-space: nowrap; }
@@ -10,7 +12,7 @@
 .fileControl:focus-within { outline: 2px solid var(--ac); outline-offset: 2px; }
 .form .fileControl input[type="file"] { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; clip-path: inset(50%); }
 .form textarea { resize: vertical; min-height: 80px; }
-.form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible, .textButton:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.form input:focus-visible, .form textarea:focus-visible, .textButton:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .form button { justify-self: start; }
 .hint { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-xs); }
 .advanced { color: var(--mut); font-size: var(--fs-xs); }
@@ -19,7 +21,7 @@
 .check { display: flex !important; align-items: start; gap: var(--sp-2) !important; color: var(--ink) !important; font-size: var(--fs-sm) !important; }
 .check input { flex: none; width: 17px; height: 17px; min-height: 0; margin: 2px 0 0; accent-color: var(--ac); }
 .muted { display: block; margin-top: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
-.tableWrap { max-width: 100%; overflow-x: auto; }
+.tableWrap { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
 .textButton { padding: var(--sp-1); border: 0; border-radius: var(--r-xs); background: transparent; color: var(--ac-ink); font: inherit; cursor: pointer; }
 .textButton:hover { background: var(--ac-soft); }
 .detail { display: grid; justify-items: start; gap: var(--sp-4); }
@@ -33,6 +35,6 @@
 .skeleton i:last-child { width: 85%; }
 .skeletonRow { height: 70px; width: 100%; }
 @keyframes shimmer { to { background-position-x: -200%; } }
-@media (max-width: 900px) { .forms { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .forms { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .form button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .skeleton i, .skeletonRow { animation: none; background: var(--sunken); } }

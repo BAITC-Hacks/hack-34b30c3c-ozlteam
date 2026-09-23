@@ -2,8 +2,9 @@
 .filters { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-4) 0; }
 .filters label { display: grid; gap: var(--sp-1); min-width: 180px; flex: 1; color: var(--mut); font-size: var(--fs-xs); }
 .filters label:first-child { flex: 3; }
-.filters input, .filters select { min-height: var(--ctl); width: 100%; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
-.filters input:focus-visible, .filters select:focus-visible, .recordLink:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.filters > label > span:first-child { color: var(--mut); font-size: var(--fs-xs); font-weight: 400; }
+.filters input { min-height: var(--ctl); width: 100%; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-body); }
+.filters input:focus-visible, .recordLink:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .recordLink { border: 0; padding: var(--sp-2) 0; color: var(--ac-ink); background: none; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
 .recordLink:hover { text-decoration: underline; }
 .pager { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-xs); }

@@ -77,7 +77,7 @@ export function DocumentsPanel() {
     setPending("upload");
     try {
       const saved = await uploadFile(file);
-      setFiles((current) => [saved, ...current.filter((item) => item.id !== saved.id)].slice(0, PAGE_SIZE));
+      setFiles((current) => [saved, ...current.filter((item) => item.id !== saved.id)]);
       setMessage(`Файл «${saved.filename}» загружен.`);
     } catch (reason) { setError(errorText(reason)); }
     finally { setPending(null); }

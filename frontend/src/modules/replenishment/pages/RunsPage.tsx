@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
-import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Table, Td, Th, Tr } from "../../../shared/ui";
+import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
 import { createOrders, createRun, getCatalog, getJob, getRecommendation, getRecommendations, getRun, getRuns } from "../api/runs";
 import type { CatalogOption, JobStatus, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
@@ -254,8 +254,8 @@ export function RunsPage() {
     {catalogLoading ? <RunSkeleton /> : <>
       <Card title="Новый расчёт" subtitle="Данные берутся из последней завершённой загрузки 1С">
         <div className={styles.controls}>
-          <label>Склад<select value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}><option value="">Выберите склад</option>{warehouses.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-          <label>Категория<select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Все категории</option>{categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+          <Select label="Склад" wrapperClassName={styles.selectControl} value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}><option value="">Выберите склад</option>{warehouses.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
+          <Select label="Категория" wrapperClassName={styles.selectControl} value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Все категории</option>{categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
           <label>Дата среза<input type="date" value={asOf} max={today} onChange={(event) => setAsOf(event.target.value)} /></label>
           <Button variant="primary" icon={<Play size={16} strokeWidth={1.8} />} loading={busy === "run"} disabled={!warehouseId || !asOf || busy !== null} onClick={() => void startRun()}>Рассчитать</Button>
         </div>
@@ -280,7 +280,7 @@ export function RunsPage() {
       {run?.status === "done" ? <>
         <Card title="Рекомендации" subtitle={visiblePage ? `${visiblePage.total} позиций · расчёт ${run.as_of}` : recommendationsError ? "Результат временно недоступен" : "Загружаем результат"}>
           <div className={styles.listControls}>
-            <label>Срочность<select value={urgencyFilter} onChange={(event) => updateParams({ urgency: event.target.value, offset: null, recommendation: null })}><option value="">Все</option><option value="critical">Критично</option><option value="high">Высокий</option><option value="normal">Планово</option><option value="none">Без заказа</option></select></label>
+            <Select label="Срочность" wrapperClassName={styles.selectControl} value={urgencyFilter} onChange={(event) => updateParams({ urgency: event.target.value, offset: null, recommendation: null })}><option value="">Все</option><option value="critical">Критично</option><option value="high">Высокий</option><option value="normal">Планово</option><option value="none">Без заказа</option></Select>
             <Button variant="primary" size="sm" icon={<ArrowRight size={15} strokeWidth={1.8} />} disabled={!visiblePage || loadingRows || !selected.size || busy !== null} onClick={() => setPreviewOpen(true)}>Создать черновики ({visiblePage ? selected.size : 0})</Button>
           </div>
           {!visiblePage && !recommendationsError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем рекомендации"><i /><i /><i /><i /></div> : null}

@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
-import { Button, Card, EmptyState, ErrorState, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
+import { Button, Card, EmptyState, ErrorState, Select, Table, Tabs, Td, Th, Tr } from "../../../shared/ui";
 import { getCatalogRecord, listCatalog, listInventory } from "../api/inventory";
 import type { CatalogRow, InboundRow, InventoryKind, StockoutRow, StockRow } from "../api/inventory";
 import styles from "./InventoryPage.module.css";
@@ -167,9 +167,9 @@ export function InventoryPage() {
 
     <Card title="Данные 1С" subtitle="Выберите склад и товар, чтобы уточнить список">
       <div className={styles.filters}>
-        <label>Склад<select value={warehouseId} onChange={(event) => updateParam("warehouse", event.target.value)}><option value="">Все склады</option>{warehouseId && !warehouses.some((item) => item.id === warehouseId) ? <option value={warehouseId}>{warehouseId}</option> : null}{warehouses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        <Select label="Склад" value={warehouseId} onChange={(event) => updateParam("warehouse", event.target.value)}><option value="">Все склады</option>{warehouseId && !warehouses.some((item) => item.id === warehouseId) ? <option value={warehouseId}>{warehouseId}</option> : null}{warehouses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>
         <label>Поиск товара<input type="search" value={productSearch} maxLength={200} onChange={(event) => setProductSearch(event.target.value)} placeholder="Название или артикул" /></label>
-        <label>Товар<select value={productId} onChange={(event) => updateParam("product", event.target.value)}><option value="">Все товары</option>{productId && !products.some((item) => item.id === productId) ? <option value={productId}>{productId}</option> : null}{products.map((item) => <option key={item.id} value={item.id}>{item.name}{item.sku ? ` · ${item.sku}` : ""}</option>)}</select></label>
+        <Select label="Товар" value={productId} onChange={(event) => updateParam("product", event.target.value)}><option value="">Все товары</option>{productId && !products.some((item) => item.id === productId) ? <option value={productId}>{productId}</option> : null}{products.map((item) => <option key={item.id} value={item.id}>{item.name}{item.sku ? ` · ${item.sku}` : ""}</option>)}</Select>
       </div>
       {catalogError ? <p className={styles.catalogError} role="alert">Справочники не загрузились: {catalogError} <button type="button" onClick={() => setReload((value) => value + 1)}>Повторить</button></p> : null}
       <p className={styles.hint}>Поиск товара выполняется в справочнике 1С. Если результатов больше 200, уточните запрос.</p>
