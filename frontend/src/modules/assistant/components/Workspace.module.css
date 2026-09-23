@@ -47,6 +47,7 @@
 .empty h2 { font-size: var(--fs-h2); margin: 0; }
 .empty p { color: var(--mut); font-size: var(--fs-sm); }
 .smallOrb { width: 84px; height: 84px; }
+.heroOrb { width: min(100%, calc(var(--touch) * 6)); aspect-ratio: 1; }
 .compact { gap: var(--sp-3); max-height: 60dvh; overflow-y: auto; padding: var(--sp-3); }
 .compact .messages { max-height: 48dvh; overflow-y: auto; padding: var(--sp-1); }
 .compact .toolbar { align-items: center; }

@@ -16,6 +16,7 @@ const NUDGE_DISMISSED_KEY = "assistant-nudge-dismissed";
 export function FloatingAssistant() {
   const panelId = useId();
   const { pathname } = useLocation();
+  const onAssistantPage = pathname.replace(/\/$/, "") === "/assistant";
   const [isOpen, setIsOpen] = useState(false);
   const [nudgeIndex, setNudgeIndex] = useState(-1);
   const [nudgeDismissed, setNudgeDismissed] = useState(() => {
@@ -27,6 +28,8 @@ export function FloatingAssistant() {
   });
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => { if (onAssistantPage) setIsOpen(false); }, [onAssistantPage]);
 
   useEffect(() => {
     if (nudgeDismissed || isOpen || pathname === "/assistant") return;
@@ -61,7 +64,7 @@ export function FloatingAssistant() {
   }
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || onAssistantPage) return;
 
     root.current?.querySelector("textarea")?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -83,7 +86,10 @@ export function FloatingAssistant() {
       window.removeEventListener("keydown", closeOnEscape);
       document.removeEventListener("mousedown", closeOnOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, onAssistantPage]);
+
+  // The full-page chat already provides the assistant; do not duplicate its launcher.
+  if (onAssistantPage) return null;
 
   return (
     <div className={styles.root} ref={root}>
