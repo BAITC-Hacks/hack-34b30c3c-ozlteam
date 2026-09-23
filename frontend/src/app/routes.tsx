@@ -2,23 +2,17 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AssistantPage } from "../modules/assistant";
 import { LoginPage } from "../modules/auth";
-import { DashboardPage } from "../modules/dashboard";
 import { RoutesPage } from "../modules/fleet";
 import { NotesPage } from "../modules/notes";
 import { UiKitPage } from "../modules/ui-kit";
 import { AppLayout } from "./AppLayout";
+import { PageHeader } from "./PageHeader";
 import { RequireAuth } from "./RequireAuth";
 
-/** Заглушка раздела: каркас есть, предметная часть появится вместе с направлением. */
-function Placeholder({ title }: { title: string }) {
+function Placeholder({ title, description }: { title: string; description: string }) {
   return (
     <section>
-      <h1 style={{ margin: 0, fontSize: "var(--fs-h1)", letterSpacing: "var(--ls-h1)" }}>
-        {title}
-      </h1>
-      <p style={{ color: "var(--mut)" }}>
-        Раздел ещё не наполнен. Каркас, маршрут и права уже работают.
-      </p>
+      <PageHeader title={title} subtitle={description} />
     </section>
   );
 }
@@ -33,16 +27,39 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      {
+        index: true,
+        element: <Placeholder title="Обзор" description="Сводка по запасам и заказам появится после подключения данных." />,
+      },
+      {
+        path: "recommendations",
+        element: <Placeholder title="Рекомендации" description="Здесь можно будет запустить расчёт потребности и проверить его результаты." />,
+      },
+      {
+        path: "orders",
+        element: <Placeholder title="Заказы поставщикам" description="Здесь будут черновики заказов для проверки, утверждения и экспорта." />,
+      },
+      {
+        path: "inventory",
+        element: <Placeholder title="Запасы" description="Остатки, товары в пути и периоды отсутствия товара будут собраны здесь." />,
+      },
+      {
+        path: "data",
+        element: <Placeholder title="Источники данных" description="Здесь будут загрузка выгрузок, проверка полей и состояние данных." />,
+      },
+      {
+        path: "data/catalogs",
+        element: <Placeholder title="Справочники" description="Товары, категории, поставщики и сроки поставки будут доступны здесь." />,
+      },
       { path: "notes", element: <NotesPage /> },
       { path: "assistant", element: <AssistantPage /> },
-      { path: "shipments", element: <Placeholder title="Отправления" /> },
-      { path: "documents", element: <Placeholder title="Документы" /> },
-      { path: "receiving", element: <Placeholder title="Приёмка" /> },
-      { path: "warehouse", element: <Placeholder title="Склад" /> },
+      { path: "shipments", element: <Placeholder title="Отправления" description="Раздел пока недоступен." /> },
+      { path: "documents", element: <Placeholder title="Документы" description="Раздел пока недоступен." /> },
+      { path: "receiving", element: <Placeholder title="Приёмка" description="Раздел пока недоступен." /> },
+      { path: "warehouse", element: <Navigate to="/inventory" replace /> },
       { path: "routes", element: <RoutesPage /> },
-      { path: "clients", element: <Placeholder title="Клиенты" /> },
-      { path: "carriers", element: <Placeholder title="Перевозчики" /> },
+      { path: "clients", element: <Placeholder title="Клиенты" description="Раздел пока недоступен." /> },
+      { path: "carriers", element: <Placeholder title="Перевозчики" description="Раздел пока недоступен." /> },
       { path: "ui-kit", element: <UiKitPage /> },
     ],
   },

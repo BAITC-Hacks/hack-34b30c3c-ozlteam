@@ -148,6 +148,8 @@
 }
 
 .navigation {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   padding: 0 var(--sp-1) var(--sp-4);
   overflow-y: auto;
@@ -161,6 +163,11 @@
 
 .navSection + .navSection {
   margin-top: var(--sp-6);
+}
+
+.navSection:last-child {
+  margin-top: auto;
+  padding-top: var(--sp-6);
 }
 
 .group {
@@ -208,6 +215,11 @@
   background: var(--ac-soft);
   color: var(--ac-ink);
   font-weight: 500;
+}
+
+.disabled {
+  color: var(--faint);
+  cursor: default;
 }
 
 .count {
