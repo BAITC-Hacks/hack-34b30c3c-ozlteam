@@ -61,6 +61,7 @@
 .previewList li { margin-bottom: var(--sp-3); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .note { font-size: var(--fs-cap); line-height: var(--lh-body); color: var(--mut); margin: var(--sp-2) 0; }
+.accessNotice { box-sizing: border-box; width: min(760px, 100%); align-self: center; }
 .dataAccess { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--fs-cap); color: var(--mut); }
 .composer { position: sticky; bottom: var(--sp-4); z-index: 1; display: flex; gap: var(--sp-2); align-items: end; padding: var(--sp-3); background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
 .composer:focus-within { outline: 2px solid var(--ac); }

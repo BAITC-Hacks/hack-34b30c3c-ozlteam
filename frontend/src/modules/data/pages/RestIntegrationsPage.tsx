@@ -158,6 +158,7 @@ export function RestIntegrationsPage() {
   const error = sources.error ?? kinds.error;
   const errorCopy = friendlyReportError(
     error instanceof Error ? error.message : t("Не удалось открыть отчёты", "Есептерді ашу мүмкін болмады", "Could not open reports"),
+    locale,
   );
   const loading =
     userPending || (canRead && (sources.isPending || kinds.isPending));

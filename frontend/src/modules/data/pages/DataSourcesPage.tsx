@@ -368,10 +368,10 @@ export function DataSourcesPage() {
         </div> : null}
       </Card> : null}
     </>}
-    <Modal id="apply-import" title="Применить импорт" open={applyOpen} closeOnEscape={busy !== "apply"} closeOnBackdrop={busy !== "apply"} showClose={busy !== "apply"} onOpenChange={(open) => { if (busy === "apply") return; if (open) setApplyOpen(true); else closeApplyModal(); }} footer={<><Button variant="secondary" disabled={busy === "apply"} onClick={closeApplyModal}>Вернуться</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>Применить файл</Button></>}>
-      {error ? <Alert tone="danger" title="Не удалось применить файл">{error}</Alert> : null}
-      <ActionPreview items={[`${detail?.row_count ?? 0} проверенных строк попадут в рабочие данные`, "Версия источника изменится; рекомендации можно будет пересчитать"]} note="Если это последняя часть согласованной выгрузки, отметьте её полной." />
-      <label className={styles.check}><input type="checkbox" checked={complete} onChange={(event) => setComplete(event.target.checked)} />Это последняя часть выгрузки — разрешить расчёт</label>
+    <Modal id="apply-import" title={t("Применить импорт", "Импортты қолдану", "Apply import")} open={applyOpen} closeOnEscape={busy !== "apply"} closeOnBackdrop={busy !== "apply"} showClose={busy !== "apply"} onOpenChange={(open) => { if (busy === "apply") return; if (open) setApplyOpen(true); else closeApplyModal(); }} footer={<><Button variant="secondary" disabled={busy === "apply"} onClick={closeApplyModal}>{t("Вернуться", "Оралу", "Go back")}</Button><Button variant="primary" loading={busy === "apply"} onClick={() => void confirmApply()}>{t("Применить файл", "Файлды қолдану", "Apply file")}</Button></>}>
+      {error ? <Alert tone="danger" title={t("Не удалось применить файл", "Файлды қолдану мүмкін болмады", "Could not apply file")}>{error}</Alert> : null}
+      <ActionPreview items={[`${detail?.row_count ?? 0} ${t("проверенных строк попадут в рабочие данные", "тексерілген жол жұмыс деректеріне қосылады", "validated rows will enter working data")}`, t("Версия источника изменится; рекомендации можно будет пересчитать", "Дереккөз нұсқасы өзгереді; ұсыныстарды қайта есептеуге болады", "The source version will change; recommendations can be recalculated")]} note={t("Если это последняя часть согласованной выгрузки, отметьте её полной.", "Бұл келісілген экспорттың соңғы бөлігі болса, оны толық деп белгілеңіз.", "If this is the final agreed export part, mark it complete.")} />
+      <label className={styles.check}><input type="checkbox" checked={complete} onChange={(event) => setComplete(event.target.checked)} />{t("Это последняя часть выгрузки — разрешить расчёт", "Бұл экспорттың соңғы бөлігі — есептеуге рұқсат беру", "This is the final export part — enable calculation")}</label>
     </Modal>
   </div>;
 }

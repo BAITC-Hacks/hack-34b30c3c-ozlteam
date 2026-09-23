@@ -165,7 +165,7 @@ export function RestReportEditor({
     new Set(pairs.map(([source]) => source)).size !== pairs.length;
   const missing = required.filter((field) => !mapping[field.name]?.trim());
   const disabled = !canWrite || busy !== null;
-  const displayError = error ? friendlyReportError(error) : null;
+  const displayError = error ? friendlyReportError(error, locale) : null;
 
   function chooseKind(nextKind: ReportKind) {
     if (nextKind.kind === form.kind) return;
