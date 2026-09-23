@@ -11,7 +11,7 @@ export function NotesPage() {
     <div className="page">
       <header>
         <a className="brand" href="/">
-          План закупок
+          Центр закупок
         </a>
         <span className="badge">TEAM WORKSPACE</span>
       </header>
@@ -64,7 +64,7 @@ export function NotesPage() {
         </section>
       </main>
       <footer>
-        План закупок · Сделано для совместной работы
+        Центр закупок · Сделано для совместной работы
         <span>Идея → прототип → результат</span>
       </footer>
     </div>

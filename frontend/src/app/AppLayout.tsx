@@ -1,4 +1,4 @@
-import { BookOpen, Boxes, ClipboardList, Container, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Plug, ShoppingCart, Sparkles } from "lucide-react";
+import { BookOpen, Boxes, ClipboardList, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Plug, ShoppingCart, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -132,10 +132,8 @@ export function AppLayout() {
       <div className={styles.sidebarSlot} data-collapsed={sidebarOpen ? undefined : ""}>
         <aside className={styles.side}>
           <div className={styles.brand}>
-            <span className={styles.mark} aria-hidden="true">
-              <Container size={19} strokeWidth={1.8} />
-            </span>
-            <span className={styles.brandName}>План закупок</span>
+            <img className={styles.mark} src="/icon.svg" alt="" />
+            <span className={styles.brandName}>Центр закупок</span>
             <Button
               className={styles.hideMenu}
               variant="ghost"
