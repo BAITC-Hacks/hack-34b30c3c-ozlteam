@@ -1,0 +1,6 @@
+interface:
+  display_name: "Направление проекта"
+  short_description: "Сверка задач с кейсом Электрокомплекта и данными"
+  default_prompt: "Используй $project-alignment, чтобы сверить задачу с требованиями и актуальным направлением проекта."
+policy:
+  allow_implicit_invocation: true
