@@ -73,6 +73,21 @@ button,input,textarea,select{font:inherit;color:inherit}
 .tile span{font-size:12.5px;color:var(--mut)}
 .tile b{font-size:var(--fs-num);font-weight:600;letter-spacing:var(--ls-num);line-height:var(--lh-num)}
 .tile .d{font-size:12px;color:var(--mut)}.tile .d.up{color:var(--er-ink)}.tile .d.wr{color:var(--wr-ink)}.tile .d.ok{color:var(--ok-ink)}
+.demand-examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--gap-cards)}
+.demand-example{min-width:0;padding:var(--pad-card);display:grid;gap:var(--sp-3)}
+.demand-example h3{margin:0;font-size:var(--fs-h3)}
+.demand-example p{margin:0;color:var(--mut);font-size:var(--fs-xs)}
+.demand-legend{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);color:var(--mut);font-size:var(--fs-xs)}
+.demand-legend span{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.demand-legend i{width:var(--sp-4);border-top:3px solid var(--ok)}
+.demand-legend .raw{border-top:2px dashed var(--ac)}
+.demand-legend .forecast{border-color:var(--ac)}
+.demand-example svg{display:block;width:100%;height:auto}
+.demand-example svg text{fill:var(--mut);font-size:var(--fs-xs);font-family:var(--font);font-variant-numeric:tabular-nums}
+.demand-grid{fill:none;stroke:var(--hair);stroke-dasharray:3 5}
+.demand-raw,.demand-corrected,.demand-forecast{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2.5;vector-effect:non-scaling-stroke}
+.demand-raw{stroke:var(--ac);stroke-dasharray:5 5;stroke-width:2}
+.demand-corrected{stroke:var(--ok)}.demand-forecast{stroke:var(--ac)}
 .meter{height:5px;border-radius:3px;background:var(--sunken);overflow:hidden;margin-top:6px}.meter i{display:block;height:100%;border-radius:3px;background:var(--ac)}
 .sh{display:flex;align-items:center;gap:10px}.sh h3{margin:0;font-size:var(--fs-h2);font-weight:600;letter-spacing:var(--ls-h2)}.sh .cnt{font-size:12.5px;color:var(--faint)}.sh .right{margin-left:auto}
 table.t{width:100%;border-collapse:collapse;font-size:13px}
@@ -230,7 +245,7 @@ table.t td.r,table.t th.r{text-align:right;white-space:nowrap}
 <nav class="toc">
   <b>UI Kit · Центр закупок</b>
   <a href="#tokens">Токены</a><a href="#type">Типографика</a><a href="#buttons">Кнопки</a><a href="#controls">Контролы</a>
-  <a href="#badges">Бейджи и аватары</a><a href="#tiles">Плитки и карточки</a><a href="#numbers">Числа и выводы</a><a href="#table">Таблица и списки</a>
+  <a href="#badges">Бейджи и аватары</a><a href="#tiles">Плитки и карточки</a><a href="#numbers">Числа и выводы</a><a href="#demand-charts">Графики спроса</a><a href="#table">Таблица и списки</a>
   <a href="#ai">Блоки ИИ</a><a href="#chat">Чат и агенты</a><a href="#fields">Поля</a><a href="#gantt">Гант</a>
   <a href="#frame">Каркас</a><a href="#segmented">Сегменты и действие</a><a href="#mobile">Мобильная навигация</a><a href="#states">Состояния</a>
 </nav>
@@ -370,6 +385,40 @@ table.t td.r,table.t th.r{text-align:right;white-space:nowrap}
   <div class="demo">
     <div class="insight info"><span class="i"></span><div><b>Домены под тему ещё не заводим</b><p>Пока трек не объявлен, каркас держит вход, файлы и задачи.</p></div></div>
     <div class="insight warn"><span class="i"></span><div><b>2 записи висят дольше недели</b><p>Самая старая — «Закрыть акты скрытых работ». Либо у неё нет владельца, либо она уже неактуальна.</p></div></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="demand-charts">
+  <h2>Графики спроса</h2>
+  <p>DemandChart: плавная линия проходит через исходные точки без дополнительных пиков. Общая шкала сохраняет сравнимость продаж и спроса; подписи и пунктир различают серии. Ниже — статические демонстрационные данные, не история Электрокомплекта.</p>
+  <div class="demand-examples">
+    <div class="card demand-example">
+      <h3>История спроса</h3>
+      <div class="demand-legend"><span><i class="raw"></i>Факт продаж</span><span><i></i>После корректировок</span></div>
+      <svg viewBox="0 0 320 220" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Демонстрация: месячные продажи от 120 до 360 штук; скорректированный спрос от 120 до 220 штук">
+        <text x="0" y="14">шт.</text>
+        <path class="demand-grid" d="M44 28H308 M44 104H308 M44 180H308"/>
+        <g text-anchor="end"><text x="36" y="32">400</text><text x="36" y="108">200</text><text x="36" y="184">0</text></g>
+        <path fill="var(--ok-soft)" d="M44 134.4 C62 134.4 79 111.6 97 111.6 C115 111.6 132 126.8 150 126.8 C168 126.8 184 96.4 202 96.4 C220 96.4 237 119.2 255 119.2 C273 119.2 290 104 308 104 L308 180H44Z"/>
+        <path class="demand-raw" d="M44 134.4 C62 134.4 79 111.6 97 111.6 C115 111.6 132 126.8 150 126.8 C168 126.8 184 96.4 202 96.4 C220 96.4 237 119.2 255 119.2 C273 119.2 290 43.2 308 43.2"/>
+        <path class="demand-corrected" d="M44 134.4 C62 134.4 79 111.6 97 111.6 C115 111.6 132 126.8 150 126.8 C168 126.8 184 96.4 202 96.4 C220 96.4 237 119.2 255 119.2 C273 119.2 290 104 308 104"/>
+        <text x="44" y="208">апр. 2026</text><text x="308" y="208" text-anchor="end">сент. 2026</text>
+      </svg>
+      <p>Пример, апрель–сентябрь: продажи 120, 180, 140, 220, 160, 360 шт.; после корректировок последнее значение — 200 шт.</p>
+    </div>
+    <div class="card demand-example">
+      <h3>Прогноз</h3>
+      <div class="demand-legend"><span><i class="forecast"></i>Прогноз спроса</span></div>
+      <svg viewBox="0 0 320 220" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Демонстрация: прогноз на шесть дней — 18, 18, 20, 20, 19, 21 штука">
+        <text x="0" y="14">шт.</text>
+        <path class="demand-grid" d="M44 28H308 M44 104H308 M44 180H308"/>
+        <g text-anchor="end"><text x="36" y="32">24</text><text x="36" y="108">12</text><text x="36" y="184">0</text></g>
+        <path fill="var(--ac-soft)" d="M44 66 C62 66 79 66 97 66 C115 66 132 53.3 150 53.3 C168 53.3 184 53.3 202 53.3 C220 53.3 237 59.7 255 59.7 C273 59.7 290 47 308 47 L308 180H44Z"/>
+        <path class="demand-forecast" d="M44 66 C62 66 79 66 97 66 C115 66 132 53.3 150 53.3 C168 53.3 184 53.3 202 53.3 C220 53.3 237 59.7 255 59.7 C273 59.7 290 47 308 47"/>
+        <text x="44" y="208">24 сент.</text><text x="308" y="208" text-anchor="end">29 сент.</text>
+      </svg>
+      <p>Пример, 24–29 сентября 2026: 18, 18, 20, 20, 19, 21 шт. В приложении точные значения доступны по наведению, касанию и стрелкам клавиатуры.</p>
+    </div>
   </div>
 </section>
 

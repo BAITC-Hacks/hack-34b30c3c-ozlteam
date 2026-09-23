@@ -29,6 +29,20 @@ class InventoryRepository:
     async def category(self, category_id):
         return await self.session.get(Category, category_id)
 
+    async def sale(self, sale_id):
+        return await self.session.get(Sale, sale_id)
+
+    async def sales_document(self, source_id, document_id, limit):
+        query = (
+            select(Sale, Product, Warehouse)
+            .join(Product, Sale.product_id == Product.id)
+            .join(Warehouse, Sale.warehouse_id == Warehouse.id)
+            .where(Sale.source_id == source_id, Sale.document_id == document_id)
+            .order_by(Sale.date, Sale.line_id, Sale.id)
+            .limit(limit)
+        )
+        return list((await self.session.execute(query)).all())
+
     async def list(self, kind, warehouse_id, product_id, limit, offset, current=False):
         model = MODELS[kind]
         query = select(model)

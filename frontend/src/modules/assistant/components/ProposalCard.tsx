@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Badge, Button, Card } from "../../../shared/ui";
 import type { Proposal } from "../api/workspace";
 import styles from "./Workspace.module.css";
@@ -10,6 +10,7 @@ const labels: Record<string, string> = {
   ready: "Готово", limited: "С ограничениями", blocked: "Требует исправления", lines: "Позиции", kind: "Действие",
   warnings: "Предупреждения", run_id: "Расчёт", orders: "Заказы", id: "ID", applied: "Применён", validated: "Проверен",
   notice: "Примечание", supplier_name: "Поставщик", line_count: "Позиций", job_id: "Фоновая задача", queued: "В очереди",
+  draft: "Черновик", approved: "Утверждён", comment: "Комментарий", reason: "Основание",
 };
 export function safeSourceUrl(value: string): string | null {
   if (!value.startsWith("/") || value.startsWith("//") || /[\\\u0000-\u001f]/.test(value)) return null;
@@ -31,18 +32,38 @@ function Preview({ value, depth = 0 }: { value: unknown; depth?: number }) {
   if (value && typeof value === "object") return <dl className={styles.previewFields}>{Object.entries(value).map(([key, item]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd><Preview value={item} depth={depth + 1} /></dd></div>)}</dl>;
   return <span>{valueText(value)}</span>;
 }
+function SupplierDraftPreview({ preview, test = false }: { preview: Record<string, unknown>; test?: boolean }) {
+  const lines = Array.isArray(preview.lines) ? preview.lines : [];
+  return <>
+    <dl className={styles.previewFields}>
+      <div><dt>Поставщик</dt><dd>{valueText(preview.supplier_name)}</dd></div>
+      <div><dt>Склад</dt><dd>{valueText(preview.warehouse_name)}</dd></div>
+    </dl>
+    <ol className={styles.previewList}>{lines.map((line, index) => {
+      if (!line || typeof line !== "object") return null;
+      const item = line as Record<string, unknown>;
+      return <li key={index}><strong>{valueText(item.name)}</strong><div>Артикул: {valueText(item.sku)}</div><div>{valueText(item.quantity)} {valueText(item.unit)}</div></li>;
+    })}</ol>
+    <p className={styles.note}>{test ? "Тестовые позиции и количества для проверки работы с заказом. Это не прогноз потребности." : "Товары и количества указаны вами. Это не расчёт потребности."}</p>
+    {test && typeof preview.notice === "string" ? <p className={styles.note}>{preview.notice}</p> : null}
+  </>;
+}
 export function ProposalCard({ proposal, busy, onDecision }: { proposal: Proposal; busy: boolean; onDecision: (proposal: Proposal, decision: "confirm" | "cancel") => void }) {
+  const location = useLocation();
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
   const result = proposal.result;
   const orders = Array.isArray(result?.orders) ? result.orders : [];
-  return <Card title={proposal.title} subtitle={`Версия предложения ${proposal.version}`} actions={<Badge tone={proposal.status === "confirmed" ? "success" : proposal.status === "pending" ? "warning" : "neutral"}>{proposal.status === "pending" ? "Ждёт решения" : proposal.status === "confirmed" ? "Подтверждено" : "Отменено"}</Badge>}>
+  const testDraft = proposal.kind === "create_test_supplier_draft";
+  const supplierDraft = proposal.kind === "create_supplier_draft" || testDraft;
+  return <Card title={proposal.title} subtitle={`${testDraft ? "Тестовый заказ · " : ""}Версия предложения ${proposal.version}`} actions={<Badge tone={proposal.status === "confirmed" ? "success" : proposal.status === "pending" ? "warning" : "neutral"}>{proposal.status === "pending" ? "Ждёт решения" : proposal.status === "confirmed" ? "Подтверждено" : "Отменено"}</Badge>}>
     <p>{proposal.summary}</p>
-    <Preview value={proposal.preview} />
-    <p className={styles.note}>{proposal.kind === "calculate" ? "Будет запущен сохранённый расчёт. Заказы не создаются." : proposal.kind === "create_orders" ? "Будут созданы только черновики. Утверждение и отправка поставщику не выполняются." : "Пакет будет применён к рабочим данным. Проверьте состав и ограничения выше."}</p>
-    {proposal.status === "pending" ? <div className={styles.actions}><Button disabled={busy} onClick={() => onDecision(proposal, "confirm")}>Подтвердить действие</Button><Button variant="secondary" disabled={busy} onClick={() => onDecision(proposal, "cancel")}>Отменить предложение</Button></div> : null}
-    {result ? <div className={styles.result}><strong>Результат</strong><Preview value={result} />
+    {supplierDraft ? <SupplierDraftPreview preview={proposal.preview} test={testDraft} /> : <Preview value={proposal.preview} />}
+    <p className={styles.note}>{proposal.kind === "calculate" ? "Будет запущен сохранённый расчёт. Заказы не создаются." : proposal.kind === "create_orders" || supplierDraft ? "Создаётся черновик с указанными позициями. Откройте заказ, чтобы проверить, утвердить или удалить его." : "Пакет будет применён к рабочим данным. Проверьте состав и ограничения выше."}</p>
+    {proposal.status === "pending" ? <div className={styles.actions}><Button loading={busy} onClick={() => onDecision(proposal, "confirm")}>{testDraft ? "Создать тестовый черновик" : supplierDraft ? "Создать черновик" : "Подтвердить действие"}</Button><Button variant="secondary" disabled={busy} onClick={() => onDecision(proposal, "cancel")}>Отменить предложение</Button></div> : null}
+    {result ? <div className={styles.result}><strong>{testDraft ? "Тестовый черновик создан" : supplierDraft ? "Черновик создан" : "Результат"}</strong>{!supplierDraft ? <Preview value={result} /> : null}
       {typeof result.run_id === "string" ? <Link to={`/recommendations?run=${encodeURIComponent(result.run_id)}`}>Открыть расчёт</Link> : null}
       {typeof result.package_id === "string" ? <Link to={`/data?package=${encodeURIComponent(result.package_id)}`}>Открыть пакет</Link> : null}
-      {orders.map((order, index) => order && typeof order === "object" && "id" in order && typeof order.id === "string" ? <Link key={order.id} to={`/orders?id=${encodeURIComponent(order.id)}`}>Открыть заказ {index + 1}</Link> : null)}
+      {orders.map((order, index) => order && typeof order === "object" && "id" in order && typeof order.id === "string" ? <Link key={order.id} to={`/orders?id=${encodeURIComponent(order.id)}`} state={{ returnTo }}>Открыть заказ {index + 1}</Link> : null)}
     </div> : null}
   </Card>;
 }

@@ -1,12 +1,12 @@
 export interface OrderLine {
   id: string;
-  recommendation_id: string;
-  run_id: string;
+  recommendation_id: string | null;
+  run_id: string | null;
   product_id: string;
   sku: string;
   name: string;
   unit: string;
-  recommended_quantity: string;
+  recommended_quantity: string | null;
   quantity: string;
   reason: string;
 }

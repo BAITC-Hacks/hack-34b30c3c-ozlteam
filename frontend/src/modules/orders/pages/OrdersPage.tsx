@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
-import { approveOrder, deleteOrderLine, editOrderLine, exportOrder, getOrder, getOrderAudit, getOrderHandoff, listOrderFilterOptions, listOrders, listWarehouses, reviseOrder, updateOrderComment } from "../api/orders";
+import { approveOrder, deleteOrder, deleteOrderLine, editOrderLine, exportOrder, getOrder, getOrderAudit, getOrderHandoff, listOrderFilterOptions, listOrders, listWarehouses, reviseOrder, updateOrderComment } from "../api/orders";
 import type { OrderAudit, OrderDelivery, OrderLine, SupplierOrder } from "../types";
 import styles from "./OrdersPage.module.css";
 
@@ -146,12 +146,12 @@ function LineEditor({ order, line, onSaved, onEditingChange, onExplain }: { orde
   }
 
   return <div className={styles.line}>
-    <div className={styles.lineHead}><div><strong>{line.name}</strong><span className={styles.secondary}>{line.sku} · {line.unit}</span><button type="button" className={styles.textButton} onClick={() => onExplain(line.recommendation_id)}>Почему рекомендовано</button></div><div className={styles.lineValue}><strong>{quantity(line.quantity)} {line.unit}</strong><span className={styles.secondary}>Рекомендовано {quantity(line.recommended_quantity)}</span></div></div>
+    <div className={styles.lineHead}><div><strong>{line.name}</strong><span className={styles.secondary}>{line.sku} · {line.unit}</span>{line.recommendation_id ? <button type="button" className={styles.textButton} onClick={() => onExplain(line.recommendation_id!)}>Почему рекомендовано</button> : <span className={styles.secondary}>Ручная позиция</span>}</div><div className={styles.lineValue}><strong>{quantity(line.quantity)} {line.unit}</strong>{line.recommended_quantity !== null ? <span className={styles.secondary}>Рекомендовано {quantity(line.recommended_quantity)}</span> : <span className={styles.secondary}>Без расчёта потребности</span>}</div></div>
     {line.reason ? <p className={styles.lineReason}>Причина: {line.reason}</p> : null}
     {order.status === "draft" ? deleting ? <div className={styles.editor}>
       <label className={styles.wideField}>Причина удаления<input value={reason} maxLength={4000} onChange={(event) => setReason(event.target.value)} placeholder="Почему исключаем позицию из заказа" /></label>
       <div className={styles.editorActions}><Button size="sm" variant="secondary" loading={pending} disabled={!reason.trim()} onClick={() => void remove()}>Удалить позицию</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setDeleting(false); onEditingChange(line.id, false); setReason(""); setError(null); }}>Отмена</Button></div>
-      <small className={styles.secondary}>Удаление останется в истории; рекомендация не вернётся в выбор для нового заказа.</small>
+      <small className={styles.secondary}>{line.recommendation_id ? "Удаление останется в истории; рекомендация не вернётся в выбор для нового заказа." : "Удаление позиции останется в истории заказа."}</small>
       {error ? <Alert tone="danger">{error}</Alert> : null}
     </div> : editing ? <div className={styles.editor}>
       <label>Количество<input inputMode="decimal" value={value} onChange={(event) => setValue(event.target.value)} aria-invalid={value.length > 0 && !validQuantity(value)} /></label>
@@ -190,10 +190,13 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
   const [deliveryLoading, setDeliveryLoading] = useState(false);
   const [revisionReason, setRevisionReason] = useState("");
   const [revisionOpen, setRevisionOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(null); setOrder(null); setPreview(false); setEditingLineIds(new Set()); setAudit([]); setAuditOffset(0); setDelivery(null); setCommentEditing(false); setRevisionOpen(false); setNotice(null);
+    setDeleteOpen(false); setDeleteReason("");
     getOrder(id, controller.signal).then((loaded) => { setOrder(loaded); setComment(loaded.comment); }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(explainError(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     listWarehouses(controller.signal).then((items) => setWarehouseNames(new Map(items.map((item) => [item.id, item.name])))).catch(() => undefined);
@@ -251,6 +254,14 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
     finally { setPending(false); }
   }
 
+  async function removeDraft() {
+    if (!order || !deleteReason.trim() || editingLineIds.size || commentEditing) return;
+    setPending(true); setError(null);
+    try { await deleteOrder(order.id, deleteReason.trim(), order.version); onBack(); }
+    catch (caught) { setError(explainError(caught)); }
+    finally { setPending(false); }
+  }
+
   async function download(format: "csv" | "xlsx") {
     if (!order) return;
     setExporting(format); setError(null);
@@ -260,7 +271,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
   }
 
   return <div className={styles.page}>
-    <PageHeader title="Заказ поставщику" subtitle={order ? `${order.supplier_name} · редакция ${order.revision}` : "Проверка и утверждение заказа"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={onBack}>К списку</Button>} />
+    <PageHeader title="Заказ поставщику" subtitle={order ? `${order.supplier_name} · редакция ${order.revision}` : "Проверка и утверждение заказа"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={onBack}>Назад</Button>} />
     {loading ? <OrderSkeleton detail /> : error && !order ? <Alert tone="danger" title="Не удалось открыть заказ" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{error}</Alert> : order ? <>
       {error ? <Alert tone="danger" title="Действие не выполнено" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Обновить заказ</Button>}>{error}</Alert> : null}
       {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
@@ -280,7 +291,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
       {order.status === "draft" ? <Card title="Утверждение" subtitle="После утверждения заказ и его строки станут неизменяемыми">
         {editingLineIds.size || commentEditing ? <p className={styles.pendingEdit}>Сохраните или отмените изменения перед утверждением.</p> : null}
         {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} disabled={editingLineIds.size > 0 || commentEditing} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0 || editingLineIds.size > 0 || commentEditing} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}
-      </Card> : <Card title="Экспорт" subtitle="Файл для передачи в учётную систему; отправка поставщику остаётся ручным действием"><div className={styles.exportActions}><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "xlsx"} disabled={exporting !== null} onClick={() => void download("xlsx")}>Скачать XLSX</Button><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "csv"} disabled={exporting !== null} onClick={() => void download("csv")}>Скачать CSV</Button></div></Card>}
+      </Card> : <Card title="Документы заказа" subtitle="Excel — оформленный заказ для просмотра и печати. CSV — таблица позиций с русскими заголовками."><div className={styles.exportActions}><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "xlsx"} disabled={exporting !== null} onClick={() => void download("xlsx")}>Заказ в Excel</Button><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "csv"} disabled={exporting !== null} onClick={() => void download("csv")}>Таблица CSV</Button></div></Card>}
       {order.status === "approved" ? <Card title="Обработка в 1С" subtitle="Статус локального пакета; сама передача требует отдельного адаптера">
         <div className={styles.delivery}><Badge tone={deliveryStatus === "accepted" ? "success" : deliveryStatus === "rejected" ? "danger" : deliveryStatus === "pending" ? "warning" : "neutral"}>{deliveryStatus === "accepted" ? "Принят 1С" : deliveryStatus === "rejected" ? "Отклонён 1С" : deliveryStatus === "pending" ? "Пакет ожидает обработки" : deliveryStatus === "loading" ? "Проверяем статус" : "Статус недоступен"}</Badge>
           {delivery?.external_document_id ? <span>Документ 1С: <b>{delivery.external_document_id}</b></span> : null}
@@ -293,15 +304,32 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
         {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)} · сотрудник {item.actor_id}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}{item.action === "line_deleted" && item.data.before ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} {String((item.data.before as Record<string, unknown>).unit)}</p> : null}</div>)}</div> : !auditError ? <p className={styles.secondary}>Действий пока нет.</p> : null}
         {auditHasMore && !auditLoading && !auditError ? <Button size="sm" variant="ghost" onClick={() => setAuditOffset((value) => value + 50)}>Показать ещё</Button> : null}
       </Card>
+      {order.status === "draft" && !order.supersedes_order_id ? <Card title="Удаление черновика" subtitle="Заказ исчезнет из списка; история действий сохранится">
+        {deleteOpen ? <div className={styles.commentForm}>
+          <label>Причина удаления<input value={deleteReason} maxLength={4000} onChange={(event) => setDeleteReason(event.target.value)} placeholder="Например, тестовый заказ больше не нужен" /></label>
+          <div className={styles.editorActions}><Button variant="secondary" loading={pending} disabled={!deleteReason.trim() || editingLineIds.size > 0 || commentEditing} onClick={() => void removeDraft()}>Удалить черновик</Button><Button variant="ghost" disabled={pending} onClick={() => setDeleteOpen(false)}>Отмена</Button></div>
+        </div> : <Button variant="ghost" disabled={pending || editingLineIds.size > 0 || commentEditing} onClick={() => { setDeleteOpen(true); setPreview(false); }}>Удалить черновик</Button>}
+      </Card> : null}
     </> : null}
   </div>;
 }
 
 export function OrdersPage() {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const id = params.get("id");
-  function open(orderId: string) { const next = new URLSearchParams(params); next.set("id", orderId); setParams(next); }
-  function back() { const next = new URLSearchParams(params); next.delete("id"); setParams(next, { replace: true }); }
+  function open(orderId: string) { const next = new URLSearchParams(params); next.set("id", orderId); setParams(next, { state: location.state }); }
+  function back() {
+    const target: unknown = location.state?.returnTo;
+    if (typeof target === "string" && target.startsWith("/") && !target.startsWith("//") && !/[\\\u0000-\u001f]/.test(target)) {
+      const url = new URL(target, window.location.origin);
+      if (url.origin === window.location.origin && ["/assistant", "/orders", "/recommendations", "/inventory", "/data/catalogs"].includes(url.pathname) && `${url.pathname}${url.search}${url.hash}` !== `${location.pathname}${location.search}${location.hash}`) {
+        navigate(target, { replace: true }); return;
+      }
+    }
+    const next = new URLSearchParams(params); next.delete("id"); setParams(next, { replace: true });
+  }
   if (id && !uuid.test(id)) return <div className={styles.page}><PageHeader title="Заказ не найден" /><Alert tone="danger" action={<Button onClick={back}>К списку</Button>}>Ссылка на заказ содержит неверный идентификатор.</Alert></div>;
   return id ? <OrderDetail id={id} onBack={back} onOpen={open} /> : <OrderList onOpen={open} />;
 }

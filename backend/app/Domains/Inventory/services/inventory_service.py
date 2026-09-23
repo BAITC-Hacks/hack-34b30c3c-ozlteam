@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from datetime import date
 from uuid import UUID
 
@@ -7,6 +8,10 @@ from app.core.errors import DomainError
 from app.Domains.Inventory.business_time import BUSINESS_TIMEZONE
 from app.Domains.Inventory.repositories.inventory_repository import InventoryRepository
 from app.Domains.Inventory.resources.inventory import RESOURCES
+from app.Domains.Inventory.services.sales_document_export import (
+    MAX_DOCUMENT_LINES,
+    create_sales_document,
+)
 
 
 async def get_snapshot(
@@ -21,6 +26,20 @@ async def get_snapshot(
 class InventoryService:
     def __init__(self, repository: InventoryRepository):
         self.repository = repository
+
+    async def export_sales_document(self, sale_id: UUID) -> bytes:
+        sale = await self.repository.sale(sale_id)
+        if sale is None:
+            raise DomainError("Продажа не найдена", status_code=404, code="sale_not_found")
+        rows = await self.repository.sales_document(
+            sale.source_id, sale.document_id, MAX_DOCUMENT_LINES + 1
+        )
+        if len(rows) > MAX_DOCUMENT_LINES:
+            raise DomainError(
+                f"Документ содержит больше {MAX_DOCUMENT_LINES} строк; выгрузка не сформирована",
+                code="sales_document_too_large",
+            )
+        return await to_thread(create_sales_document, sale.source_id, sale.document_id, rows)
 
     async def list(self, kind, warehouse_id, product_id, limit, offset, current=False):
         return [

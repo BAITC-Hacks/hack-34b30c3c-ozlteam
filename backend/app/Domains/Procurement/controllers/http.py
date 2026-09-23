@@ -9,7 +9,9 @@ from app.Domains.Procurement.dependencies import get_order_service
 from app.Domains.Procurement.DTO.order import (
     Acknowledge,
     CreateOrders,
+    CreateSupplierDraft,
     DeleteLine,
+    DeleteOrder,
     EditLine,
     EditOrder,
     ReviseOrder,
@@ -57,6 +59,21 @@ async def create_orders(data: CreateOrders, service: Service, user: Write):
     return await service.create(data, user.id)
 
 
+@router.post(
+    "/drafts",
+    response_model=OrderOut,
+    status_code=201,
+    summary="Создать черновик с указанными товарами и количествами",
+    description="Требуется orders.write. Поставщик, склад и активные товары должны принадлежать "
+    "одной базе 1С, товары — выбранному поставщику. Количества задаёт пользователь; "
+    "рекомендации не создаются и не распределяются. Возвращает draft, не утверждает и не "
+    "отправляет заказ. Повтор ключа с тем же составом возвращает исходный заказ; "
+    "другой состав или удалённый исходный черновик — 409.",
+)
+async def create_supplier_draft(data: CreateSupplierDraft, service: Service, user: Write):
+    return await service.create_supplier_draft(data, user.id)
+
+
 @router.get("", response_model=list[OrderOut], summary="Список заказов с фильтрами")
 async def list_orders(
     service: Service,
@@ -78,6 +95,23 @@ async def get_order(order_id: UUID, service: Service, user: Read):
 @router.patch("/{order_id}", response_model=OrderOut, summary="Изменить комментарий черновика")
 async def edit_order(order_id: UUID, data: EditOrder, service: Service, user: Write):
     return await service.edit(order_id, data, user.id)
+
+
+@router.delete(
+    "/{order_id}",
+    status_code=204,
+    response_class=Response,
+    summary="Удалить черновик заказа",
+    description="Требуется orders.write. Тело: expected_version и reason. Только draft; "
+    "устаревшая версия, утверждённый заказ или редакция отклонённого заказа — 409. "
+    "Редакции необходимо исправлять, чтобы сохранить цепочку обмена с 1С. "
+    "Удалённый черновик скрывается из "
+    "списка и GET возвращает 404; аудит сохраняется. Распределённые этому черновику "
+    "рекомендации освобождаются. Старый ключ создания не восстанавливает удалённый заказ.",
+)
+async def delete_order(order_id: UUID, data: DeleteOrder, service: Service, user: Write):
+    await service.delete(order_id, data, user.id)
+    return Response(status_code=204)
 
 
 @router.patch(
@@ -143,12 +177,14 @@ async def get_audit(
 @router.get(
     "/{order_id}/export",
     response_class=Response,
-    summary="Скачать утверждённую версию CSV или XLSX",
+    summary="Скачать документ заказа или таблицу обмена CSV/XLSX",
     responses={
         200: {
             "description": "Файл утверждённого заказа, включая исторические редакции; "
-            "количество строкой "
-            "без потери точности, без цены. CSV UTF-8 BOM.",
+            "layout=document — русские подписи, названия поставщика и склада; "
+            "XLSX оформлен для чтения и печати, CSV с разделителем «;». "
+            "layout=exchange (по умолчанию) сохраняет технические колонки и точные "
+            "количества строкой. Оба CSV содержат UTF-8 BOM. Цены не добавляются.",
             "content": {
                 "text/csv": {"schema": {"type": "string", "format": "binary"}},
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
@@ -163,9 +199,13 @@ async def get_audit(
     },
 )
 async def export_order(
-    order_id: UUID, service: Service, user: Export, format: Literal["csv", "xlsx"] = "xlsx"
+    order_id: UUID,
+    service: Service,
+    user: Export,
+    format: Literal["csv", "xlsx"] = "xlsx",
+    layout: Literal["document", "exchange"] = "exchange",
 ):
-    content = await service.export(order_id, format)
+    content = await service.export(order_id, format, layout=layout)
     revision = (await service.get(order_id)).revision
     content_type = (
         "text/csv"

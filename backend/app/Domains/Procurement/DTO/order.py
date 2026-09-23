@@ -24,6 +24,33 @@ class VersionCommand(Command):
     expected_version: int = Field(ge=1, description="Версия из последнего GET заказа.")
 
 
+class SupplierDraftLine(Command):
+    product_id: UUID = Field(description="Товар выбранного поставщика из справочника.")
+    quantity: Decimal = Field(gt=0, max_digits=20, decimal_places=6, examples=["12.5"])
+
+
+class CreateSupplierDraft(Command):
+    supplier_id: UUID
+    warehouse_id: UUID
+    lines: list[SupplierDraftLine] = Field(min_length=1, max_length=1000)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    comment: str = Field(default="", max_length=4000)
+    reason: str = Field(
+        default="Товары и количества указаны пользователем", min_length=1, max_length=4000
+    )
+
+    @model_validator(mode="after")
+    def unique_products(self):
+        ids = [line.product_id for line in self.lines]
+        if len(ids) != len(set(ids)):
+            raise ValueError("product_ids must be unique")
+        return self
+
+
+class DeleteOrder(VersionCommand):
+    reason: str = Field(min_length=1, max_length=4000, description="Причина удаления черновика.")
+
+
 class EditOrder(VersionCommand):
     comment: str = Field(max_length=4000)
     reason: str = Field(min_length=1, max_length=4000)

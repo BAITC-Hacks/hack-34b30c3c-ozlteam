@@ -33,6 +33,12 @@ class Tools:
         self.proposals = []
         self.result = result or {"items": []}
 
+    def can_use_supplier_context(self):
+        return True
+
+    async def supplier_directory(self):
+        return []
+
     async def execute_read(self, name, args):
         self.reads.append((name, args))
         return self.result

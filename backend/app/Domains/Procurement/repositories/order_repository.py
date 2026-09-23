@@ -1,7 +1,7 @@
 from hashlib import sha256
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.Domains.Procurement.models.order import (
@@ -49,7 +49,7 @@ class OrderRepository:
         return await self.session.scalar(query)
 
     async def list(self, limit, offset, status=None, supplier_id=None, warehouse_id=None):
-        query = select(Order)
+        query = select(Order).where(Order.deleted_at.is_(None))
         for column, value in (
             (Order.status, status),
             (Order.supplier_id, supplier_id),
@@ -73,6 +73,11 @@ class OrderRepository:
     async def delete_line(self, line):
         await self.session.delete(line)
         await self.session.flush()
+
+    async def release_allocations(self, order_id):
+        await self.session.execute(
+            delete(OrderAllocation).where(OrderAllocation.order_id == order_id)
+        )
 
     async def audits(self, order_id, limit, offset):
         return list(
@@ -101,7 +106,11 @@ class OrderRepository:
         )
 
     async def count_drafts(self, warehouse_id=None):
-        query = select(func.count()).select_from(Order).where(Order.status == "draft")
+        query = (
+            select(func.count())
+            .select_from(Order)
+            .where(Order.status == "draft", Order.deleted_at.is_(None))
+        )
         if warehouse_id is not None:
             query = query.where(Order.warehouse_id == warehouse_id)
         return await self.session.scalar(query)

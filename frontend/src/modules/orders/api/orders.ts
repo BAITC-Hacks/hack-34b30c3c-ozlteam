@@ -25,6 +25,12 @@ export function getOrder(id: string, signal: AbortSignal) {
   return apiRequest<SupplierOrder>(`${base}/${id}`, { signal });
 }
 
+export function deleteOrder(orderId: string, reason: string, expectedVersion: number) {
+  return apiRequest<void>(`${base}/${orderId}`, {
+    method: "DELETE", body: { reason, expected_version: expectedVersion },
+  });
+}
+
 export function listWarehouses(signal: AbortSignal) {
   return apiRequest<Array<{ id: string; name: string }>>("/v1/catalogs/warehouses?limit=200", { signal });
 }
@@ -74,7 +80,7 @@ export function approveOrder(orderId: string, expectedVersion: number) {
 }
 
 export async function exportOrder(order: SupplierOrder, format: "csv" | "xlsx") {
-  const response = await fetch(`/api${base}/${order.id}/export?format=${format}`, {
+  const response = await fetch(`/api${base}/${order.id}/export?format=${format}&layout=document`, {
     headers: tokenStore.get() ? { Authorization: `Bearer ${tokenStore.get()}` } : {},
   });
   if (!response.ok) {
@@ -84,7 +90,8 @@ export async function exportOrder(order: SupplierOrder, format: "csv" | "xlsx") 
   const url = URL.createObjectURL(await response.blob());
   const link = document.createElement("a");
   link.href = url;
-  link.download = `order-${order.id}-r${order.revision}.${format}`;
+  const supplier = order.supplier_name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").slice(0, 80);
+  link.download = `Заказ-${supplier}-${order.id.slice(-8)}-ред${order.revision}.${format}`;
   document.body.append(link);
   link.click();
   link.remove();

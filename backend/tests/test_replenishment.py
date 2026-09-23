@@ -6,10 +6,10 @@ from uuid import uuid4
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from pydantic import ValidationError
 
-from app.Domains.Replenishment.adapters.xlsx import create_workbook, parse_workbook
+from app.Domains.Replenishment.adapters.xlsx import SHEETS, create_workbook, parse_workbook
 from app.Domains.Replenishment.controllers.http import router
 from app.Domains.Replenishment.DTO.calculation import CalculationInput
 from app.Domains.Replenishment.services.calculation import calculate
@@ -118,13 +118,63 @@ def test_xlsx_roundtrip_and_derived_config():
     assert calculate(restored) == calculate(data)
 
     workbook = load_workbook(BytesIO(create_workbook(data)))
-    del workbook["config"]
+    del workbook["Настройки"]
     output = BytesIO()
     workbook.save(output)
     derived = parse_workbook(output.getvalue())
     assert derived.as_of == data.as_of
     assert derived.review_days == 14
     assert derived.products == data.products
+
+
+def test_readable_template_preserves_values_and_supplier_identity():
+    data = demo_input()
+    workbook = load_workbook(BytesIO(create_workbook(data)))
+    products = workbook["Товары"]
+    assert [cell.value for cell in products[1]] == [
+        "Артикул",
+        "Наименование",
+        "Категория",
+        "Код поставщика",
+        "Поставщик (справочно)",
+    ]
+    assert products["B3"].value == "Автоматический выключатель 16А"
+    assert products["E2"].value == "КабельТрейд"
+    assert products["D2"].value == data.products[0].supplier_id
+    assert products.column_dimensions["D"].hidden
+    assert products.column_dimensions["B"].width >= len(products["B3"].value)
+    assert products["B3"].alignment.wrap_text
+    assert products.freeze_panes == "A2"
+    assert products.auto_filter.ref == "A1:E4"
+    assert workbook["Продажи"]["A2"].number_format == "dd.mm.yyyy"
+    assert workbook["Прирост по категориям"]["B2"].value == 0.08
+    assert workbook["Прирост по категориям"]["B2"].number_format == "0.0%"
+    assert "Синтетические данные" in workbook["Как заполнить"]["B2"].value
+
+
+def test_legacy_english_workbook_still_imports():
+    data = demo_input()
+    workbook = Workbook()
+    workbook.remove(workbook.active)
+    for name, columns in SHEETS.items():
+        sheet = workbook.create_sheet(name)
+        sheet.append(columns)
+        for record in getattr(data, name):
+            sheet.append([getattr(record, column) for column in columns])
+    config = workbook.create_sheet("config")
+    config.append(("setting", "value"))
+    config.append(("as_of", data.as_of))
+    config.append(("review_days", data.review_days))
+    output = BytesIO()
+    workbook.save(output)
+    assert parse_workbook(output.getvalue()) == data
+
+
+def test_template_treats_formula_like_names_as_text():
+    data = demo_input()
+    data.products[0].name = "=1+1"
+    data.suppliers[0].name = '=HYPERLINK("https://example.com")'
+    assert parse_workbook(create_workbook(data)) == data
 
 
 async def test_http_success_errors_and_openapi(preview_app):
