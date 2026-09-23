@@ -1,7 +1,8 @@
-import { LogOut, Menu, Sparkles, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { NovaOrb } from "../modules/assistant";
 
 import { Button } from "../shared/ui";
 import styles from "./MobileNav.module.css";
@@ -151,17 +152,12 @@ export function MobileNav({
           className={({ isActive }) =>
             isActive ? `${styles.cell} ${styles.assistantCell} ${styles.activeAssistantCell}` : `${styles.cell} ${styles.assistantCell}`
           }
-          aria-label="Нова — ИИ-помощник по закупкам"
+          aria-label="Қамба — ИИ-помощник по закупкам"
         >
           <span className={styles.assistantOrb} aria-hidden="true">
-            <span className={`${styles.assistantOrbit} ${styles.assistantOrbitOne}`} />
-            <span className={`${styles.assistantOrbit} ${styles.assistantOrbitTwo}`} />
-            <span className={styles.assistantSphere} />
-            <span className={styles.assistantCore}>
-              <Sparkles size={23} strokeWidth={1.8} />
-            </span>
+            <NovaOrb variant="mini" size={96} />
           </span>
-          <span className={styles.assistantLabel}>Нова</span>
+          <span className={styles.assistantLabel}>Қамба</span>
         </NavLink>
         {primary.slice(2).map((item) => (
           <NavLink

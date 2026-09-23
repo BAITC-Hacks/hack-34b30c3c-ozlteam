@@ -7,6 +7,7 @@ import { useCurrentUser } from "../../auth";
 import { Insight, Spinner } from "../../../shared/ui";
 import { askAssistant } from "../api/assistant";
 import type { ChatTurn } from "../api/assistant";
+import { NovaOrb } from "../components/NovaOrb";
 import styles from "./AssistantPage.module.css";
 
 const PROMPTS = [
@@ -84,33 +85,18 @@ export function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Нова" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
+      <PageHeader title="Қамба" subtitle="ИИ-помощник по закупкам: спросите о данных, расчётах и заказах своими словами." />
 
       <div className={styles.room}>
         {empty ? (
           <div className={styles.welcome}>
+            <div className={styles.orbStage} aria-label="Қамба — визуализация ИИ-помощника">
+              <NovaOrb variant="hero" />
+            </div>
             <h2 className={styles.hello}>
               {greeting(new Date().getHours())}
               {name ? `, ${name}` : ""}
             </h2>
-            <div className={styles.prompts}>
-              {PROMPTS.map((prompt) => (
-                <button
-                  key={prompt.title}
-                  type="button"
-                  className={styles.prompt}
-                  onClick={() => void send(prompt.text)}
-                >
-                  <span className={styles.promptIcon} aria-hidden="true">
-                    {prompt.icon}
-                  </span>
-                  <span className={styles.promptBody}>
-                    <b>{prompt.title}</b>
-                    <span>{prompt.text}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
           </div>
         ) : (
           <div className={styles.thread}>
@@ -124,7 +110,7 @@ export function AssistantPage() {
             ))}
             {asking ? (
               <p className={styles.thinking} role="status">
-                <Spinner size="sm" /> Нова отвечает…
+                <Spinner size="sm" /> Қамба отвечает…
               </p>
             ) : null}
             <div ref={tail} />
@@ -152,7 +138,7 @@ export function AssistantPage() {
                 void send(question);
               }
             }}
-            placeholder="Спросите Нову"
+            placeholder="Спросите Қамба"
             rows={1}
             maxLength={4000}
             aria-label="Вопрос ассистенту"
@@ -166,6 +152,19 @@ export function AssistantPage() {
             <ArrowUp size={17} strokeWidth={2} />
           </button>
         </form>
+        {empty ? <div className={styles.prompts}>
+          {PROMPTS.map((prompt) => (
+            <button
+              key={prompt.title}
+              type="button"
+              className={styles.prompt}
+              onClick={() => void send(prompt.text)}
+            >
+              <span className={styles.promptIcon} aria-hidden="true">{prompt.icon}</span>
+              <span className={styles.promptBody}><b>{prompt.title}</b><span>{prompt.text}</span></span>
+            </button>
+          ))}
+        </div> : null}
         <p className={styles.note}>
           Enter отправляет, Shift + Enter переносит строку. Ответы модели проверяйте перед
           применением.
