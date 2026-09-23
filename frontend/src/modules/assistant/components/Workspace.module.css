@@ -22,7 +22,8 @@
 .toolbar a, .sources a, .result a, .note a { color: var(--ac-ink); }
 .scope { padding: var(--sp-4); background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
 .scope summary { cursor: pointer; font-weight: 600; }
-.controls { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
+.controls { display: grid; gap: var(--sp-3); }
+.controls > .note:first-child { margin-top: 0; }
 .contextItem { display: flex; gap: var(--sp-2); align-items: center; justify-content: space-between; font-size: var(--fs-cap); }
 .contextItem span { overflow-wrap: anywhere; user-select: text; }
 .contextItem button, .note button { color: var(--ac-ink); background: none; border: 0; cursor: pointer; font: inherit; }
