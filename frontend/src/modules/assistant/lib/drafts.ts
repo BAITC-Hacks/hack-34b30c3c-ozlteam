@@ -19,8 +19,14 @@ export function moveDraft(drafts: Drafts, from: string, to: string): Drafts {
   return writeDraft(writeDraft(drafts, from, ""), to, content);
 }
 
-/** A reply must not erase the next question typed while the request was in flight. */
+/** Clear at submission, never when the answer arrives. */
 export function clearSubmittedDraft(drafts: Drafts, conversationId: string, submitted: string): Drafts {
   return readDraft(drafts, conversationId).trim() === submitted.trim()
     ? writeDraft(drafts, conversationId, "") : drafts;
+}
+
+/** Keep a newer question intact; the failed request remains available for retry. */
+export function restoreFailedDraft(drafts: Drafts, conversationId: string, submitted: string): Drafts {
+  return readDraft(drafts, conversationId) === ""
+    ? writeDraft(drafts, conversationId, submitted) : drafts;
 }
