@@ -337,22 +337,6 @@
     radial-gradient(ellipse 32% 30% at 94% 86%, color-mix(in srgb, var(--ac) 9%, transparent), transparent 85%);
 }
 
-.main:has([data-assistant-page="decorated"])::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  content: "";
-  background: repeating-radial-gradient(
-    circle at var(--assistant-orb-x) var(--assistant-orb-y),
-    transparent 0 132px,
-    color-mix(in srgb, var(--ac) 10%, transparent) 133px 134px,
-    transparent 135px 178px
-  );
-  filter: blur(2px);
-  mask-image: linear-gradient(to bottom, transparent, black 15%, black 70%, transparent);
-}
-
 @media (max-width: 900px) {
   .main:has([data-assistant-page="decorated"]) {
     --assistant-orb-y: clamp(300px, 56dvh, 480px);

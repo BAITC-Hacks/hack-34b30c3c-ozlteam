@@ -3,6 +3,9 @@
 .chat { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; overflow-y: auto; padding-bottom: 120px; }
 .workspace:not(.compact) .chat > .composer { position: absolute; z-index: 1; bottom: 30px; left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
 .workspace:not(.compact) .chat > .note { position: absolute; bottom: 0; left: 50%; width: min(760px, 100%); margin: 0; transform: translateX(-50%); text-align: center; }
+.workspace:not(.compact) .chat:has(> .accessNotice) { padding-bottom: var(--sp-4); }
+.workspace:not(.compact) .chat:has(> .accessNotice) > .composer { position: relative; left: auto; bottom: auto; width: min(760px, 100%); flex: none; align-self: center; transform: none; }
+.workspace:not(.compact) .chat:has(> .accessNotice) > .note { position: static; width: min(760px, 100%); flex: none; align-self: center; transform: none; }
 .workspace:not(.compact) .chat:has(> .statusNotice) { padding-bottom: 180px; }
 .statusNotice { padding: var(--sp-2) var(--sp-3); align-items: center; background: color-mix(in srgb, var(--alert-soft) 55%, var(--panel)); box-shadow: var(--sh-1); }
 .noticeAction { border: 0; padding: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; cursor: pointer; }
@@ -10,6 +13,15 @@
 .workspace:not(.compact) .chat > .statusNotice { position: absolute; z-index: 1; bottom: calc(30px + var(--touch) + var(--sp-6) + var(--sp-2)); left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
 .toolbar { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .chatTitle { min-width: 0; max-width: 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--mut); }
+@media (min-width: 901px) {
+  .workspace:not(.compact) .sidebar { padding-right: min(500px, calc(100% - 190px)); }
+}
+@media (min-width: 901px) and (max-width: 1100px) {
+  .workspace:not(.compact) .chatTitle { display: none; }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .workspace:not(.compact) .sidebar { padding-right: 280px; }
+}
 .contextBar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); color: var(--mut); font-size: var(--fs-cap); }
 .contextBar button { border: 0; border-radius: var(--r-xs); background: var(--sunken); color: var(--ac-ink); font: inherit; padding: var(--sp-1) var(--sp-2); cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
 .historyList { display: grid; gap: var(--sp-1); }
@@ -34,9 +46,6 @@
 .emptyMessages { flex: 0 0 auto; overflow: visible; }
 .chat:has(> .statusNotice) .emptyMessages { overflow-y: auto; padding-bottom: var(--sp-3); }
 .workspace:not(.compact) .messages { width: min(760px, 100%); align-self: center; }
-.workspace:not(.compact) .chat:has(> .accessNotice) .emptyMessages > div { padding-top: 0; gap: var(--sp-2); }
-.workspace:not(.compact) .chat:has(> .accessNotice) .emptyMessages > div > :first-child { min-height: min(22dvh, 170px); margin-bottom: var(--sp-2); }
-.workspace:not(.compact) .chat:has(> .accessNotice) .emptyMessages > div > :first-child > span { width: min(22dvh, 170px); }
 .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
 .workspace:not(.compact) .emptyMessages > div > :first-child { transform: none; }
 .mine, .theirs { min-width: min(220px, 70%); max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
@@ -64,7 +73,7 @@
 .previewList li { margin-bottom: var(--sp-3); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .note { font-size: var(--fs-cap); line-height: var(--lh-body); color: var(--mut); margin: var(--sp-2) 0; }
-.accessNotice { box-sizing: border-box; width: min(760px, 100%); align-self: center; }
+.accessNotice { box-sizing: border-box; width: min(760px, 100%); flex: none; align-self: center; margin-top: auto; }
 .accessNotice p { margin: var(--sp-2) 0 0; }
 .accessNotice button { margin-top: var(--sp-3); }
 .dataAccess { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--fs-cap); color: var(--mut); }
@@ -110,6 +119,8 @@
   .workspace:not(.compact) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--sp-3); }
   .workspace:not(.compact) .sidebar { max-height: 36dvh; }
   .workspace:not(.compact) .chat { padding-bottom: 80px; }
+  .workspace:not(.compact) .chat:has(> .accessNotice) { padding-bottom: 80px; }
+  .workspace:not(.compact) .chat:has(> .accessNotice) > .composer { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
   .workspace:not(.compact) .chat:has(> .statusNotice) { padding-bottom: 140px; }
   .workspace:not(.compact) .chat > .composer { bottom: 0; }
   .workspace:not(.compact) .chat > .statusNotice { bottom: calc(var(--touch) + var(--sp-6) + var(--sp-3)); }

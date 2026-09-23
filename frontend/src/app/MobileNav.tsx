@@ -1,4 +1,4 @@
-import { LogOut, Menu, Sparkles, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -159,9 +159,9 @@ export function MobileNav({
           }
           aria-label={t("Помощник по закупкам", "Сатып алу көмекшісі", "Procurement assistant")}
         >
-          {location.pathname.replace(/\/$/, "") === "/assistant" ? <Sparkles size={20} aria-hidden="true" /> : <span className={styles.assistantOrb} aria-hidden="true">
+          <span className={styles.assistantOrb} aria-hidden="true">
             <NovaOrb variant="mini" size={64} />
-          </span>}
+          </span>
           <span className={styles.assistantLabel}>{t("Помощник", "Көмекші", "Assistant")}</span>
         </NavLink>
         {primary.slice(2).map((item) => (
