@@ -14,7 +14,8 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const dateTime = (value: string, locale = "ru") => new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 const auditAction = (action: string, t: ReturnType<typeof useI18n>["t"]) => ({ created: t("Заказ создан", "Тапсырыс жасалды", "Order created"), edited: t("Комментарий изменён", "Пікір өзгертілді", "Comment changed"), line_edited: t("Количество изменено", "Саны өзгертілді", "Quantity changed"), line_deleted: t("Позиция удалена", "Позиция жойылды", "Item removed"), approved: t("Заказ утверждён", "Тапсырыс бекітілді", "Order approved"), revised_from: t("Создана новая редакция", "Жаңа нұсқа жасалды", "New revision created"), superseded: t("Создана следующая редакция", "Келесі нұсқа жасалды", "Next revision created"), "1c_acknowledged": t("Ответ 1С получен", "1С жауабы алынды", "1C response received") } as Record<string, string>)[action] ?? action;
 
-function quantity(value: string) {
+function quantity(value: string | null) {
+  if (value === null) return "—";
   const [integer, fraction] = value.split(".");
   const whole = new Intl.NumberFormat("ru-RU").format(BigInt(integer || "0"));
   const decimal = fraction?.replace(/0+$/, "");
