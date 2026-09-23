@@ -1,5 +1,5 @@
 import { ApiError, apiRequest, tokenStore } from "../../../shared/api/client";
-import type { SupplierOrder } from "../types";
+import type { OrderAudit, OrderHandoff, SupplierOrder } from "../types";
 
 const base = "/v1/orders";
 
@@ -22,6 +22,36 @@ export function editOrderLine(orderId: string, lineId: string, quantity: string,
     method: "PATCH",
     body: { quantity, reason, expected_version: expectedVersion },
   });
+}
+
+export function updateOrderComment(orderId: string, comment: string, reason: string, expectedVersion: number) {
+  return apiRequest<SupplierOrder>(`${base}/${orderId}`, {
+    method: "PATCH",
+    body: { comment, reason, expected_version: expectedVersion },
+  });
+}
+
+export function deleteOrderLine(orderId: string, lineId: string, reason: string, expectedVersion: number) {
+  return apiRequest<SupplierOrder>(`${base}/${orderId}/lines/${lineId}`, {
+    method: "DELETE",
+    body: { reason, expected_version: expectedVersion },
+  });
+}
+
+export function getOrderAudit(orderId: string, offset: number, signal: AbortSignal) {
+  const query = new URLSearchParams({ limit: "50", offset: String(offset) });
+  return apiRequest<OrderAudit[]>(`${base}/${orderId}/audit?${query}`, { signal });
+}
+
+export function reviseOrder(orderId: string, reason: string, expectedVersion: number) {
+  return apiRequest<SupplierOrder>(`${base}/${orderId}/revise`, {
+    method: "POST",
+    body: { reason, expected_version: expectedVersion },
+  });
+}
+
+export function getOrderHandoff(orderId: string, signal: AbortSignal) {
+  return apiRequest<OrderHandoff>(`${base}/${orderId}/1c`, { signal });
 }
 
 export function approveOrder(orderId: string, expectedVersion: number) {

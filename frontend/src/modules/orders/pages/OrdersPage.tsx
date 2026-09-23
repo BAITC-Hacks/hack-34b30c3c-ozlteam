@@ -5,12 +5,13 @@ import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
-import { approveOrder, editOrderLine, exportOrder, getOrder, listOrders, listWarehouses } from "../api/orders";
-import type { OrderLine, SupplierOrder } from "../types";
+import { approveOrder, deleteOrderLine, editOrderLine, exportOrder, getOrder, getOrderAudit, getOrderHandoff, listOrders, listWarehouses, reviseOrder, updateOrderComment } from "../api/orders";
+import type { OrderAudit, OrderDelivery, OrderLine, SupplierOrder } from "../types";
 import styles from "./OrdersPage.module.css";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const dateTime = (value: string) => new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+const auditAction = (action: string) => ({ created: "Заказ создан", edited: "Комментарий изменён", line_edited: "Количество изменено", line_deleted: "Позиция удалена", approved: "Заказ утверждён", revised_from: "Создана новая редакция", superseded: "Создана следующая редакция", "1c_acknowledged": "Ответ 1С получен" } as Record<string, string>)[action] ?? action;
 
 function quantity(value: string) {
   const [integer, fraction] = value.split(".");
@@ -102,6 +103,7 @@ function LineEditor({ order, line, onSaved, onEditingChange }: { order: Supplier
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const normalized = value.trim().replace(",", ".");
   const ready = validQuantity(value) && reason.trim().length > 0 && normalized !== line.quantity;
 
@@ -115,20 +117,33 @@ function LineEditor({ order, line, onSaved, onEditingChange }: { order: Supplier
     finally { setPending(false); }
   }
 
+  async function remove() {
+    if (!reason.trim()) return;
+    setPending(true); setError(null);
+    try { onSaved(await deleteOrderLine(order.id, line.id, reason.trim(), order.version)); onEditingChange(line.id, false); }
+    catch (caught) { setError(explainError(caught)); }
+    finally { setPending(false); }
+  }
+
   return <div className={styles.line}>
     <div className={styles.lineHead}><div><strong>{line.name}</strong><span className={styles.secondary}>{line.sku} · {line.unit}</span></div><div className={styles.lineValue}><strong>{quantity(line.quantity)} {line.unit}</strong><span className={styles.secondary}>Рекомендовано {quantity(line.recommended_quantity)}</span></div></div>
     {line.reason ? <p className={styles.lineReason}>Причина: {line.reason}</p> : null}
-    {order.status === "draft" ? editing ? <div className={styles.editor}>
+    {order.status === "draft" ? deleting ? <div className={styles.editor}>
+      <label className={styles.wideField}>Причина удаления<input value={reason} maxLength={4000} onChange={(event) => setReason(event.target.value)} placeholder="Почему исключаем позицию из заказа" /></label>
+      <div className={styles.editorActions}><Button size="sm" variant="secondary" loading={pending} disabled={!reason.trim()} onClick={() => void remove()}>Удалить позицию</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setDeleting(false); onEditingChange(line.id, false); setReason(""); setError(null); }}>Отмена</Button></div>
+      <small className={styles.secondary}>Удаление останется в истории; рекомендация не вернётся в выбор для нового заказа.</small>
+      {error ? <Alert tone="danger">{error}</Alert> : null}
+    </div> : editing ? <div className={styles.editor}>
       <label>Количество<input inputMode="decimal" value={value} onChange={(event) => setValue(event.target.value)} aria-invalid={value.length > 0 && !validQuantity(value)} /></label>
       <label>Причина изменения<input value={reason} maxLength={4000} onChange={(event) => setReason(event.target.value)} placeholder="Например, согласована партия поставки" /></label>
       <div className={styles.editorActions}><Button size="sm" loading={pending} disabled={!ready} onClick={() => void save()}>Сохранить</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setEditing(false); onEditingChange(line.id, false); setValue(line.quantity); setReason(""); setError(null); }}>Отмена</Button></div>
       {value && !validQuantity(value) ? <small className={styles.errorText}>Введите положительное число: до 20 цифр и 6 знаков после запятой.</small> : null}
       {error ? <Alert tone="danger">{error}</Alert> : null}
-    </div> : <Button size="sm" variant="ghost" onClick={() => { setValue(line.quantity); setEditing(true); onEditingChange(line.id, true); }}>Изменить количество</Button> : null}
+    </div> : <div className={styles.lineActions}><Button size="sm" variant="ghost" onClick={() => { setValue(line.quantity); setEditing(true); onEditingChange(line.id, true); }}>Изменить количество</Button><Button size="sm" variant="ghost" onClick={() => { setDeleting(true); setReason(""); onEditingChange(line.id, true); }}>Удалить позицию</Button></div> : null}
   </div>;
 }
 
-function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
+function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; onOpen: (id: string) => void }) {
   const [order, setOrder] = useState<SupplierOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,20 +154,76 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [editingLineIds, setEditingLineIds] = useState<Set<string>>(new Set());
   const [warehouseNames, setWarehouseNames] = useState<Map<string, string>>(new Map());
+  const [comment, setComment] = useState("");
+  const [commentReason, setCommentReason] = useState("");
+  const [commentEditing, setCommentEditing] = useState(false);
+  const [audit, setAudit] = useState<OrderAudit[]>([]);
+  const [auditOffset, setAuditOffset] = useState(0);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [auditHasMore, setAuditHasMore] = useState(false);
+  const [delivery, setDelivery] = useState<OrderDelivery | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [revisionReason, setRevisionReason] = useState("");
+  const [revisionOpen, setRevisionOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError(null); setOrder(null); setPreview(false); setEditingLineIds(new Set());
-    getOrder(id, controller.signal).then(setOrder).catch((caught: unknown) => { if (!controller.signal.aborted) setError(explainError(caught)); })
+    setLoading(true); setError(null); setOrder(null); setPreview(false); setEditingLineIds(new Set()); setAudit([]); setAuditOffset(0); setDelivery(null); setCommentEditing(false); setRevisionOpen(false); setNotice(null);
+    getOrder(id, controller.signal).then((loaded) => { setOrder(loaded); setComment(loaded.comment); }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(explainError(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     listWarehouses(controller.signal).then((items) => setWarehouseNames(new Map(items.map((item) => [item.id, item.name])))).catch(() => undefined);
     return () => controller.abort();
   }, [id, reload]);
 
-  async function approve() {
-    if (!order || editingLineIds.size) return;
+  useEffect(() => {
+    if (!order || order.id !== id) return;
+    const controller = new AbortController();
+    setAuditLoading(true); setAuditError(null);
+    getOrderAudit(id, auditOffset, controller.signal).then((items) => { setAudit((current) => auditOffset ? [...current, ...items] : items); setAuditHasMore(items.length === 50); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setAuditError(explainError(caught)); })
+      .finally(() => { if (!controller.signal.aborted) setAuditLoading(false); });
+    return () => controller.abort();
+  }, [id, order?.version, auditOffset]);
+
+  useEffect(() => {
+    if (order?.status !== "approved" || order.id !== id) { setDelivery(null); setDeliveryError(null); return; }
+    const controller = new AbortController();
+    setDeliveryLoading(true);
+    getOrderHandoff(id, controller.signal).then((handoff) => { setDelivery(handoff.delivery); setDeliveryError(null); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted && !(caught instanceof ApiError && caught.status === 409)) setDeliveryError(explainError(caught)); })
+      .finally(() => { if (!controller.signal.aborted) setDeliveryLoading(false); });
+    return () => controller.abort();
+  }, [id, order?.status, order?.version]);
+
+  const acknowledgement = audit.find((item) => item.action === "1c_acknowledged");
+  const acknowledgedStatus = acknowledgement?.data.status;
+  const deliveryStatus = acknowledgedStatus === "accepted" || acknowledgedStatus === "rejected" ? acknowledgedStatus : delivery?.status ?? (auditLoading || deliveryLoading ? "loading" : "unknown");
+  const successorId = audit.find((item) => item.action === "superseded")?.data.successor_order_id;
+
+  function acceptOrder(updated: SupplierOrder) { setOrder(updated); setAuditOffset(0); setAudit([]); setError(null); }
+
+  async function saveComment() {
+    if (!order || !commentReason.trim() || comment === order.comment) return;
     setPending(true); setError(null);
-    try { setOrder(await approveOrder(order.id, order.version)); setPreview(false); setNotice("Заказ утверждён. Теперь доступен экспорт; поставщику он не отправлен."); }
+    try { acceptOrder(await updateOrderComment(order.id, comment, commentReason.trim(), order.version)); setCommentEditing(false); setCommentReason(""); setNotice("Комментарий сохранён."); }
+    catch (caught) { setError(explainError(caught)); }
+    finally { setPending(false); }
+  }
+
+  async function createRevision() {
+    if (!order || !revisionReason.trim()) return;
+    setPending(true); setError(null);
+    try { const next = await reviseOrder(order.id, revisionReason.trim(), order.version); onOpen(next.id); }
+    catch (caught) { setError(explainError(caught)); }
+    finally { setPending(false); }
+  }
+
+  async function approve() {
+    if (!order || editingLineIds.size || commentEditing) return;
+    setPending(true); setError(null);
+    try { acceptOrder(await approveOrder(order.id, order.version)); setPreview(false); setNotice("Заказ утверждён. Теперь доступен экспорт; поставщику он не отправлен."); }
     catch (caught) { setError(explainError(caught)); setPreview(false); }
     finally { setPending(false); }
   }
@@ -172,15 +243,33 @@ function OrderDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
       <Card title={order.supplier_name} subtitle={`Создан ${dateTime(order.created_at)} · версия ${order.version}`} actions={<Badge tone={order.status === "approved" ? "success" : "warning"}>{order.status === "approved" ? "Утверждён" : "Черновик"}</Badge>}>
         <div className={styles.summary}><span>Склад <b className={styles.identifier}>{warehouseNames.get(order.warehouse_id) ?? order.warehouse_id}</b></span><span>Позиций <b>{order.lines.length}</b></span>{order.approved_at ? <span>Утверждён <b>{dateTime(order.approved_at)}</b></span> : null}</div>
-        {order.comment ? <p className={styles.comment}>{order.comment}</p> : null}
+        {order.supersedes_order_id ? <p className={styles.comment}>Предыдущая редакция: <button type="button" className={styles.textButton} onClick={() => onOpen(order.supersedes_order_id!)}>Открыть</button></p> : null}
+        {typeof successorId === "string" ? <p className={styles.comment}>Есть новая редакция: <button type="button" className={styles.textButton} onClick={() => onOpen(successorId)}>Открыть</button></p> : null}
+        {commentEditing ? <div className={styles.commentForm}>
+          <label>Комментарий<textarea value={comment} maxLength={4000} onChange={(event) => setComment(event.target.value)} /></label>
+          <label>Причина изменения<input value={commentReason} maxLength={4000} onChange={(event) => setCommentReason(event.target.value)} /></label>
+          <div className={styles.editorActions}><Button size="sm" loading={pending} disabled={comment === order.comment || !commentReason.trim()} onClick={() => void saveComment()}>Сохранить комментарий</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => { setComment(order.comment); setCommentReason(""); setCommentEditing(false); }}>Отмена</Button></div>
+        </div> : <div className={styles.commentRow}><p className={styles.comment}>{order.comment || "Комментарий не добавлен"}</p>{order.status === "draft" ? <Button size="sm" variant="ghost" onClick={() => setCommentEditing(true)}>Изменить комментарий</Button> : null}</div>}
       </Card>
       <Card title="Позиции заказа" subtitle={order.status === "draft" ? "Количество можно изменить, указав причину" : "Утверждённый состав сохранён без изменений"}>
-        <div className={styles.lines}>{order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { setOrder(updated); setError(null); }} onEditingChange={(lineId, editing) => { setEditingLineIds((current) => { const next = new Set(current); if (editing) next.add(lineId); else next.delete(lineId); return next; }); if (editing) setPreview(false); }} />)}</div>
+        <div className={styles.lines}>{order.lines.length ? order.lines.map((line) => <LineEditor key={line.id} order={order} line={line} onSaved={(updated) => { acceptOrder(updated); setEditingLineIds((current) => { const next = new Set(current); next.delete(line.id); return next; }); }} onEditingChange={(lineId, editing) => { setEditingLineIds((current) => { const next = new Set(current); if (editing) next.add(lineId); else next.delete(lineId); return next; }); if (editing) setPreview(false); }} />) : <EmptyState title="Все позиции исключены" text="Удалённые строки и причины остаются в истории заказа." />}</div>
       </Card>
       {order.status === "draft" ? <Card title="Утверждение" subtitle="После утверждения заказ и его строки станут неизменяемыми">
-        {editingLineIds.size ? <p className={styles.pendingEdit}>Сохраните или отмените изменение строки перед утверждением.</p> : null}
-        {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} disabled={editingLineIds.size > 0} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0 || editingLineIds.size > 0} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}
+        {editingLineIds.size || commentEditing ? <p className={styles.pendingEdit}>Сохраните или отмените изменения перед утверждением.</p> : null}
+        {preview ? <ActionPreview title="Проверка перед утверждением" items={[`${order.lines.length} позиций будут зафиксированы в редакции ${order.revision}.`, "Заказ станет доступен для экспорта в CSV и XLSX.", "Заказ не отправляется поставщику автоматически."]} actions={<><Button loading={pending} disabled={editingLineIds.size > 0 || commentEditing} onClick={() => void approve()}>Утвердить заказ</Button><Button variant="ghost" disabled={pending} onClick={() => setPreview(false)}>Отмена</Button></>} /> : <Button variant="dark" disabled={order.lines.length === 0 || editingLineIds.size > 0 || commentEditing} onClick={() => setPreview(true)}>Просмотреть и утвердить</Button>}
       </Card> : <Card title="Экспорт" subtitle="Файл для передачи в учётную систему; отправка поставщику остаётся ручным действием"><div className={styles.exportActions}><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "xlsx"} disabled={exporting !== null} onClick={() => void download("xlsx")}>Скачать XLSX</Button><Button variant="secondary" icon={<Download size={16} />} loading={exporting === "csv"} disabled={exporting !== null} onClick={() => void download("csv")}>Скачать CSV</Button></div></Card>}
+      {order.status === "approved" ? <Card title="Обработка в 1С" subtitle="Статус локального пакета; сама передача требует отдельного адаптера">
+        <div className={styles.delivery}><Badge tone={deliveryStatus === "accepted" ? "success" : deliveryStatus === "rejected" ? "danger" : deliveryStatus === "pending" ? "warning" : "neutral"}>{deliveryStatus === "accepted" ? "Принят 1С" : deliveryStatus === "rejected" ? "Отклонён 1С" : deliveryStatus === "pending" ? "Пакет ожидает обработки" : deliveryStatus === "loading" ? "Проверяем статус" : "Статус недоступен"}</Badge>
+          {delivery?.external_document_id ? <span>Документ 1С: <b>{delivery.external_document_id}</b></span> : null}
+          {delivery?.message || typeof acknowledgement?.data.message === "string" ? <span>{delivery?.message || String(acknowledgement?.data.message)}</span> : null}</div>
+        {deliveryError ? <Alert tone="warning">Не удалось прочитать пакет 1С: {deliveryError}</Alert> : null}
+        {deliveryStatus === "rejected" && !successorId ? revisionOpen ? <div className={styles.commentForm}><label>Причина новой редакции<input value={revisionReason} maxLength={4000} onChange={(event) => setRevisionReason(event.target.value)} /></label><div className={styles.editorActions}><Button size="sm" loading={pending} disabled={!revisionReason.trim()} onClick={() => void createRevision()}>Создать черновик редакции {order.revision + 1}</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => setRevisionOpen(false)}>Отмена</Button></div></div> : <Button size="sm" variant="secondary" onClick={() => setRevisionOpen(true)}>Создать новую редакцию</Button> : null}
+      </Card> : null}
+      <Card title="История действий" subtitle="Изменения и причины по этому заказу">
+        {auditError ? <Alert tone="danger" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{auditError}</Alert> : null}
+        {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}</div>)}</div> : <p className={styles.secondary}>Действий пока нет.</p>}
+        {auditHasMore && !auditLoading ? <Button size="sm" variant="ghost" onClick={() => setAuditOffset((value) => value + 50)}>Показать ещё</Button> : null}
+      </Card>
     </> : null}
   </div>;
 }
@@ -191,5 +280,5 @@ export function OrdersPage() {
   function open(orderId: string) { const next = new URLSearchParams(params); next.set("id", orderId); setParams(next); }
   function back() { const next = new URLSearchParams(params); next.delete("id"); setParams(next, { replace: true }); }
   if (id && !uuid.test(id)) return <div className={styles.page}><PageHeader title="Заказ не найден" /><Alert tone="danger" action={<Button onClick={back}>К списку</Button>}>Ссылка на заказ содержит неверный идентификатор.</Alert></div>;
-  return id ? <OrderDetail id={id} onBack={back} /> : <OrderList onOpen={open} />;
+  return id ? <OrderDetail id={id} onBack={back} onOpen={open} /> : <OrderList onOpen={open} />;
 }
