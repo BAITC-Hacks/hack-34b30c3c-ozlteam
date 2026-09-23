@@ -3,6 +3,7 @@ import { clock } from "../lib/format";
 import type { TripEvent } from "../types";
 import { eventIcon } from "./eventIcon";
 import styles from "./EventFeed.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 export interface EventFeedProps {
   events: TripEvent[];
@@ -15,11 +16,12 @@ export interface EventFeedProps {
  * логисту важен порядок происходящего, а не из какой подсистемы пришла строка.
  */
 export function EventFeed({ events, activeId, onPick }: EventFeedProps) {
+  const { t } = useI18n();
   if (events.length === 0) {
     return (
       <EmptyState
-        title="Событий пока нет"
-        text="Запустите рейс — лента наполнится тем, что происходит в дороге."
+        title={t("Событий пока нет", "Әзірге оқиғалар жоқ", "No events yet")}
+        text={t("Запустите рейс — лента наполнится тем, что происходит в дороге.", "Рейсті бастаңыз — жолдағы оқиғалар осы жерде пайда болады.", "Start a trip to see events from the road here.")}
       />
     );
   }

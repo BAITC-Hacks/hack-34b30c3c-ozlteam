@@ -3,36 +3,37 @@ import { Button } from "../../../shared/ui/Button";
 import { NoteForm } from "../components/NoteForm";
 import { NoteList } from "../components/NoteList";
 import { useNotes } from "../hooks/useNotes";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import styles from "./NotesPage.module.css";
 
 export function NotesPage() {
+  const { t } = useI18n();
   const { notes, loading, busy, error, create, remove, reload } = useNotes();
   return (
     <div className="page">
       <header>
         <a className="brand" href="/">
-          Центр закупок
+          {t("Центр закупок", "Сатып алу орталығы", "Procurement center")}
         </a>
-        <span className="badge">TEAM WORKSPACE</span>
+        <span className="badge">{t("КОМАНДНОЕ ПРОСТРАНСТВО", "КОМАНДАЛЫҚ КЕҢІСТІК", "TEAM WORKSPACE")}</span>
       </header>
       <main>
         <section className="intro">
-          <p className="eyebrow">ОТ ИДЕИ К ПЕРВОМУ ДЕМО</p>
+          <p className="eyebrow">{t("ОТ ИДЕИ К ПЕРВОМУ ДЕМО", "ИДЕЯДАН АЛҒАШҚЫ ДЕМОҒА", "FROM IDEA TO FIRST DEMO")}</p>
           <h1>
-            Большие идеи.
+            {t("Большие идеи.", "Үлкен идеялар.", "Big ideas.")}
             <br />
-            <span>Первый шаг — здесь.</span>
+            <span>{t("Первый шаг — здесь.", "Алғашқы қадам — осында.", "The first step starts here.")}</span>
           </h1>
           <p>
-            Общее место для планов команды. Запишите идею, выберите главное и
-            начните создавать.
+            {t("Общее место для планов команды. Запишите идею, выберите главное и начните создавать.", "Команда жоспарларына арналған ортақ орын. Идеяны жазып, бастысына назар аударып, іске кірісіңіз.", "A shared space for team plans. Write down an idea, choose what matters, and get started.")}
           </p>
         </section>
         <section className="workspace" aria-labelledby="notes-heading">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">01 / РАБОЧИЙ СТОЛ</p>
-              <h2 id="notes-heading">Заметки команды</h2>
+              <p className="eyebrow">{t("01 / РАБОЧИЙ СТОЛ", "01 / ЖҰМЫС ҮСТЕЛІ", "01 / WORKSPACE")}</p>
+              <h2 id="notes-heading">{t("Заметки команды", "Команда жазбалары", "Team notes")}</h2>
             </div>
             <span className="count">{notes.length}</span>
           </div>
@@ -50,13 +51,13 @@ export function NotesPage() {
                 onClick={reload}
                 disabled={busy || loading}
               >
-                Повторить
+                {t("Повторить", "Қайталау", "Try again")}
               </Button>
             </div>
           )}
           {loading ? (
             <p role="status" className="loading">
-              Загружаем заметки…
+              {t("Загружаем заметки…", "Жазбалар жүктелуде…", "Loading notes…")}
             </p>
           ) : (
             <NoteList notes={notes} disabled={busy} onRemove={remove} />
@@ -64,8 +65,8 @@ export function NotesPage() {
         </section>
       </main>
       <footer>
-        Центр закупок · Сделано для совместной работы
-        <span>Идея → прототип → результат</span>
+        {t("Центр закупок · Сделано для совместной работы", "Сатып алу орталығы · Бірлескен жұмысқа арналған", "Procurement center · Built for teamwork")}
+        <span>{t("Идея → прототип → результат", "Идея → прототип → нәтиже", "Idea → prototype → result")}</span>
       </footer>
     </div>
   );

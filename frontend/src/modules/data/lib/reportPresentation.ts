@@ -1,94 +1,101 @@
-const reportKinds: Record<string, { title: string; description: string }> = {
+import { translate, type Locale } from "../../../shared/i18n/I18nContext";
+
+type Copy = [ru: string, kk: string, en: string];
+const copy = (locale: Locale, value: Copy): string => translate(locale, ...value);
+
+const reportKinds: Record<string, { title: Copy; description: Copy }> = {
   products: {
-    title: "Товары",
-    description: "Названия, артикулы, единицы измерения и условия закупки.",
+    title: ["Товары", "Тауарлар", "Products"],
+    description: ["Названия, артикулы, единицы измерения и условия закупки.", "Атаулар, артикулдар, өлшем бірліктері және сатып алу шарттары.", "Names, SKUs, units, and purchasing terms."],
   },
   sales: {
-    title: "Отгрузки клиентам",
-    description: "Что и когда отгружали клиентам, включая возвраты.",
+    title: ["Отгрузки клиентам", "Клиенттерге жөнелтілімдер", "Client shipments"],
+    description: ["Что и когда отгружали клиентам, включая возвраты.", "Клиенттерге не және қашан жөнелтілді, қайтаруларды қоса.", "What was shipped to clients and when, including returns."],
   },
   stocks: {
-    title: "Остатки на складах",
-    description: "Сколько товара есть на складе и сколько зарезервировано.",
+    title: ["Остатки на складах", "Қойма қорлары", "Warehouse stock"],
+    description: ["Сколько товара есть на складе и сколько зарезервировано.", "Қоймадағы тауар саны және резервтелген саны.", "Stock on hand and reserved quantities."],
   },
   inbound: {
-    title: "Товары в пути",
-    description: "Какие поставки ждём, в каком количестве и к какой дате.",
+    title: ["Товары в пути", "Жолдағы тауарлар", "Inbound goods"],
+    description: ["Какие поставки ждём, в каком количестве и к какой дате.", "Күтілетін жеткізілімдер, олардың саны және келу күні.", "Expected deliveries, quantities, and arrival dates."],
   },
   suppliers: {
-    title: "Поставщики",
-    description: "Компании, у которых закупаем товары.",
+    title: ["Поставщики", "Жеткізушілер", "Suppliers"],
+    description: ["Компании, у которых закупаем товары.", "Тауар сатып алынатын компаниялар.", "Companies we buy products from."],
   },
   warehouses: {
-    title: "Склады",
-    description: "Склады Электрокомплекта, для которых считаем пополнение.",
+    title: ["Склады", "Қоймалар", "Warehouses"],
+    description: ["Склады Электрокомплекта, для которых считаем пополнение.", "Қор толықтыруы есептелетін Электрокомплект қоймалары.", "Elektrokomplekt warehouses used for replenishment calculations."],
   },
   categories: {
-    title: "Категории товаров",
-    description: "Группы товаров и правила пополнения для каждой группы.",
+    title: ["Категории товаров", "Тауар санаттары", "Product categories"],
+    description: ["Группы товаров и правила пополнения для каждой группы.", "Тауар топтары және әр топтың қор толықтыру ережелері.", "Product groups and replenishment rules for each group."],
   },
   stockouts: {
-    title: "Периоды отсутствия товара",
-    description: "Подтверждённые даты, когда товара не было на складе.",
+    title: ["Периоды отсутствия товара", "Тауар болмаған кезеңдер", "Stockout periods"],
+    description: ["Подтверждённые даты, когда товара не было на складе.", "Қоймада тауар болмаған расталған күндер.", "Confirmed dates when a product was out of stock."],
   },
   growth: {
-    title: "Прогноз роста спроса",
-    description: "Ожидаемое изменение спроса на товар или категорию.",
+    title: ["Прогноз роста спроса", "Сұраныс өсімінің болжамы", "Demand growth forecast"],
+    description: ["Ожидаемое изменение спроса на товар или категорию.", "Тауарға немесе санатқа сұраныстың күтілетін өзгерісі.", "Expected demand change for a product or category."],
   },
 };
 
-const fieldLabels: Record<string, string> = {
-  external_id: "Идентификатор записи в 1С",
-  revision: "Версия записи в 1С",
-  source_updated_at: "Обновлено в 1С",
-  name: "Название",
-  active: "Используется",
-  review_days: "Пересчитывать каждые, дней",
-  safety_days: "Запас на случай задержки, дней",
-  organization_external_id: "Идентификатор организации в 1С",
-  sku: "Артикул",
-  code: "Код товара в 1С",
-  category_external_id: "Идентификатор категории в 1С",
-  supplier_external_id: "Идентификатор поставщика в 1С",
-  characteristic_external_id: "Идентификатор характеристики в 1С",
-  unit: "Единица измерения",
-  pack_size: "Кратность заказа",
-  min_order_qty: "Минимум для заказа",
-  lead_time_days: "Доставка, дней",
-  data_quality: "Готовность данных",
-  product_external_id: "Идентификатор товара в 1С",
-  warehouse_external_id: "Идентификатор склада в 1С",
-  date: "Дата отгрузки",
-  document_date: "Дата документа",
-  document_id: "Идентификатор документа в 1С",
-  line_id: "Идентификатор строки документа",
-  quantity: "Количество",
-  price: "Цена",
-  client_id: "Обезличенный идентификатор клиента",
-  status: "Статус",
-  as_of: "Остаток на дату",
-  reserved: "В резерве",
-  expected_date: "Ожидаемая дата прихода",
-  start: "Начало периода",
-  end: "Конец периода",
-  rate: "Изменение спроса (0,1 = 10%)",
-  mode: "Как учитывать прогноз",
-  kind: "Вид данных",
+const fieldLabels: Record<string, Copy> = {
+  external_id: ["Идентификатор записи в 1С", "1С жазбасының идентификаторы", "1C record ID"],
+  revision: ["Версия записи в 1С", "1С жазбасының нұсқасы", "1C record version"],
+  source_updated_at: ["Обновлено в 1С", "1С жүйесінде жаңартылды", "Updated in 1C"],
+  name: ["Название", "Атауы", "Name"],
+  active: ["Используется", "Қолданылады", "Active"],
+  review_days: ["Пересчитывать каждые, дней", "Қайта есептеу аралығы, күн", "Review interval, days"],
+  safety_days: ["Запас на случай задержки, дней", "Кідіріске арналған қор, күн", "Safety stock, days"],
+  organization_external_id: ["Идентификатор организации в 1С", "1С ұйымының идентификаторы", "1C organization ID"],
+  sku: ["Артикул", "Артикул", "SKU"],
+  code: ["Код товара в 1С", "1С жүйесіндегі тауар коды", "1C product code"],
+  category_external_id: ["Идентификатор категории в 1С", "1С санатының идентификаторы", "1C category ID"],
+  supplier_external_id: ["Идентификатор поставщика в 1С", "1С жеткізушісінің идентификаторы", "1C supplier ID"],
+  characteristic_external_id: ["Идентификатор характеристики в 1С", "1С сипаттамасының идентификаторы", "1C characteristic ID"],
+  unit: ["Единица измерения", "Өлшем бірлігі", "Unit"],
+  pack_size: ["Кратность заказа", "Қаптама еселігі", "Pack size"],
+  min_order_qty: ["Минимум для заказа", "Ең аз тапсырыс саны", "Minimum order quantity"],
+  lead_time_days: ["Доставка, дней", "Жеткізу мерзімі, күн", "Lead time, days"],
+  data_quality: ["Готовность данных", "Деректер дайындығы", "Data readiness"],
+  product_external_id: ["Идентификатор товара в 1С", "1С тауарының идентификаторы", "1C product ID"],
+  warehouse_external_id: ["Идентификатор склада в 1С", "1С қоймасының идентификаторы", "1C warehouse ID"],
+  date: ["Дата отгрузки", "Жөнелтілім күні", "Shipment date"],
+  document_date: ["Дата документа", "Құжат күні", "Document date"],
+  document_id: ["Идентификатор документа в 1С", "1С құжатының идентификаторы", "1C document ID"],
+  line_id: ["Идентификатор строки документа", "Құжат жолының идентификаторы", "Document line ID"],
+  quantity: ["Количество", "Саны", "Quantity"],
+  price: ["Цена", "Бағасы", "Price"],
+  client_id: ["Обезличенный идентификатор клиента", "Клиенттің жасырын идентификаторы", "Anonymized client ID"],
+  status: ["Статус", "Мәртебе", "Status"],
+  as_of: ["Остаток на дату", "Күнгі қалдық", "Stock as of date"],
+  reserved: ["В резерве", "Резервте", "Reserved"],
+  expected_date: ["Ожидаемая дата прихода", "Күтілетін келу күні", "Expected arrival date"],
+  start: ["Начало периода", "Кезең басы", "Period start"],
+  end: ["Конец периода", "Кезең соңы", "Period end"],
+  rate: ["Изменение спроса (0,1 = 10%)", "Сұраныс өзгерісі (0,1 = 10%)", "Demand change (0.1 = 10%)"],
+  mode: ["Как учитывать прогноз", "Болжамды есепке алу тәсілі", "Forecast mode"],
+  kind: ["Вид данных", "Дерек түрі", "Data type"],
 };
 
-export function reportKindTitle(kind: string): string {
-  return reportKinds[kind]?.title ?? kind;
+export function reportKindTitle(kind: string, locale: Locale = "ru"): string {
+  return reportKinds[kind] ? copy(locale, reportKinds[kind].title) : kind;
 }
 
-export function reportKindDescription(kind: string): string {
-  return reportKinds[kind]?.description ?? "Данные из вашей 1С.";
+export function reportKindDescription(kind: string, locale: Locale = "ru"): string {
+  return reportKinds[kind] ? copy(locale, reportKinds[kind].description) : translate(locale, "Данные из вашей 1С.", "Сіздің 1С деректеріңіз.", "Data from your 1C.");
 }
 
-export function reportFieldLabel(field: string): string {
-  return fieldLabels[field] ?? field;
+export function reportFieldLabel(field: string, locale: Locale = "ru"): string {
+  return fieldLabels[field] ? copy(locale, fieldLabels[field]) : field;
 }
 
-export function reportRowCount(count: number): string {
+export function reportRowCount(count: number, locale: Locale = "ru"): string {
+  if (locale === "kk") return `${count.toLocaleString("kk-KZ")} жол`;
+  if (locale === "en") return `${count.toLocaleString("en-US")} ${count === 1 ? "row" : "rows"}`;
   const lastTwo = Math.abs(count) % 100;
   const last = lastTwo % 10;
   const noun =
@@ -102,14 +109,14 @@ export function reportRowCount(count: number): string {
   return `${count.toLocaleString("ru-RU")} ${noun}`;
 }
 
-const valueLabels: Record<string, string> = {
-  posted: "Проведён",
-  cancelled: "Отменён",
-  confirmed: "Подтверждён",
-  in_transit: "В пути",
-  received: "Получен",
-  additional: "Дополнительно к текущему росту",
-  replace_trend: "Вместо текущего роста",
+const valueLabels: Record<string, Copy> = {
+  posted: ["Проведён", "Өткізілген", "Posted"],
+  cancelled: ["Отменён", "Болдырылмаған", "Cancelled"],
+  confirmed: ["Подтверждён", "Расталған", "Confirmed"],
+  in_transit: ["В пути", "Жолда", "In transit"],
+  received: ["Получен", "Қабылданған", "Received"],
+  additional: ["Дополнительно к текущему росту", "Ағымдағы өсімге қосымша", "In addition to current growth"],
+  replace_trend: ["Вместо текущего роста", "Ағымдағы өсімнің орнына", "Replace current growth"],
 };
 const dateFields = new Set([
   "date",
@@ -121,19 +128,19 @@ const dateFields = new Set([
   "source_updated_at",
 ]);
 
-export function reportCellValue(value: unknown, field: string): string {
+export function reportCellValue(value: unknown, field: string, locale: Locale = "ru"): string {
   if (value == null || value === "") return "—";
-  if (typeof value === "boolean") return value ? "Да" : "Нет";
+  if (typeof value === "boolean") return value ? translate(locale, "Да", "Иә", "Yes") : translate(locale, "Нет", "Жоқ", "No");
   if (typeof value === "object") return JSON.stringify(value);
   const text = String(value);
-  if (field === "kind") return reportKindTitle(text);
-  if (field === "status" || field === "mode") return valueLabels[text] ?? text;
+  if (field === "kind") return reportKindTitle(text, locale);
+  if (field === "status" || field === "mode") return valueLabels[text] ? copy(locale, valueLabels[text]) : text;
   if (dateFields.has(field)) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(text))
-      return text.split("-").reverse().join(".");
+      return new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(`${text}T12:00:00Z`));
     const date = new Date(text);
     if (!Number.isNaN(date.getTime())) {
-      return date.toLocaleString("ru-RU", {
+      return date.toLocaleString(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

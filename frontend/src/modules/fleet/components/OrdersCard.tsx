@@ -5,20 +5,22 @@ import { client } from "../data/fleet";
 import { placeName } from "../data/places";
 import type { Order } from "../types";
 import styles from "./OrdersCard.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 export interface OrdersCardProps {
   orders: Order[];
   onPlan: (order: Order) => void;
 }
 
-function due(value: string): string {
-  return new Date(value).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+function due(value: string, locale: string): string {
+  return new Date(value).toLocaleDateString(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", { day: "numeric", month: "short" });
 }
 
 /** Заказы без рейса. Отсюда начинается цикл: заказ → рейс → движение → приёмка. */
 export function OrdersCard({ orders, onPlan }: OrdersCardProps) {
+  const { locale, t } = useI18n();
   if (orders.length === 0) {
-    return <EmptyState title="Все заказы распланированы" text="Новых заявок нет." />;
+    return <EmptyState title={t("Все заказы распланированы", "Барлық тапсырыстар жоспарланған", "All orders are planned")} text={t("Новых заявок нет.", "Жаңа өтінімдер жоқ.", "No new requests.")} />;
   }
 
   return (
@@ -28,13 +30,13 @@ export function OrdersCard({ orders, onPlan }: OrdersCardProps) {
           <div className={styles.body}>
             <div className={styles.head}>
               <b className={styles.id}>{order.id}</b>
-              <Badge tone="warning">до {due(order.dueAt)}</Badge>
+              <Badge tone="warning">{t("до", "дейін", "due")} {due(order.dueAt, locale)}</Badge>
             </div>
             <p className={styles.route}>
               {placeName(order.from)} → {placeName(order.to)}
             </p>
             <p className={styles.meta}>
-              {client(order.clientId).name} · {order.cargo.name} · {order.cargo.weightT} т
+              {client(order.clientId).name} · {order.cargo.name} · {order.cargo.weightT} {t("т", "т", "t")}
             </p>
           </div>
           <Button
@@ -43,7 +45,7 @@ export function OrdersCard({ orders, onPlan }: OrdersCardProps) {
             icon={<Plus size={14} strokeWidth={2} />}
             onClick={() => onPlan(order)}
           >
-            Рейс
+            {t("Рейс", "Рейс", "Trip")}
           </Button>
         </li>
       ))}

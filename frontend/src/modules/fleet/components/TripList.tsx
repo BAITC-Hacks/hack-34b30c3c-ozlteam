@@ -7,6 +7,7 @@ import type { SimState } from "../lib/simulator";
 import type { BadgeTone } from "../../../shared/ui";
 import type { Trip, TripStatus } from "../types";
 import styles from "./TripList.module.css";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 const STATUS: Record<TripStatus, { label: string; tone: BadgeTone }> = {
   planned: { label: "Запланирован", tone: "neutral" },
@@ -24,6 +25,7 @@ export interface TripListProps {
 }
 
 export function TripList({ trips, states, selectedId, onSelect }: TripListProps) {
+  const { t } = useI18n();
   return (
     <ul className={styles.list}>
       {trips.map((trip) => {
@@ -47,7 +49,7 @@ export function TripList({ trips, states, selectedId, onSelect }: TripListProps)
             >
               <span className={styles.head}>
                 <b className={styles.id}>{trip.id}</b>
-                <Badge tone={status.tone}>{status.label}</Badge>
+                <Badge tone={status.tone}>{status.label === "Запланирован" ? t("Запланирован", "Жоспарланған", "Planned") : status.label === "В пути" ? t("В пути", "Жолда", "En route") : status.label === "Стоит" ? t("Стоит", "Тоқтаған", "Stopped") : t("Доставлен", "Жеткізілді", "Delivered")}</Badge>
               </span>
               <span className={styles.route}>
                 {placeName(trip.route[0])} → {placeName(trip.route[trip.route.length - 1])}
@@ -61,7 +63,7 @@ export function TripList({ trips, states, selectedId, onSelect }: TripListProps)
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label={`Пройдено по рейсу ${trip.id}`}
+                aria-label={`${t("Пройдено по рейсу", "Рейс бойынша жүрілген", "Progress for trip")} ${trip.id}`}
               >
                 <span className={styles.fill} style={{ width: `${progress}%` }} />
               </span>
