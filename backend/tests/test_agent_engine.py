@@ -162,13 +162,19 @@ async def test_malformed_model_json_does_not_execute_anything():
     assert result["tool_calls"][0]["status"] == "error"
 
 
-async def test_provider_failure_after_read_returns_safe_message_not_secret():
+async def test_provider_failure_after_read_remains_a_failure():
     provider = Provider(tool("get_stock"), {}, LlmRequestFailed("secret-provider-token"))
-    result = await AgentEngine(provider, Tools()).run(
-        "остатки", [], "inventory", allow_business_data=True
-    )
-    assert "secret-provider-token" not in result["content"]
-    assert "недоступна" in result["content"]
+    with pytest.raises(LlmRequestFailed):
+        await AgentEngine(provider, Tools()).run(
+            "остатки", [], "inventory", allow_business_data=True
+        )
+
+
+async def test_help_search_does_not_mask_provider_failure():
+    with pytest.raises(LlmRequestFailed):
+        await AgentEngine(Provider(LlmRequestFailed("provider unavailable")), Tools()).run(
+            "вопрос без раздела справки", [], "help"
+        )
 
 
 async def test_business_adapter_checks_rights_before_accessing_database():

@@ -114,7 +114,8 @@ async def messages(
     summary="Спросить агента с разрешёнными инструментами",
     description="Повтор client_request_id идемпотентен. До 10 сообщений/минуту; "
     "один активный запрос пользователя. Модель ограничена 90 секундами. "
-    "Изменения только предлагаются; учётные сводки требуют allow_business_data.",
+    "Изменения только предлагаются; учётные сводки требуют allow_business_data. "
+    "При недоступности модели возвращается 503, сообщение не сохраняется.",
 )
 async def send(conversation_id: UUID, command: SendMessage, service: Service):
     return await service.send(conversation_id, command)

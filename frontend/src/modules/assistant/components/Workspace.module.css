@@ -36,12 +36,19 @@
 .workspace:not(.compact) .messages { width: min(760px, 100%); align-self: center; }
 .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
 .workspace:not(.compact) .emptyMessages > div > :first-child { transform: none; }
-.mine, .theirs { min-width: 0; max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
+.mine, .theirs { min-width: min(220px, 70%); max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
 .mine { justify-self: end; background: var(--ac-soft); color: var(--ink); }
 .theirs { justify-self: start; background: var(--panel); box-shadow: var(--sh-1); }
+.failedAnswer { background: color-mix(in srgb, var(--er-soft) 55%, var(--panel)); }
+.failedAnswer button { margin-top: var(--sp-3); }
 .mine p, .theirs p { margin: var(--sp-2) 0 0; }
 .mine small, .theirs small { color: var(--mut); }
+.failedAnswer small { color: var(--er-ink); }
 .theirs details { margin-top: var(--sp-3); font-size: var(--fs-sm); }
+.theirs details summary { width: fit-content; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); cursor: pointer; user-select: none; transition: background-color var(--t-hover), transform var(--t-press); }
+.theirs details summary:active { transform: scale(.98); }
+@media (hover: hover) and (pointer: fine) { .theirs details summary:hover { background: var(--sunken); } }
+@media (prefers-reduced-motion: reduce) { .theirs details summary { transition: none; } }
 .sources, .result { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); font-size: var(--fs-sm); }
 .previewFields { display: grid; gap: var(--sp-2); margin: var(--sp-2) 0; overflow-wrap: anywhere; font-size: var(--fs-sm); }
 .previewFields > div { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: var(--sp-3); }

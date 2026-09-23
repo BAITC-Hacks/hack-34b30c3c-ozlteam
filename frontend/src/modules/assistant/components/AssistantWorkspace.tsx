@@ -13,6 +13,21 @@ import styles from "./Workspace.module.css";
 import hero from "../pages/AssistantPage.module.css";
 
 const contextLabels: Record<ContextKey, string> = { warehouse_id: "Склад", run_id: "Расчёт", recommendation_id: "Рекомендация", order_id: "Заказ", package_id: "Пакет" };
+const toolLabels: Record<string, string> = {
+  search_help: "Поиск по справке", search_catalog: "Поиск по справочнику", get_overview: "Обзор склада",
+  get_stock: "Остатки", get_inbound: "Поступления", list_runs: "Расчёты", get_run: "Расчёт",
+  list_recommendations: "Рекомендации", get_recommendation: "Рекомендация", list_orders: "Заказы",
+  get_order: "Заказ", list_packages: "Пакеты файлов", get_package: "Пакет файлов",
+  prepare_calculate: "Подготовка расчёта", prepare_create_orders: "Подготовка заказов",
+  prepare_apply_package: "Подготовка пакета", calculate: "Расчёт", create_orders: "Заказы",
+  apply_package: "Пакет файлов", plan: "План проверки",
+};
+const toolStatusLabels: Record<string, string> = { success: "выполнено", error: "не выполнено", confirmed: "подтверждено", cancelled: "отменено" };
+function toolSummary(name: string, summary: string) {
+  return name === "search_help" && summary === "Найдено разделов справки: 0"
+    ? "Подходящие разделы справки не найдены."
+    : summary;
+}
 const uuid = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 function incomingContext(pathname: string, search: string): AssistantContext {
   const params = new URLSearchParams(search);
@@ -47,14 +62,14 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
   }, [workspace.userId, location.pathname, location.search, state.busy]);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
   const pending = state.pendingMessage?.conversationId === state.activeId ? state.pendingMessage : null;
-  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id]);
+  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id, pending?.error]);
   const chat = conversation.data;
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
-  const initialLoading = !!state.activeId && conversation.isPending;
+  const initialLoading = !!state.activeId && conversation.isPending && !pending;
   const empty = !initialLoading && !chat?.messages.length && !pending;
   const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
   useEffect(() => { if (!state.error) setDismissedError(""); }, [state.error]);
-  const resultErrorVisible = !!state.error && state.error !== dismissedError;
+  const resultErrorVisible = !!state.error && !pending?.error && state.error !== dismissedError;
   async function send(text: string) {
     await workspace.send(text);
   }
@@ -122,15 +137,16 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
     </aside>
     <section className={styles.chat} aria-label="Чат помощника">
     <div className={`${styles.messages} ${empty && !compact ? styles.emptyMessages : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
-      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
+      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError && !pending ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
         {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
-          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{tool.name}</b> · {tool.status}<p>{tool.summary}</p></li>)}</ul></details> : null}
+          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{toolLabels[tool.name] ?? "Проверка"}</b> · {toolStatusLabels[tool.status] ?? "статус неизвестен"}<p>{toolSummary(tool.name, tool.summary)}</p></li>)}</ul></details> : null}
           {message.sources.length ? <div className={styles.sources}><b>Источники</b>{message.sources.map((source, index) => { const url = safeSourceUrl(source.url); return url ? <Link key={index} to={url}>{source.title}</Link> : <span key={index}>{source.title} (ссылка недоступна)</span>; })}</div> : null}
         </article>)}
       </>}
       {chat?.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} busy={state.busy} onDecision={(item, decision) => void workspace.decide(item, decision)} />)}
       {pending && !chat?.messages.some((message) => message.id === pending.existingMessageId) ? <article className={styles.mine} aria-label="Отправленный вопрос"><small>Вы</small><p>{pending.content}</p></article> : null}
+      {pending?.error ? <article className={`${styles.theirs} ${styles.failedAnswer}`} role="alert"><small>Помощник · запрос не выполнен</small><p>Не удалось ответить: {pending.error}</p><Button variant="ghost" size="sm" disabled={state.busy} onClick={() => void workspace.send(state.retry ? "" : pending.content, !!state.retry)}>Повторить вопрос</Button></article> : null}
       {state.busy ? <p className={styles.note} role="status">{pending ? "Помощник готовит ответ…" : "Запрос выполняется. Результат ещё не подтверждён сервером."}</p> : null}
       <div ref={tail} />
     </div>
