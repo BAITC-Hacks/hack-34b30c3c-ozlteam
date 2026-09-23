@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Container } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -60,10 +59,8 @@ export function LoginPage() {
     <div className={styles.screen}>
       <div className={styles.card}>
         <span className={styles.brand}>
-          <span className={styles.mark} aria-hidden="true">
-            <Container size={15} strokeWidth={1.8} />
-          </span>
-          План закупок
+          <img className={styles.mark} src="/icon.svg" alt="" />
+          Центр закупок
         </span>
 
         <div>

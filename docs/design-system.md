@@ -1,4 +1,4 @@
-# Дизайн-система «План закупок»
+# Дизайн-система «Центр закупок»
 
 Правила интерфейса для команды и агентов. Значения живут в [`design/tokens.css`](design/tokens.css), живой каталог компонентов — [`design/ui-kit.html`](design/ui-kit.html), эталонный прототип — [`../.lavish/page-elevated.html`](../.lavish/page-elevated.html). Порядок работы для агента — [`.agents/skills/project-design/SKILL.md`](../.agents/skills/project-design/SKILL.md). Исходный бриф и границы — [`design-agent-handoff.md`](design-agent-handoff.md).
 
@@ -99,7 +99,7 @@
 
 | Компонент | Анатомия | Состояния |
 | --- | --- | --- |
-| **Button** | 36 px, радиус 10, 13,5/500. Варианты: primary (`--ac`), secondary (белый + `--sh-1`), **dark** (`--stamp`, белый текст — одно главное действие раздела), ghost (текст `--ac-ink`), danger-quiet. Размеры sm 30, xs 27 | hover (у primary меняется только фон на `--ac-hover`, secondary `--sunken`), active (`scale(.98)`), focus-visible (2 px `--ink`), disabled (подложка 18 %), pending (спиннер вместо текста, ширина сохранена) |
+| **Button** | 36 px, радиус 10, 13,5/500. Варианты: primary (`--ac`), secondary (белый + `--sh-1`), **dark** (`--stamp`, белый текст — одно главное действие раздела), ghost (текст `--ac-ink`), danger-quiet. Размеры sm 30, xs 27 | hover (у primary меняется только фон на `--ac-hover`, secondary `--ac-soft` для контраста с фоном окна), active (`scale(.98)`), focus-visible (2 px `--ink`), disabled (подложка 18 %), pending (спиннер вместо текста, ширина сохранена) |
 | **IconButton** | 36×36, радиус 10, белый + `--sh-1`, иконка 17 px `--mut` | hover → `--sunken` фон без смены цвета иконки; active (`scale(.98)`); точка-индикатор 7 px `--er` с белой обводкой |
 | **Segmented** | подложка 5 % `--ink`, радиус 10, бегунок белый с тенью | hover невыбранного сегмента → полупрозрачный белый фон; active (`scale(.98)`); pressed, focus-visible |
 | **Checkbox / Radio / Switch** | нативные поля с увеличенной зоной нажатия, подписью и опциональным пояснением; switch 44×24 | checked, unchecked, hover, active, focus-visible, disabled; клавиатура и screen reader используют нативную семантику |

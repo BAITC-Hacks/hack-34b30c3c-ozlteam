@@ -23,13 +23,10 @@
   letter-spacing: -0.25px;
 }
 .mark {
+  display: block;
   width: 26px;
   height: 26px;
   border-radius: var(--r-xs);
-  background: var(--ac);
-  color: #fff;
-  display: grid;
-  place-items: center;
   flex: none;
 }
 .title {

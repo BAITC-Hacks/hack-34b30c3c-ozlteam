@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: "prompt",
       devOptions: { enabled: false },
       manifest: {
-        name: "План закупок",
+        name: "Центр закупок",
         short_name: "Закупки",
         lang: "ru",
         description: "Расчёт пополнения склада и подготовка заказов поставщикам",

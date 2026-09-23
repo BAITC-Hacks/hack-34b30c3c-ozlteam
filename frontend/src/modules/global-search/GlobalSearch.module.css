@@ -17,7 +17,7 @@
   transition: background var(--t-hover), color var(--t-hover), transform var(--t-press);
 }
 
-.trigger:hover { background: var(--sunken); color: var(--ink); transition-duration: 0s; }
+.trigger:hover { background: var(--ac-soft); color: var(--ink); transition-duration: 0s; }
 .trigger:active { transform: scale(.98); }
 .trigger:focus-visible, .result:focus-visible, .error button:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .trigger kbd { margin-left: auto; font: inherit; font-size: var(--fs-micro); color: var(--mut); }

@@ -48,11 +48,11 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   min-height: var(--touch);
   padding: 0 var(--sp-2);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: -0.3px;
 }
 
@@ -112,13 +112,10 @@
 }
 
 .mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: var(--stamp-size);
   height: var(--stamp-size);
   border-radius: var(--r-xs);
-  background: var(--stamp);
-  color: var(--panel);
   flex: none;
 }
 

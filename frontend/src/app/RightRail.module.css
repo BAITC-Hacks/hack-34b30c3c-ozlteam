@@ -391,7 +391,11 @@
   .moreLink:hover,
   .feedback a:hover,
   .feedback button:hover { text-decoration: underline; }
-  .tab:hover,
+  .tab:hover {
+    color: var(--ac-ink);
+    background: var(--ac-soft);
+    transition-duration: 0s;
+  }
   .closeButton:hover {
     color: var(--ink);
     background: var(--sunken);

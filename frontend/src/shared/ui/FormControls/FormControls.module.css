@@ -58,6 +58,9 @@
   height: var(--ctl);
   padding: 0 38px 0 14px;
   appearance: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -79,7 +82,12 @@
 }
 
 @supports (appearance: base-select) {
-  .select,
+  .select {
+    appearance: base-select;
+    display: flex;
+    align-items: center;
+  }
+
   .select::picker(select) {
     appearance: base-select;
   }

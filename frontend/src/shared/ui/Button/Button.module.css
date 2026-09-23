@@ -61,7 +61,7 @@
 
 .secondary:hover:not(:disabled) {
   filter: none;
-  background: var(--sunken);
+  background: var(--ac-soft);
 }
 
 .ghost {
@@ -129,7 +129,7 @@
 
   .secondary:hover:not(:disabled) {
     filter: none;
-    background: var(--sunken);
+    background: var(--ac-soft);
   }
 
   .ghost:hover:not(:disabled) {
