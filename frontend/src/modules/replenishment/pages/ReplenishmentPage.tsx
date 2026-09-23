@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 
 import { PageHeader } from "../../../app/PageHeader";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 import { ActionPreview, Alert, Button, Card, EmptyState, ErrorState, Modal, Tile } from "../../../shared/ui";
 import { calculate, downloadTemplate, getDemo, importWorkbook } from "../api/replenishment";
 import { RecommendationGroup, recommendationKey } from "../components/RecommendationGroup";
@@ -12,13 +13,14 @@ import styles from "./ReplenishmentPage.module.css";
 
 const number = (value: number) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value);
 
-function message(error: unknown): string {
-  return error instanceof Error ? error.message : "Не удалось выполнить запрос. Попробуйте ещё раз.";
+function message(error: unknown, t: ReturnType<typeof useI18n>["t"]): string {
+  return error instanceof Error ? error.message : t("Не удалось выполнить запрос. Попробуйте ещё раз.", "Сұрау орындалмады. Қайта көріңіз.", "Request failed. Try again.");
 }
 
 function LoadingScreen() {
+  const { t } = useI18n();
   return (
-    <div className={styles.loadingRegion} role="status" aria-busy="true" aria-label="Загружаем данные и считаем рекомендации">
+    <div className={styles.loadingRegion} role="status" aria-busy="true" aria-label={t("Загружаем данные и считаем рекомендации", "Деректер жүктеліп, ұсынымдар есептелуде", "Loading data and calculating recommendations")}>
       <div className={styles.skeletonStats} aria-hidden="true">
         {Array.from({ length: 4 }, (_, index) => <div className={styles.skeletonTile} key={index}><i /><i /><i /></div>)}
       </div>
@@ -28,12 +30,13 @@ function LoadingScreen() {
         <div className={styles.skeletonRow}><i /><i /><i /></div>
         <div className={styles.skeletonRow}><i /><i /><i /></div>
       </div>
-      <span className="srOnly">Загружаем данные и считаем рекомендации…</span>
+      <span className="srOnly">{t("Загружаем данные и считаем рекомендации…", "Деректер жүктеліп, ұсынымдар есептелуде…", "Loading data and calculating recommendations…")}</span>
     </div>
   );
 }
 
 export function ReplenishmentPage() {
+  const { t, locale } = useI18n();
   const [input, setInput] = useState<CalculationInput | null>(null);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -58,7 +61,7 @@ export function ReplenishmentPage() {
         setQuantities({});
       } catch (caught) {
         if (controller.signal.aborted || requestVersion.current !== version) return;
-        setError(message(caught));
+        setError(message(caught, t));
       } finally {
         if (requestVersion.current === version) setBusy(null);
       }
@@ -81,7 +84,7 @@ export function ReplenishmentPage() {
       setQuantities({});
       setSource("demo");
     } catch (caught) {
-      if (requestVersion.current === version) setError(message(caught));
+      if (requestVersion.current === version) setError(message(caught, t));
     } finally {
       if (requestVersion.current === version) setBusy(null);
     }
@@ -98,7 +101,7 @@ export function ReplenishmentPage() {
       setResult(next);
       setQuantities({});
     } catch (caught) {
-      if (requestVersion.current === version) setError(message(caught));
+      if (requestVersion.current === version) setError(message(caught, t));
     } finally {
       if (requestVersion.current === version) setBusy(null);
     }
@@ -109,7 +112,7 @@ export function ReplenishmentPage() {
     event.currentTarget.value = "";
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      setError("Выберите файл .xlsx по шаблону для загрузки.");
+      setError(t('Выберите файл .xlsx по шаблону для загрузки.', 'Жүктеу үшін үлгіге сай .xlsx файлын таңдаңыз.', 'Select a template based .xlsx file to upload.'));
       return;
     }
     const version = ++requestVersion.current;
@@ -129,7 +132,7 @@ export function ReplenishmentPage() {
       setResult(next);
       setQuantities({});
     } catch (caught) {
-      if (requestVersion.current === version) setError(message(caught));
+      if (requestVersion.current === version) setError(message(caught, t));
     } finally {
       if (requestVersion.current === version) setBusy(null);
     }
@@ -139,7 +142,7 @@ export function ReplenishmentPage() {
     setBusy("template");
     setError(null);
     try { await downloadTemplate(); }
-    catch (caught) { setError(message(caught)); }
+    catch (caught) { setError(message(caught, t)); }
     finally { setBusy(null); }
   }
 
@@ -167,62 +170,62 @@ export function ReplenishmentPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Пополнение склада"
-        subtitle="Расчёт заказов поставщикам по спросу, остаткам и товарам в пути"
-        actions={<Button variant="dark" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} loading={busy === "calculate"} disabled={!input || busy !== null} onClick={() => input && void runCalculation(input)}>Рассчитать</Button>}
+        title={t('Пополнение склада', 'Қойманы толықтыру', 'Warehouse replenishment')}
+        subtitle={t('Расчёт заказов поставщикам по спросу, остаткам и товарам в пути', 'Сұраныс, қалдықтар және жолдағы тауарлар негізінде жеткізушілерге тапсырыстарды есептеу', 'Calculate supplier orders from demand, stock and inbound goods')}
+        actions={<Button variant="dark" size="sm" icon={<RefreshCw size={15} strokeWidth={1.8} />} loading={busy === "calculate"} disabled={!input || busy !== null} onClick={() => input && void runCalculation(input)}>{t('Рассчитать', 'Есептеу', 'Calculate')}</Button>}
       />
 
-      <Card className={styles.sourceCard} title="Исходные данные" subtitle={source === "demo" ? "Сейчас открыт демонстрационный набор" : "Загружена ваша таблица"}>
+      <Card className={styles.sourceCard} title={t('Исходные данные', 'Бастапқы деректер', 'Source data')} subtitle={source === "demo" ? t('Сейчас открыт демонстрационный набор', 'Қазір демо деректер жиыны ашық', 'Demo dataset is open') : t('Загружена ваша таблица', 'Кестеңіз жүктелді', 'Your workbook is loaded')}>
         <div className={styles.sourceBody}>
           <div className={styles.sourceFacts}>
             {input ? <>
-              <span>Дата расчёта: <b>{input.as_of}</b></span>
-              <span>Товары: <b>{number(input.products.length)}</b></span>
-              <span>Продажи: <b>{number(input.sales.length)}</b></span>
-              <span>Склады: <b>{new Set(input.stock.map((item) => item.warehouse)).size}</b></span>
-              <span>Товары в пути: <b>{number(input.inbound.length)}</b></span>
-            </> : <span>Подготовка данных…</span>}
+              <span>{t('Дата расчёта: ', 'Есептеу күні: ', 'Calculation date: ')}<b>{input.as_of}</b></span>
+              <span>{t('Товары: ', 'Тауарлар: ', 'Products: ')}<b>{number(input.products.length)}</b></span>
+              <span>{t('Продажи: ', 'Сатылымдар: ', 'Sales: ')}<b>{number(input.sales.length)}</b></span>
+              <span>{t('Склады: ', 'Қоймалар: ', 'Warehouses: ')}<b>{new Set(input.stock.map((item) => item.warehouse)).size}</b></span>
+              <span>{t('Товары в пути: ', 'Жолдағы тауарлар: ', 'Inbound goods: ')}<b>{number(input.inbound.length)}</b></span>
+            </> : <span>{t('Подготовка данных…', 'Деректер дайындалуда…', 'Preparing data…')}</span>}
           </div>
           <div className={styles.sourceActions}>
-            <input ref={fileRef} className={styles.fileInput} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Загрузить XLSX с данными" onChange={(event) => void handleFile(event)} />
-            <Button variant="secondary" size="sm" icon={<FileSpreadsheet size={15} strokeWidth={1.8} />} loading={busy === "template"} disabled={busy !== null} onClick={() => void handleTemplate()}>Шаблон XLSX</Button>
-            <Button variant="secondary" size="sm" icon={<Upload size={15} strokeWidth={1.8} />} loading={busy === "import"} disabled={busy !== null} onClick={() => fileRef.current?.click()}>Загрузить XLSX</Button>
-            <Button variant="ghost" size="sm" disabled={busy !== null} onClick={() => void loadDemo()}>Вернуть демо</Button>
+            <input ref={fileRef} className={styles.fileInput} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label={t('Загрузить XLSX с данными', 'Деректері бар XLSX жүктеу', 'Upload data XLSX')} onChange={(event) => void handleFile(event)} />
+            <Button variant="secondary" size="sm" icon={<FileSpreadsheet size={15} strokeWidth={1.8} />} loading={busy === "template"} disabled={busy !== null} onClick={() => void handleTemplate()}>{t('Шаблон XLSX', 'XLSX үлгісі', 'XLSX template')}</Button>
+            <Button variant="secondary" size="sm" icon={<Upload size={15} strokeWidth={1.8} />} loading={busy === "import"} disabled={busy !== null} onClick={() => fileRef.current?.click()}>{t('Загрузить XLSX', 'XLSX жүктеу', 'Upload XLSX')}</Button>
+            <Button variant="ghost" size="sm" disabled={busy !== null} onClick={() => void loadDemo()}>{t('Вернуть демо', 'Демоны қайтару', 'Restore demo')}</Button>
           </div>
         </div>
       </Card>
 
-      {error ? <Alert tone="danger" title="Не удалось выполнить действие" action={<Button variant="secondary" size="sm" onClick={() => input ? void runCalculation(input) : void loadDemo()}>Повторить расчёт</Button>}>{error}</Alert> : null}
+      {error ? <Alert tone="danger" title={t('Не удалось выполнить действие', 'Әрекет орындалмады', 'Action failed')} action={<Button variant="secondary" size="sm" onClick={() => input ? void runCalculation(input) : void loadDemo()}>{t('Повторить расчёт', 'Есептеуді қайталау', 'Retry calculation')}</Button>}>{error}</Alert> : null}
 
       {busy && !result ? <LoadingScreen /> : result ? <>
-        <div className={styles.stats} aria-label="Итоги расчёта">
-          <Tile label="Позиций к заказу" value={number(approvedRows.length)} hint={`Поставщиков: ${groups.length}`} />
-          <Tile label="Объём заказа" value={`${number(orderUnits)} шт.`} hint="с учётом ручных правок" />
-          <Tile label="Риск дефицита" value={number(criticalCount)} hint="критичные позиции" tone={criticalCount ? "warn" : "good"} />
-          <Tile label="Разовых единиц исключено" value={number(spikeUnits)} hint={`Stockout учтён: ${stockoutCount} поз.`} />
+        <div className={styles.stats} aria-label={t('Итоги расчёта', 'Есептеу нәтижесі', 'Calculation results')}>
+          <Tile label={t('Позиций к заказу', 'Тапсырысқа позициялар', 'Items to order')} value={number(approvedRows.length)} hint={`${t("Поставщиков:", "Жеткізушілер:", "Suppliers:")} ${groups.length}`} />
+          <Tile label={t('Объём заказа', 'Тапсырыс көлемі', 'Order quantity')} value={`${number(orderUnits)} ${t("шт.", "дана", "units")}`} hint={t('с учётом ручных правок', 'қолмен түзетулерді ескере отырып', 'including manual edits')} />
+          <Tile label={t('Риск дефицита', 'Тапшылық қаупі', 'Stockout risk')} value={number(criticalCount)} hint={t('критичные позиции', 'шұғыл позициялар', 'critical items')} tone={criticalCount ? "warn" : "good"} />
+          <Tile label={t('Разовых единиц исключено', 'Бір реттік бірліктер алынып тасталды', 'One-off units excluded')} value={number(spikeUnits)} hint={`${t("Тапшылық ескерілген:", "Тапшылық ескерілген:", "Stockouts included:")} ${stockoutCount} ${t("поз.", "позиция", "items")}`} />
         </div>
 
         <div className={styles.sectionHead}>
-          <div><h2>Рекомендации поставщикам</h2><p>Проверьте обоснование и количество. Ноль исключает позицию из выгрузки.</p></div>
-          <span>Расчёт на {result.as_of}</span>
+          <div><h2>{t('Рекомендации поставщикам', 'Жеткізушілерге ұсынымдар', 'Supplier recommendations')}</h2><p>{t('Проверьте обоснование и количество. Ноль исключает позицию из выгрузки.', 'Негіздеме мен санын тексеріңіз. Нөл позицияны экспорттан алып тастайды.', 'Review the rationale and quantity. Zero excludes an item from export.')}</p></div>
+          <span>{t("Расчёт на", "Есептеу күні", "Calculated for")} {result.as_of}</span>
         </div>
 
-        {rows.length ? <div className={styles.groups}>{groups.map(([supplierId, supplier]) => <RecommendationGroup key={supplierId} supplier={supplier.name} rows={supplier.rows} quantities={quantities} onQuantityChange={changeQuantity} />)}</div> : <EmptyState title="Заказы не требуются" text="По текущим данным все позиции обеспечены запасом и товарами в пути." action={<Button variant="secondary" onClick={() => input && void runCalculation(input)}>Пересчитать</Button>} />}
+        {rows.length ? <div className={styles.groups}>{groups.map(([supplierId, supplier]) => <RecommendationGroup key={supplierId} supplier={supplier.name} rows={supplier.rows} quantities={quantities} onQuantityChange={changeQuantity} />)}</div> : <EmptyState title={t('Заказы не требуются', 'Тапсырыс қажет емес', 'No orders needed')} text={t('По текущим данным все позиции обеспечены запасом и товарами в пути.', 'Ағымдағы деректер бойынша барлық позициялар қор мен жолдағы тауарлармен қамтамасыз етілген.', 'Current stock and inbound goods cover all items.')} action={<Button variant="secondary" onClick={() => input && void runCalculation(input)}>{t('Пересчитать', 'Қайта есептеу', 'Recalculate')}</Button>} />}
 
-        {rows.length ? <Card className={styles.approvalCard} title="Проверка и утверждение" subtitle="Решение остаётся за менеджером закупа">
+        {rows.length ? <Card className={styles.approvalCard} title={t('Проверка и утверждение', 'Тексеру және бекіту', 'Review and approval')} subtitle={t('Решение остаётся за менеджером закупа', 'Шешімді сатып алу менеджері қабылдайды', 'The purchasing manager makes the decision')}>
           <div className={styles.approvalBody}>
-            <p>К выгрузке: {approvedRows.length} позиций, {number(orderUnits)} шт. Заказы поставщикам автоматически не отправляются.</p>
+            <p>{t("К выгрузке:", "Экспортқа:", "To export:")} {approvedRows.length} {t("позиций,", "позиция,", "items,")} {number(orderUnits)} {t("шт.", "дана.", "units.")} {t("Заказы поставщикам автоматически не отправляются.", "Тапсырыстар жеткізушілерге автоматты түрде жіберілмейді.", "Orders are not sent to suppliers automatically.")}</p>
             <div className={styles.approvalActions}>
-              <Button variant="primary" icon={<Check size={16} strokeWidth={1.8} />} disabled={approvedRows.length === 0 || busy !== null || approved} onClick={() => setPreviewOpen(true)}>{approved ? "Утверждено" : "Просмотреть и утвердить"}</Button>
-              <Button variant="secondary" icon={<Download size={16} strokeWidth={1.8} />} disabled={!approved || approvedRows.length === 0} onClick={() => exportOrdersCsv(rows, quantities, result.as_of)}>Скачать CSV</Button>
+              <Button variant="primary" icon={<Check size={16} strokeWidth={1.8} />} disabled={approvedRows.length === 0 || busy !== null || approved} onClick={() => setPreviewOpen(true)}>{approved ? t('Утверждено', 'Бекітілді', 'Approved') : t('Просмотреть и утвердить', 'Қарап, бекіту', 'Review and approve')}</Button>
+              <Button variant="secondary" icon={<Download size={16} strokeWidth={1.8} />} disabled={!approved || approvedRows.length === 0} onClick={() => exportOrdersCsv(rows, quantities, result.as_of)}>{t('Скачать CSV', 'CSV жүктеу', 'Download CSV')}</Button>
             </div>
           </div>
-          {approved ? <Alert tone="success" title="Заказ утверждён локально">Скачайте CSV для загрузки в учётную систему. Поставщикам ничего не отправлено.</Alert> : null}
+          {approved ? <Alert tone="success" title={t('Заказ утверждён локально', 'Тапсырыс жергілікті түрде бекітілді', 'Order approved locally')}>{t('Скачайте CSV для загрузки в учётную систему. Поставщикам ничего не отправлено.', 'Есеп жүйесіне жүктеу үшін CSV файлын алыңыз. Жеткізушілерге ештеңе жіберілген жоқ.', 'Download CSV for your accounting system. Nothing has been sent to suppliers.')}</Alert> : null}
         </Card> : null}
-      </> : !busy ? <ErrorState title="Нет данных для расчёта" text="Загрузите демо или таблицу по шаблону." onRetry={() => void loadDemo()} /> : null}
+      </> : !busy ? <ErrorState title={t('Нет данных для расчёта', 'Есептеуге дерек жоқ', 'No data to calculate')} text={t('Загрузите демо или таблицу по шаблону.', 'Демоны немесе үлгі бойынша кестені жүктеңіз.', 'Load the demo or a workbook based on the template.')} onRetry={() => void loadDemo()} /> : null}
 
-      <Modal id="replenishment-approval" title="Утвердить заказ" open={previewOpen} onOpenChange={setPreviewOpen} size="md" footer={<><Button variant="secondary" onClick={() => setPreviewOpen(false)}>Вернуться к правкам</Button><Button variant="primary" onClick={() => { setApproved(true); setPreviewOpen(false); }}>Подтвердить</Button></>}>
-        <ActionPreview items={groups.filter(([, supplier]) => supplier.rows.some((row) => (quantities[recommendationKey(row)] ?? row.recommended_qty) > 0)).map(([, supplier]) => `${supplier.name}: ${supplier.rows.filter((row) => (quantities[recommendationKey(row)] ?? row.recommended_qty) > 0).length} позиций, ${number(supplier.rows.reduce((sum, row) => sum + (quantities[recommendationKey(row)] ?? row.recommended_qty), 0))} шт.`)} note="Подтверждение действует только в этой вкладке. Заказ не отправляется автоматически; после подтверждения доступен экспорт CSV." />
+      <Modal id="replenishment-approval" title={t('Утвердить заказ', 'Тапсырысты бекіту', 'Approve order')} open={previewOpen} onOpenChange={setPreviewOpen} size="md" footer={<><Button variant="secondary" onClick={() => setPreviewOpen(false)}>{t('Вернуться к правкам', 'Түзетуге оралу', 'Back to edits')}</Button><Button variant="primary" onClick={() => { setApproved(true); setPreviewOpen(false); }}>{t('Подтвердить', 'Растау', 'Confirm')}</Button></>}>
+        <ActionPreview items={groups.filter(([, supplier]) => supplier.rows.some((row) => (quantities[recommendationKey(row)] ?? row.recommended_qty) > 0)).map(([, supplier]) => `${supplier.name}: ${supplier.rows.filter((row) => (quantities[recommendationKey(row)] ?? row.recommended_qty) > 0).length} ${t("позиций", "позиция", "items")}, ${number(supplier.rows.reduce((sum, row) => sum + (quantities[recommendationKey(row)] ?? row.recommended_qty), 0))} ${t("шт.", "дана", "units")}`)} note={t('Подтверждение действует только в этой вкладке. Заказ не отправляется автоматически; после подтверждения доступен экспорт CSV.', 'Растау тек осы қойындыда жарамды. Тапсырыс автоматты түрде жіберілмейді; растағаннан кейін CSV экспорттауға болады.', 'Approval applies only in this tab. The order is not sent automatically; CSV export becomes available after confirmation.')} />
       </Modal>
     </div>
   );
