@@ -44,4 +44,4 @@
 
 @keyframes pulse { 50% { opacity: .4; } }
 @media (prefers-reduced-motion: reduce) { .loading i { animation: none; } .trigger { transition: none; } }
-@media (max-width: 900px) { .trigger { width: var(--touch); height: var(--touch); justify-content: center; } .trigger span, .trigger kbd { display: none; } }
+@media (max-width: 900px) { .trigger { width: auto; min-height: var(--touch); white-space: nowrap; } .trigger kbd { display: none; } }

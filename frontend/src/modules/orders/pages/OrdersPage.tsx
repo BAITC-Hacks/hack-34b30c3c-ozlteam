@@ -5,7 +5,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../app/PageHeader";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Select, Table, Td, Th, Tr } from "../../../shared/ui";
 import { ApiError } from "../../../shared/api/client";
-import { approveOrder, deleteOrderLine, editOrderLine, exportOrder, getOrder, getOrderAudit, getOrderHandoff, listOrders, listWarehouses, reviseOrder, updateOrderComment } from "../api/orders";
+import { approveOrder, deleteOrderLine, editOrderLine, exportOrder, getOrder, getOrderAudit, getOrderHandoff, listOrderFilterOptions, listOrders, listWarehouses, reviseOrder, updateOrderComment } from "../api/orders";
 import type { OrderAudit, OrderDelivery, OrderLine, SupplierOrder } from "../types";
 import styles from "./OrdersPage.module.css";
 
@@ -46,12 +46,16 @@ function OrderSkeleton({ detail = false }: { detail?: boolean }) {
 function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
   const [params, setParams] = useSearchParams();
   const status = params.get("status") ?? "all";
-  const supplierId = params.get("supplier_id");
+  const supplierId = params.get("supplier_id") ?? "";
   const from = params.get("from");
   const supplierReturn = from?.startsWith("/data/catalogs?") ? from : `/data/catalogs?${new URLSearchParams({ tab: "suppliers", id: supplierId ?? "" })}`;
   const query = params.get("q") ?? "";
+  const warehouseId = params.get("warehouse_id") ?? "";
   const offset = Math.max(0, Number(params.get("offset") ?? 0) || 0);
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
+  const [warehouses, setWarehouses] = useState<Array<{ id: string; name: string }>>([]);
+  const [filtersError, setFiltersError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -60,11 +64,20 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    listOrders(status, offset, controller.signal, supplierId).then(setOrders).catch((caught: unknown) => {
+    listOrders(status, offset, controller.signal, supplierId, warehouseId).then(setOrders).catch((caught: unknown) => {
       if (!controller.signal.aborted) setError(explainError(caught));
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [status, offset, supplierId, reload]);
+  }, [status, supplierId, warehouseId, offset, reload]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setFiltersError(null);
+    Promise.all([listOrderFilterOptions("suppliers", controller.signal), listOrderFilterOptions("warehouses", controller.signal)])
+      .then(([supplierRows, warehouseRows]) => { setSuppliers(supplierRows); setWarehouses(warehouseRows); })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setFiltersError(explainError(caught)); });
+    return () => controller.abort();
+  }, [reload]);
 
   const visible = useMemo(() => orders.filter((order) =>
     `${order.supplier_name} ${order.id} ${order.lines.map((line) => `${line.sku} ${line.name}`).join(" ")}`
@@ -75,7 +88,7 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
     const next = new URLSearchParams(params);
     if (value && value !== "all") next.set(name, value);
     else next.delete(name);
-    if (name === "status" || name === "supplier_id") next.delete("offset");
+    if (name !== "offset") next.delete("offset");
     setParams(next);
   }
 
@@ -85,8 +98,11 @@ function OrderList({ onOpen }: { onOpen: (id: string) => void }) {
       {supplierId ? <Alert tone="info" title="Заказы выбранного поставщика" action={<Button variant="ghost" size="sm" onClick={() => updateParam("supplier_id", "")}>Все поставщики</Button>}>Фильтр сохраняется при смене статуса и страницы. <Link to={supplierReturn}>Вернуться в справочник</Link></Alert> : null}
       <div className={styles.filters}>
         <Select label="Статус" value={status} onChange={(event) => updateParam("status", event.target.value)}><option value="all">Все</option><option value="draft">Черновики</option><option value="approved">Утверждённые</option></Select>
+        <Select label="Поставщик" value={supplierId} onChange={(event) => updateParam("supplier_id", event.target.value)}><option value="">Все поставщики</option>{suppliers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}{supplierId && !suppliers.some((item) => item.id === supplierId) ? <option value={supplierId}>{supplierId}</option> : null}</Select>
+        <Select label="Склад" value={warehouseId} onChange={(event) => updateParam("warehouse_id", event.target.value)}><option value="">Все склады</option>{warehouses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}{warehouseId && !warehouses.some((item) => item.id === warehouseId) ? <option value={warehouseId}>{warehouseId}</option> : null}</Select>
         <label>Поиск на странице<input type="search" value={query} onChange={(event) => updateParam("q", event.target.value)} placeholder="Поставщик, товар или номер" /></label>
       </div>
+      {filtersError ? <Alert tone="warning">Справочники фильтров не загрузились: {filtersError}</Alert> : null}
       {loading ? <OrderSkeleton /> : error ? <Alert tone="danger" title="Не удалось загрузить заказы" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{error}</Alert> : <>
         {visible.length ?
         <Table><thead><Tr><Th>Поставщик</Th><Th>Создан</Th><Th numeric>Позиций</Th><Th>Статус</Th><Th>Заказ</Th></Tr></thead><tbody>{visible.map((order) => <Tr key={order.id}>
@@ -166,6 +182,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [auditHasMore, setAuditHasMore] = useState(false);
+  const [auditRetry, setAuditRetry] = useState(0);
   const [delivery, setDelivery] = useState<OrderDelivery | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
@@ -189,7 +206,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
       .catch((caught: unknown) => { if (!controller.signal.aborted) setAuditError(explainError(caught)); })
       .finally(() => { if (!controller.signal.aborted) setAuditLoading(false); });
     return () => controller.abort();
-  }, [id, order?.version, auditOffset]);
+  }, [id, order?.version, auditOffset, auditRetry]);
 
   useEffect(() => {
     if (order?.status !== "approved" || order.id !== id) { setDelivery(null); setDeliveryError(null); return; }
@@ -270,9 +287,9 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
         {deliveryStatus === "rejected" && !successorId ? revisionOpen ? <div className={styles.commentForm}><label>Причина новой редакции<input value={revisionReason} maxLength={4000} onChange={(event) => setRevisionReason(event.target.value)} /></label><div className={styles.editorActions}><Button size="sm" loading={pending} disabled={!revisionReason.trim()} onClick={() => void createRevision()}>Создать черновик редакции {order.revision + 1}</Button><Button size="sm" variant="ghost" disabled={pending} onClick={() => setRevisionOpen(false)}>Отмена</Button></div></div> : <Button size="sm" variant="secondary" onClick={() => setRevisionOpen(true)}>Создать новую редакцию</Button> : null}
       </Card> : null}
       <Card title="История действий" subtitle="Изменения и причины по этому заказу">
-        {auditError ? <Alert tone="danger" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Повторить</Button>}>{auditError}</Alert> : null}
-        {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}</div>)}</div> : <p className={styles.secondary}>Действий пока нет.</p>}
-        {auditHasMore && !auditLoading ? <Button size="sm" variant="ghost" onClick={() => setAuditOffset((value) => value + 50)}>Показать ещё</Button> : null}
+        {auditError ? <Alert tone="danger" action={<Button size="sm" variant="secondary" onClick={() => setAuditRetry((value) => value + 1)}>Повторить</Button>}>{auditError}</Alert> : null}
+        {auditLoading && !audit.length ? <div className={styles.skeletonRow}><i /><i /><i /></div> : audit.length ? <div className={styles.auditList}>{audit.map((item) => <div className={styles.auditItem} key={item.id}><div><strong>{auditAction(item.action)}</strong><span className={styles.secondary}>{dateTime(item.created_at)}</span></div>{typeof item.data.reason === "string" ? <p>Причина: {item.data.reason}</p> : null}{item.action === "line_edited" && item.data.before && item.data.after ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} → {String((item.data.after as Record<string, unknown>).quantity)}</p> : null}{item.action === "line_deleted" && item.data.before ? <p>{String((item.data.before as Record<string, unknown>).name)}: {String((item.data.before as Record<string, unknown>).quantity)} {String((item.data.before as Record<string, unknown>).unit)}</p> : null}</div>)}</div> : !auditError ? <p className={styles.secondary}>Действий пока нет.</p> : null}
+        {auditHasMore && !auditLoading && !auditError ? <Button size="sm" variant="ghost" onClick={() => setAuditOffset((value) => value + 50)}>Показать ещё</Button> : null}
       </Card>
     </> : null}
   </div>;

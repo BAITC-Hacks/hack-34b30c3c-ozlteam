@@ -24,6 +24,7 @@
 .tableWrap { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
 .textButton { padding: var(--sp-1); border: 0; border-radius: var(--r-xs); background: transparent; color: var(--ac-ink); font: inherit; cursor: pointer; }
 .textButton:hover { background: var(--ac-soft); }
+.pagination { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-xs); }
 .detail { display: grid; justify-items: start; gap: var(--sp-4); }
 .detail h4 { margin-bottom: var(--sp-2); font-size: var(--fs-body); }
 .detail > div { width: 100%; min-width: 0; }

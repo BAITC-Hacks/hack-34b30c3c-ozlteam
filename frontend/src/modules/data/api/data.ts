@@ -1,5 +1,5 @@
 import { apiFormRequest, apiRequest } from "../../../shared/api/client";
-import type { ImportBatch, ImportDetail, Source } from "../types";
+import type { ExchangeBatch, ImportBatch, ImportDetail, Source } from "../types";
 
 export function listSources(signal?: AbortSignal) {
   return apiRequest<Source[]>("/v1/integrations/1c/sources", { signal });
@@ -9,8 +9,12 @@ export function createSource(name: string, system: "1c" | "file") {
   return apiRequest<Source>("/v1/integrations/1c/sources", { method: "POST", body: { name, system } });
 }
 
-export function listImports(signal?: AbortSignal) {
-  return apiRequest<ImportBatch[]>("/v1/imports?limit=50", { signal });
+export function listImports(limit = 20, offset = 0, signal?: AbortSignal) {
+  return apiRequest<ImportBatch[]>(`/v1/imports?limit=${limit}&offset=${offset}`, { signal });
+}
+
+export function listExchangeBatches(sourceId: string, limit = 20, offset = 0, signal?: AbortSignal) {
+  return apiRequest<ExchangeBatch[]>(`/v1/integrations/1c/sources/${encodeURIComponent(sourceId)}/batches?limit=${limit}&offset=${offset}`, { signal });
 }
 
 export function getImport(id: string, signal?: AbortSignal) {

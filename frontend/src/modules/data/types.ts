@@ -9,6 +9,17 @@ export interface Source {
   created_at: string;
 }
 
+export interface ExchangeBatch {
+  id: string;
+  source_id: string;
+  batch_key: string;
+  revision: number;
+  row_count: number;
+  cursor: string | null;
+  created_at: string;
+  summary: Record<string, number>;
+}
+
 export interface RowError {
   sheet: string | null;
   row: number;

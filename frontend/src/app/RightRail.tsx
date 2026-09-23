@@ -2,6 +2,7 @@ import { Bell, Bot, CheckSquare, FileText, RefreshCw, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { AssistantPanel } from "../modules/assistant";
 import { listOrders } from "../modules/orders/api/orders";
 import type { SupplierOrder } from "../modules/orders/types";
 import { getRuns } from "../modules/replenishment/api/runs";
@@ -26,19 +27,6 @@ const RAIL_ITEMS: RailItem[] = [
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
-}
-
-function AgentsPanel({ onNavigate }: { onNavigate: () => void }) {
-  return <div className={styles.list}>
-    <Link className={styles.actionRow} to="/assistant" onClick={onNavigate}>
-      <span className={styles.agentIcon} aria-hidden="true"><Bot size={18} strokeWidth={1.8} /></span>
-      <span className={styles.rowText}>
-        <b>Логист ИИ</b>
-        <span>Задайте вопрос о расчёте пополнения, заказах и работе с данными.</span>
-      </span>
-    </Link>
-    <p className={styles.footnote}>Ассистент отвечает на вопросы. Решения по заказам утверждает менеджер закупок.</p>
-  </div>;
 }
 
 function ActivityPanel({
@@ -164,7 +152,8 @@ export function RightRail() {
         {(activeSection === "notifications" || activeSection === "tasks") && <button className={styles.closeButton} type="button" aria-label="Обновить данные" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={17} strokeWidth={1.8} /></button>}
         <button className={styles.closeButton} type="button" aria-label="Закрыть панель" onClick={() => setIsOpen(false)}><X size={17} strokeWidth={1.8} /></button>
       </header>
-      {activeSection === "agents" ? <AgentsPanel onNavigate={() => setIsOpen(false)} /> : activeSection === "documents" ? <DocumentsPanel /> : <ActivityPanel section={activeSection} orders={orders} runs={runs} loading={loading} error={error} onRefresh={() => setRefresh((value) => value + 1)} onNavigate={() => setIsOpen(false)} hasMoreTasks={hasMoreTasks} loadingMoreTasks={loadingMoreTasks} moreError={moreError} onLoadMoreTasks={() => void loadMoreTasks()} />}
+      <div className={styles.assistantSlot} hidden={activeSection !== "agents"}><AssistantPanel /></div>
+      {activeSection === "agents" ? null : activeSection === "documents" ? <DocumentsPanel /> : <ActivityPanel section={activeSection} orders={orders} runs={runs} loading={loading} error={error} onRefresh={() => setRefresh((value) => value + 1)} onNavigate={() => setIsOpen(false)} hasMoreTasks={hasMoreTasks} loadingMoreTasks={loadingMoreTasks} moreError={moreError} onLoadMoreTasks={() => void loadMoreTasks()} />}
     </aside>
     <nav className={styles.tabs} aria-label="Быстрые разделы">
       {RAIL_ITEMS.map((item) => <button key={item.id} className={styles.tab} type="button" aria-label={item.label} aria-expanded={isOpen && activeSection === item.id} aria-controls={panelId} onClick={() => selectSection(item.id)}>

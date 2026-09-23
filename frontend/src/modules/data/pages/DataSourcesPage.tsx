@@ -5,8 +5,8 @@ import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
 import { ActionPreview, Alert, Badge, Button, Card, EmptyState, Modal, Select, Table, Td, Th, Tr } from "../../../shared/ui";
-import { applyImport, createSource, getImport, listImports, listSources, stageImport } from "../api/data";
-import type { ImportBatch, ImportDetail, RowError, Source } from "../types";
+import { applyImport, createSource, getImport, listExchangeBatches, listImports, listSources, stageImport } from "../api/data";
+import type { ExchangeBatch, ImportBatch, ImportDetail, RowError, Source } from "../types";
 import { PackageImportsPanel } from "../components/PackageImportsPanel";
 import styles from "./DataSourcesPage.module.css";
 
@@ -18,6 +18,7 @@ const kinds = [
 
 const kindName = new Map<string, string>(kinds);
 const statusName: Record<string, string> = { validated: "Проверен", invalid: "Есть ошибки", applied: "Применён" };
+const PAGE_SIZE = 20;
 const formatDate = (value: string | null) => value ? new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
 
 function errorText(error: unknown): string {
@@ -53,21 +54,22 @@ function DataSkeleton() {
   </div>;
 }
 
-function SourceList({ sources }: { sources: Source[] }) {
+function SourceList({ sources, selectedSourceId, onViewBatches }: { sources: Source[]; selectedSourceId: string | null; onViewBatches: (id: string) => void }) {
   return <Card title="Источники" subtitle="Версия и полнота данных, полученных из 1С или файлов">
-    {sources.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Источник</Th><Th>Версия</Th><Th>Состояние</Th><Th>Синхронизация</Th></Tr></thead><tbody>
+    {sources.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Источник</Th><Th>Версия</Th><Th>Состояние</Th><Th>Синхронизация</Th><Th>Пакеты</Th></Tr></thead><tbody>
       {sources.map((source) => <Tr key={source.id}>
         <Td><strong>{source.name}</strong><small className={styles.muted}>{source.system === "1c" ? "База 1С" : "Файловые выгрузки"}</small></Td>
         <Td>{source.revision}</Td>
         <Td><Badge tone={source.complete ? "success" : "warning"}>{source.complete ? "Полный набор" : "Загрузка не завершена"}</Badge></Td>
         <Td>{formatDate(source.synced_at)}</Td>
+        <Td><button className={styles.textButton} type="button" aria-pressed={selectedSourceId === source.id} onClick={() => onViewBatches(source.id)}>{selectedSourceId === source.id ? "Скрыть" : "Журнал"}<span className="srOnly"> источника {source.name}</span></button></Td>
       </Tr>)}
     </tbody></Table></div> : <EmptyState title="Источников пока нет" text="Зарегистрируйте базу 1С или источник файловых выгрузок." />}
   </Card>;
 }
 
-function ImportHistory({ batches, sourceNames, onOpen }: { batches: ImportBatch[]; sourceNames: Map<string, string>; onOpen: (id: string) => void }) {
-  return <Card title="История загрузок" subtitle="Последние 50 проверенных файлов и результаты применения">
+function ImportHistory({ batches, sourceNames, onOpen, page, hasNext, loading, onPageChange }: { batches: ImportBatch[]; sourceNames: Map<string, string>; onOpen: (id: string) => void; page: number; hasNext: boolean; loading: boolean; onPageChange: (page: number) => void }) {
+  return <Card title="История загрузок" subtitle="Проверенные файлы и результаты применения">
     {batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Файл</Th><Th>Источник</Th><Th>Строк</Th><Th>Состояние</Th><Th>Проверка</Th></Tr></thead><tbody>
       {batches.map((batch) => <Tr key={batch.id}>
         <Td><strong>{batch.filename}</strong><small className={styles.muted}>{kindName.get(batch.kind) ?? batch.kind} · {formatDate(batch.created_at)}</small></Td>
@@ -76,7 +78,18 @@ function ImportHistory({ batches, sourceNames, onOpen }: { batches: ImportBatch[
         <Td><Badge tone={batch.status === "applied" ? "success" : batch.status === "invalid" ? "danger" : "warning"}>{statusName[batch.status] ?? batch.status}</Badge></Td>
         <Td><button className={styles.textButton} type="button" onClick={() => onOpen(batch.id)}>Открыть<span className="srOnly"> {batch.filename}</span></button></Td>
       </Tr>)}
-    </tbody></Table></div> : <EmptyState title="Файлы ещё не загружались" text="Выберите источник и загрузите нормализованный CSV или XLSX." />}
+    </tbody></Table></div> : loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем историю" /> : <EmptyState title={page ? "На этой странице загрузок нет" : "Файлы ещё не загружались"} text={page ? "Вернитесь к предыдущей странице." : "Выберите источник и загрузите нормализованный CSV или XLSX."} />}
+    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>Назад</Button><span>Страница {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>Далее</Button></div> : null}
+  </Card>;
+}
+
+function ExchangeHistory({ source, batches, page, hasNext, loading, error, onPageChange, onClose }: { source: Source; batches: ExchangeBatch[]; page: number; hasNext: boolean; loading: boolean; error: string | null; onPageChange: (page: number) => void; onClose: () => void }) {
+  return <Card title={`Пакеты источника: ${source.name}`} subtitle="Журнал успешно применённых нормализованных пакетов; регистрация источника сама по себе не подключает 1С" actions={<Button variant="ghost" size="sm" onClick={onClose}>Закрыть</Button>}>
+    {error ? <Alert tone="danger" title="Не удалось загрузить журнал">{error}</Alert> : null}
+    {loading ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем пакеты источника" /> : batches.length ? <div className={styles.tableWrap}><Table><thead><Tr><Th>Пакет</Th><Th>Ревизия</Th><Th>Строк</Th><Th>Курсор</Th><Th>Применён</Th></Tr></thead><tbody>
+      {batches.map((batch) => <Tr key={batch.id}><Td><strong>{batch.batch_key}</strong></Td><Td>{batch.revision}</Td><Td>{batch.row_count}</Td><Td>{batch.cursor ?? "—"}</Td><Td>{formatDate(batch.created_at)}</Td></Tr>)}
+    </tbody></Table></div> : !error ? <EmptyState title={page ? "На этой странице пакетов нет" : "Применённых пакетов пока нет"} text={page ? "Вернитесь к предыдущей странице." : "Пакеты появятся после обмена через внешний адаптер 1С."} /> : null}
+    {(page > 0 || hasNext) ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={page === 0 || loading} onClick={() => onPageChange(page - 1)}>Назад</Button><span>Страница {page + 1}</span><Button variant="secondary" size="sm" disabled={!hasNext || loading} onClick={() => onPageChange(page + 1)}>Далее</Button></div> : null}
   </Card>;
 }
 
@@ -90,6 +103,14 @@ export function DataSourcesPage() {
   const batchId = params.get("import");
   const [sources, setSources] = useState<Source[]>([]);
   const [batches, setBatches] = useState<ImportBatch[]>([]);
+  const [importPage, setImportPage] = useState(0);
+  const [importsHasNext, setImportsHasNext] = useState(false);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [exchangeBatches, setExchangeBatches] = useState<ExchangeBatch[]>([]);
+  const [exchangePage, setExchangePage] = useState(0);
+  const [exchangeHasNext, setExchangeHasNext] = useState(false);
+  const [exchangeLoading, setExchangeLoading] = useState(false);
+  const [exchangeError, setExchangeError] = useState<string | null>(null);
   const [detail, setDetail] = useState<ImportDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -108,6 +129,14 @@ export function DataSourcesPage() {
   const [complete, setComplete] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const sourceNames = useMemo(() => new Map(sources.map((source) => [source.id, source.name])), [sources]);
+  const selectedSource = sources.find((source) => source.id === selectedSourceId);
+
+  function viewBatches(id: string) {
+    setExchangePage(0);
+    setExchangeBatches([]);
+    setExchangeError(null);
+    setSelectedSourceId((current) => current === id ? null : id);
+  }
 
   function selectBatch(id: string | null) {
     setApplyOpen(false);
@@ -123,15 +152,31 @@ export function DataSourcesPage() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    Promise.all([listSources(controller.signal), listImports(controller.signal)]).then(([nextSources, nextBatches]) => {
+    Promise.all([listSources(controller.signal), listImports(PAGE_SIZE + 1, importPage * PAGE_SIZE, controller.signal)]).then(([nextSources, nextBatches]) => {
       setSources(nextSources);
-      setBatches(nextBatches);
+      setBatches(nextBatches.slice(0, PAGE_SIZE));
+      setImportsHasNext(nextBatches.length > PAGE_SIZE);
       setSourceId((current) => current || nextSources[0]?.id || "");
       setError(null);
     }).catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [reload]);
+  }, [reload, importPage]);
+
+  useEffect(() => {
+    if (!selectedSourceId) return;
+    const controller = new AbortController();
+    setExchangeLoading(true);
+    setExchangeError(null);
+    listExchangeBatches(selectedSourceId, PAGE_SIZE + 1, exchangePage * PAGE_SIZE, controller.signal)
+      .then((nextBatches) => {
+        setExchangeBatches(nextBatches.slice(0, PAGE_SIZE));
+        setExchangeHasNext(nextBatches.length > PAGE_SIZE);
+      })
+      .catch((caught: unknown) => { if (!controller.signal.aborted) setExchangeError(errorText(caught)); })
+      .finally(() => { if (!controller.signal.aborted) setExchangeLoading(false); });
+    return () => controller.abort();
+  }, [selectedSourceId, exchangePage, reload]);
 
   useEffect(() => {
     setDetail(null);
@@ -169,7 +214,7 @@ export function DataSourcesPage() {
     try {
       const staged = await stageImport({ sourceId, kind, file, mapping: JSON.stringify(parsed), multiplier: reverseSign ? -1 : 1 });
       setFile(null); if (fileInputRef.current) fileInputRef.current.value = "";
-      setDetail(staged); selectBatch(staged.id); setReload((value) => value + 1);
+      setDetail(staged); selectBatch(staged.id); setImportPage(0); setReload((value) => value + 1);
       setNotice(staged.status === "invalid" ? "Файл проверен: исправьте ошибки и загрузите его снова." : "Файл проверен. Просмотрите строки перед применением.");
     } catch (caught) { setError(errorText(caught)); }
     finally { setBusy(null); }
@@ -192,7 +237,8 @@ export function DataSourcesPage() {
     {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
     <PackageImportsPanel sources={sources} onChanged={() => setReload((value) => value + 1)} />
     {loading && !sources.length && !batches.length ? <DataSkeleton /> : <>
-      <SourceList sources={sources} />
+      <SourceList sources={sources} selectedSourceId={selectedSourceId} onViewBatches={viewBatches} />
+      {selectedSource ? <ExchangeHistory source={selectedSource} batches={exchangeBatches} page={exchangePage} hasNext={exchangeHasNext} loading={exchangeLoading} error={exchangeError} onPageChange={setExchangePage} onClose={() => setSelectedSourceId(null)} /> : null}
       <div className={styles.forms}>
         <Card title="Зарегистрировать источник" subtitle="Регистрация базы 1С не устанавливает соединение с ней">
           <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void addSource(); }}>
@@ -221,7 +267,7 @@ export function DataSourcesPage() {
           <p className={styles.hint}>Сначала загрузите категории, поставщиков, склады и товары; затем продажи, остатки и другие факты. До подтверждения рабочие данные не меняются.</p>
         </Card>
       </div>
-      <ImportHistory batches={batches} sourceNames={sourceNames} onOpen={selectBatch} />
+      <ImportHistory batches={batches} sourceNames={sourceNames} onOpen={selectBatch} page={importPage} hasNext={importsHasNext} loading={loading} onPageChange={setImportPage} />
       {batchId ? <Card title={detail ? `Проверка: ${detail.filename}` : "Проверка файла"} subtitle={detail ? `${kindName.get(detail.kind) ?? detail.kind} · ${detail.row_count} строк · версия источника ${detail.base_revision}` : "Загружаем результат"} actions={<Button variant="ghost" size="sm" onClick={() => selectBatch(null)}>Закрыть</Button>}>
         {detailLoading && !detail ? <div className={styles.skeletonRow} role="status" aria-busy="true" aria-label="Загружаем проверку" /> : null}
         {detail ? <div className={styles.detail}>

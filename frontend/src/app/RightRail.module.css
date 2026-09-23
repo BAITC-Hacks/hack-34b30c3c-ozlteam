@@ -182,6 +182,8 @@
   padding: 6px 0;
 }
 
+.assistantSlot[hidden] { display: none; }
+
 .actionRow {
   min-width: 0;
   display: grid;

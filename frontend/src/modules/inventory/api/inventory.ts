@@ -1,6 +1,6 @@
 import { apiRequest } from "../../../shared/api/client";
 
-export type InventoryKind = "stocks" | "inbound" | "stockouts";
+export type InventoryKind = "stocks" | "inbound" | "stockouts" | "sales" | "stock_history" | "growth";
 
 interface BaseRow {
   id: string;
@@ -29,6 +29,26 @@ export interface StockoutRow extends BaseRow {
   active: boolean;
 }
 
+export interface SaleRow extends BaseRow {
+  date: string;
+  document_id: string;
+  line_id: string;
+  quantity: string;
+  price: string | null;
+  status: string;
+}
+
+export interface GrowthRow {
+  id: string;
+  product_id: string | null;
+  category_id: string | null;
+  start: string;
+  end: string;
+  rate: string;
+  mode: string;
+  active: boolean;
+}
+
 export interface CatalogRow {
   id: string;
   name: string;
@@ -36,12 +56,12 @@ export interface CatalogRow {
   unit?: string;
 }
 
-export function listInventory(kind: InventoryKind, filters: URLSearchParams, signal?: AbortSignal): Promise<StockRow[] | InboundRow[] | StockoutRow[]> {
-  const path = kind === "stocks" ? "/v1/inventory" : `/v1/inventory/${kind}`;
+export function listInventory(kind: InventoryKind, filters: URLSearchParams, signal?: AbortSignal): Promise<StockRow[] | InboundRow[] | StockoutRow[] | SaleRow[] | GrowthRow[]> {
+  const path = kind === "stocks" ? "/v1/inventory" : `/v1/inventory/${kind === "stock_history" ? "stocks" : kind}`;
   return apiRequest(`${path}?${filters}`, { signal });
 }
 
-export function listCatalog(kind: "warehouses" | "products" | "suppliers", query = "", signal?: AbortSignal): Promise<CatalogRow[]> {
+export function listCatalog(kind: "warehouses" | "products" | "suppliers" | "categories", query = "", signal?: AbortSignal): Promise<CatalogRow[]> {
   const filters = new URLSearchParams({ limit: "200", active: "true" });
   if (query) filters.set("q", query);
   return apiRequest(`/v1/catalogs/${kind}?${filters}`, { signal });
