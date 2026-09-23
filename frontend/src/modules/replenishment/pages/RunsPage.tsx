@@ -15,6 +15,14 @@ const urgency = {
   high: { label: "Высокий", tone: "warning" },
   critical: { label: "Критично", tone: "danger" },
 } as const;
+const warningText: Record<string, string> = {
+  missing_client_ids_day_level_outliers_only: "Нет обезличенных ID клиентов: крупные продажи проверены только по дням.",
+  insufficient_history_for_annual_seasonality: "Истории недостаточно для годового сезонного профиля.",
+  stale_stock_snapshot: "Снимок остатков мог устареть к дате расчёта.",
+  overdue_inbound_excluded: "Просроченные поставки не учтены как будущие поступления.",
+  incomplete_sources: "В расчёте использованы неполные источники данных.",
+};
+const describeWarnings = (values: string[]) => values.map((value) => warningText[value] ?? `Код предупреждения: ${value}`).join(" · ");
 
 const historyLimit = 30;
 const orderAttemptStorage = "hackalem.order-attempt";
@@ -67,7 +75,7 @@ export function RunsPage() {
   const [suppliers, setSuppliers] = useState<CatalogOption[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [runsTotal, setRunsTotal] = useState(0);
-  const [runsLoadedOffset, setRunsLoadedOffset] = useState<number | null>(null);
+  const [runsLoadedKey, setRunsLoadedKey] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyRetry, setHistoryRetry] = useState(0);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -89,6 +97,7 @@ export function RunsPage() {
   const [categoryId, setCategoryId] = useState("");
   const [today, setToday] = useState(() => new Date().toLocaleDateString("en-CA"));
   const [asOf, setAsOf] = useState(today);
+  const [historyDays, setHistoryDays] = useState(1095);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -99,7 +108,9 @@ export function RunsPage() {
   const activeRunId = useRef<string | null>(null);
 
   const historyOffset = Math.max(0, Math.floor(Number(params.get("history_offset") || "0") || 0));
-  const visibleRuns = runsLoadedOffset === historyOffset ? runs : [];
+  const warehouseFilter = params.get("warehouse") ?? "";
+  const historyKey = `${warehouseFilter}:${historyOffset}`;
+  const visibleRuns = runsLoadedKey === historyKey ? runs : [];
   const runId = params.get("run") ?? visibleRuns[0]?.id ?? null;
   const recommendationId = params.get("recommendation");
   const offset = Math.max(0, Math.floor(Number(params.get("offset") || "0") || 0));
@@ -112,6 +123,7 @@ export function RunsPage() {
   const selectedUnits = [...selectedRows.reduce((map, row) => map.set(row.unit, [...(map.get(row.unit) ?? []), row.recommended_quantity]), new Map<string, string[]>())];
   const conflictOrders = visiblePage?.items.filter((row) => conflictIds.includes(row.id) && row.order_id) ?? [];
   const supplierNames = useMemo(() => new Map(suppliers.map((item) => [item.id, item.name])), [suppliers]);
+  const validHistoryDays = Number.isInteger(historyDays) && historyDays >= 28 && historyDays <= 3650;
 
   function updateParams(changes: Record<string, string | null>) {
     setParams((current) => {
@@ -142,7 +154,7 @@ export function RunsPage() {
         setWarehouses(nextWarehouses);
         setCategories(nextCategories);
         setSuppliers(nextSuppliers);
-        setWarehouseId((current) => current || nextWarehouses[0]?.id || "");
+        setWarehouseId((current) => current || (nextWarehouses.some((item) => item.id === warehouseFilter) ? warehouseFilter : nextWarehouses[0]?.id) || "");
       })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setError(errorText(caught)); })
       .finally(() => { if (!controller.signal.aborted) setCatalogLoading(false); });
@@ -160,11 +172,11 @@ export function RunsPage() {
   useEffect(() => {
     const controller = new AbortController();
     setHistoryError(null);
-    getRuns(historyOffset, controller.signal)
-      .then((next) => { setRuns(next.items); setRunsTotal(next.total); setRunsLoadedOffset(historyOffset); })
+    getRuns(historyOffset, controller.signal, warehouseFilter)
+      .then((next) => { setRuns(next.items); setRunsTotal(next.total); setRunsLoadedKey(historyKey); })
       .catch((caught: unknown) => { if (!controller.signal.aborted) setHistoryError(errorText(caught)); });
     return () => controller.abort();
-  }, [historyOffset, historyRetry]);
+  }, [historyKey, historyOffset, historyRetry, warehouseFilter]);
 
   useEffect(() => {
     if (activeRunId.current !== runId) {
@@ -228,8 +240,8 @@ export function RunsPage() {
   }, [recommendationId]);
 
   async function startRun() {
-    if (!warehouseId) return;
-    const signature = `${warehouseId}:${categoryId}:${asOf}:1095`;
+    if (!warehouseId || !validHistoryDays) return;
+    const signature = `${warehouseId}:${categoryId}:${asOf}:${historyDays}`;
     let attempt = runAttempt.current;
     if (!attempt || attempt.signature !== signature) {
       try {
@@ -243,11 +255,11 @@ export function RunsPage() {
     setBusy("run");
     setError(null);
     try {
-      const next = await createRun({ warehouse_id: warehouseId, category_id: categoryId || null, as_of: asOf, idempotency_key: attempt.key, parameters: { history_days: 1095 } });
+      const next = await createRun({ warehouse_id: warehouseId, category_id: categoryId || null, as_of: asOf, idempotency_key: attempt.key, parameters: { history_days: historyDays } });
       runAttempt.current = null;
       try { sessionStorage.removeItem(runAttemptStorage); } catch { /* Хранилище недоступно. */ }
       setCreatedOrders([]);
-      setRunsLoadedOffset(null);
+      setRunsLoadedKey(null);
       setHistoryRetry((current) => current + 1);
       updateParams({ history_offset: null, run: next.id, recommendation: null, offset: null, urgency: null, supplier: null });
     } catch (caught) { setError(errorText(caught)); }
@@ -323,8 +335,9 @@ export function RunsPage() {
           <Select label="Склад" wrapperClassName={styles.selectControl} value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}><option value="">Выберите склад</option>{warehouses.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
           <Select label="Категория" wrapperClassName={styles.selectControl} value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Все категории</option>{categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</Select>
           <label>Дата среза<input type="date" value={asOf} max={today} onChange={(event) => setAsOf(event.target.value)} /></label>
-          <Button variant="primary" icon={<Play size={16} strokeWidth={1.8} />} loading={busy === "run"} disabled={!warehouseId || !asOf || busy !== null} onClick={() => void startRun()}>Рассчитать</Button>
+          <Button variant="primary" icon={<Play size={16} strokeWidth={1.8} />} loading={busy === "run"} disabled={!warehouseId || !asOf || !validHistoryDays || busy !== null} onClick={() => void startRun()}>Рассчитать</Button>
         </div>
+        <details className={styles.runOptions}><summary>Дополнительные параметры</summary><label>Глубина истории, дней<input type="number" min={28} max={3650} step={1} value={historyDays} aria-invalid={!validHistoryDays} onChange={(event) => setHistoryDays(Number(event.target.value))} /></label><p>От 28 до 3650 дней. Значение по умолчанию — 1095.</p></details>
         {!warehouses.length ? <p className={styles.note}>Склады пока не загружены. Сначала примените подготовленные данные; демонстрационный расчёт доступен отдельно.</p> : null}
       </Card>
 
@@ -336,20 +349,21 @@ export function RunsPage() {
         <p className={styles.overviewNote}>{overview.latest_run ? `Срез от ${overview.latest_run.as_of}; источников в срезе: ${overview.source_versions.length}.` : "Нет завершённого расчёта для выбранного склада."}</p>
       </section> : null}
 
-      {runsTotal || historyOffset || runsLoadedOffset !== historyOffset ? <Card title="История расчётов" subtitle="Выберите сохранённый результат">
-        {runsLoadedOffset !== historyOffset && !historyError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем историю"><i /><i /><i /></div> : null}
+      <Card title="История расчётов" subtitle="Выберите сохранённый результат">
+        <Select label="Склад в истории" wrapperClassName={styles.historyFilter} value={warehouseFilter} onChange={(event) => { if (event.target.value) setWarehouseId(event.target.value); updateParams({ warehouse: event.target.value, history_offset: null, run: null, recommendation: null, offset: null }); }}><option value="">Все склады</option>{warehouses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>
+        {runsLoadedKey !== historyKey && !historyError ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем историю"><i /><i /><i /></div> : null}
         {historyError ? <div><Alert tone="danger" title="Не удалось загрузить историю">{historyError}</Alert><Button variant="secondary" size="sm" onClick={() => setHistoryRetry((current) => current + 1)}>Повторить</Button></div> : null}
         <div className={styles.runList}>{visibleRuns.map((item) => <button type="button" key={item.id} className={`${styles.runItem} ${runId === item.id ? styles.activeRun : ""}`} onClick={() => updateParams({ run: item.id, recommendation: null, offset: null })} aria-current={runId === item.id ? "true" : undefined}>
           <span>{item.as_of} · {warehouses.find((warehouse) => warehouse.id === item.warehouse_id)?.name ?? "Склад"}</span><small>{runLabel(item)}</small>
         </button>)}</div>
-        {runsLoadedOffset === historyOffset && !visibleRuns.length ? <p className={styles.note}>На этой странице расчётов нет.</p> : null}
-        {runsTotal > historyLimit || historyOffset > 0 ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={historyOffset === 0 || runsLoadedOffset !== historyOffset} onClick={() => updateParams({ history_offset: String(Math.max(0, historyOffset - historyLimit)), run: null, recommendation: null, offset: null })}>Назад</Button><span>{visibleRuns.length ? `${historyOffset + 1}–${historyOffset + visibleRuns.length}` : `${historyOffset + 1}`} из {runsTotal}</span><Button variant="secondary" size="sm" disabled={historyOffset + historyLimit >= runsTotal || runsLoadedOffset !== historyOffset} onClick={() => updateParams({ history_offset: String(historyOffset + historyLimit), run: null, recommendation: null, offset: null })}>Далее</Button></div> : null}
-      </Card> : <EmptyState title="Расчётов пока нет" text="После загрузки данных выберите склад и запустите первый расчёт." />}
+        {runsLoadedKey === historyKey && !visibleRuns.length ? <p className={styles.note}>{historyOffset ? "На этой странице расчётов нет." : "Расчётов для выбранного склада пока нет."}</p> : null}
+        {runsTotal > historyLimit || historyOffset > 0 ? <div className={styles.pagination}><Button variant="secondary" size="sm" disabled={historyOffset === 0 || runsLoadedKey !== historyKey} onClick={() => updateParams({ history_offset: String(Math.max(0, historyOffset - historyLimit)), run: null, recommendation: null, offset: null })}>Назад</Button><span>{visibleRuns.length ? `${historyOffset + 1}–${historyOffset + visibleRuns.length}` : `${historyOffset + 1}`} из {runsTotal}</span><Button variant="secondary" size="sm" disabled={historyOffset + historyLimit >= runsTotal || runsLoadedKey !== historyKey} onClick={() => updateParams({ history_offset: String(historyOffset + historyLimit), run: null, recommendation: null, offset: null })}>Далее</Button></div> : null}
+      </Card>
 
       {runError ? <div><Alert tone="danger" title="Не удалось обновить расчёт">{runError}</Alert><Button variant="secondary" size="sm" onClick={() => setRunRetry((current) => current + 1)}>Повторить сейчас</Button></div> : null}
       {run?.status === "queued" || run?.status === "running" ? <Card title="Расчёт выполняется" subtitle="Страница обновит результат автоматически"><div className={styles.steps} role="status" aria-live="polite">{job?.steps.length ? job.steps.map((step) => <span key={step.name}><Check size={14} strokeWidth={1.8} aria-hidden="true" className={step.state === "done" ? styles.stepDone : ""} />{step.name}</span>) : <span><RefreshCw size={14} strokeWidth={1.8} aria-hidden="true" />Готовим данные и прогноз</span>}</div></Card> : null}
       {run?.status === "failed" ? <Alert tone="danger" title="Расчёт завершился с ошибкой">{run.error ?? "Проверьте источники данных и попробуйте снова."}</Alert> : null}
-      {run?.warnings.length ? <Alert tone="warning" title="Замечания к данным">{run.warnings.join(" · ")}</Alert> : null}
+      {run?.warnings.length ? <Alert tone="warning" title="Замечания к данным">{describeWarnings(run.warnings)}</Alert> : null}
 
       {run?.status === "done" ? <>
         <Card title="Рекомендации" subtitle={visiblePage ? `${visiblePage.total} позиций · расчёт ${run.as_of}` : recommendationsError ? "Результат временно недоступен" : "Загружаем результат"}>
@@ -378,7 +392,7 @@ export function RunsPage() {
           <div className={styles.detailHead}><p>{detail?.explanation}</p><Button variant="ghost" size="sm" onClick={() => updateParams({ recommendation: null })}>Закрыть</Button></div>
           {loadingDetail && !detail ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем обоснование"><i /><i /><i /></div> : null}
           {detail ? <div className={styles.detailBody}>
-            {detail.details.warnings.length ? <Alert tone="warning" title="Ограничения расчёта">{detail.details.warnings.join(" · ")}</Alert> : null}
+            {detail.details.warnings.length ? <Alert tone="warning" title="Ограничения расчёта">{describeWarnings(detail.details.warnings)}</Alert> : null}
             <dl className={styles.breakdown}>{Object.entries(detail.details.breakdown).filter(([, value]) => value !== null).map(([key, value]) => <div key={key}><dt>{breakdownLabels[key] ?? key}</dt><dd>{typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value) ? quantity(value) : String(value)}</dd></div>)}</dl>
             <div className={styles.detailFacts}><p>История: {detail.details.history.length} дн.</p><p>Прогноз: {detail.details.forecast.length} дн.</p><p>Исключено продаж: {detail.details.excluded_sales.length}</p><p>Поступлений в пути: {detail.details.inbound.length}</p></div>
           </div> : null}

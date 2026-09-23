@@ -2,6 +2,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { NovaOrb } from "../modules/assistant";
 
 import { Button } from "../shared/ui";
 import styles from "./MobileNav.module.css";
@@ -15,7 +16,7 @@ export interface MobileNavItem {
 }
 
 interface Props {
-  /** Разделы нижней панели, до четырёх: пятая ячейка занята кнопкой «Ещё». */
+  /** Три рабочих раздела вокруг центрального действия ассистента. */
   primary: MobileNavItem[];
   /** Остальные разделы, они живут в листе «Ещё». */
   rest: MobileNavItem[];
@@ -133,11 +134,35 @@ export function MobileNav({
       </div>
 
       <nav className={styles.bar} aria-label="Основные разделы">
-        {primary.map((item) => (
+        {primary.slice(0, 2).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === "/"}
+            className={({ isActive }) =>
+              isActive ? `${styles.cell} ${styles.activeCell}` : styles.cell
+            }
+          >
+            {item.icon}
+            <span>{item.mobileLabel ?? item.label}</span>
+          </NavLink>
+        ))}
+        <NavLink
+          to="/assistant"
+          className={({ isActive }) =>
+            isActive ? `${styles.cell} ${styles.assistantCell} ${styles.activeAssistantCell}` : `${styles.cell} ${styles.assistantCell}`
+          }
+          aria-label="Помощник по закупкам"
+        >
+          <span className={styles.assistantOrb} aria-hidden="true">
+            <NovaOrb variant="mini" size={64} />
+          </span>
+          <span className={styles.assistantLabel}>Помощник</span>
+        </NavLink>
+        {primary.slice(2).map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
             className={({ isActive }) =>
               isActive ? `${styles.cell} ${styles.activeCell}` : styles.cell
             }

@@ -1,6 +1,6 @@
-import { RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { ApiError } from "../../../shared/api/client";
@@ -10,6 +10,14 @@ import type { CatalogRow, GrowthRow, InboundRow, InventoryKind, SaleRow, Stockou
 import styles from "./InventoryPage.module.css";
 
 const PAGE_SIZE = 50;
+function returnToRecommendation(input: string | null): string {
+  if (!input || !input.startsWith("/") || input.startsWith("//")) return "/recommendations";
+  try {
+    const url = new URL(input, window.location.origin);
+    return url.origin === window.location.origin && /^\/recommendations\/[0-9a-f-]{36}$/i.test(url.pathname)
+      ? `${url.pathname}${url.search}${url.hash}` : "/recommendations";
+  } catch { return "/recommendations"; }
+}
 const kinds: { id: InventoryKind; title: string; description: string }[] = [
   { id: "stocks", title: "Остатки", description: "Последний снимок по каждому товару и складу. Остаток включает резерв." },
   { id: "inbound", title: "В пути", description: "Загруженные записи о поставках. В расчёт попадают только подтверждённые и находящиеся в пути." },
@@ -52,6 +60,7 @@ function InventorySkeleton() {
 }
 
 export function InventoryPage() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = kinds.find((item) => item.id === params.get("tab"))?.id ?? "stocks";
   const warehouseId = params.get("warehouse") ?? "";
@@ -179,7 +188,7 @@ export function InventoryPage() {
   const hasRows = loadedKey === dataKey && rows.length > 0;
 
   return <div className={styles.page}>
-    <PageHeader title="Запасы и спрос" subtitle="Загруженные остатки, поставки, продажи и прогноз прироста" actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
+    <PageHeader title="Запасы и спрос" subtitle="Загруженные остатки, поставки, продажи и прогноз прироста" actions={<>{params.has("from") ? <Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={() => navigate(returnToRecommendation(params.get("from")), { replace: true })}>К рекомендации</Button> : null}<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button></>} />
 
     <Card title="Данные о товарах" subtitle="Выберите склад и товар, чтобы уточнить список">
       <div className={styles.filters}>

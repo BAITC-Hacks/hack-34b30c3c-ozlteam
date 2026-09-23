@@ -12,6 +12,14 @@ import styles from "./CatalogsPage.module.css";
 
 const PAGE_SIZE = 50;
 const qualityNames = { ready: "Готово", limited: "С ограничениями", blocked: "Нужно исправить" } as const;
+function recommendationReturn(input: string | null): string | null {
+  if (!input || !input.startsWith("/") || input.startsWith("//")) return null;
+  try {
+    const url = new URL(input, window.location.origin);
+    return url.origin === window.location.origin && /^\/recommendations\/[0-9a-f-]{36}$/i.test(url.pathname)
+      ? `${url.pathname}${url.search}${url.hash}` : null;
+  } catch { return null; }
+}
 const kinds: { id: CatalogKind; label: string }[] = [
   { id: "products", label: "Товары" },
   { id: "categories", label: "Категории" },
@@ -207,6 +215,8 @@ export function CatalogsPage() {
   }
 
   function closeDetail() {
+    const back = recommendationReturn(params.get("from"));
+    if (back) { navigate(back, { replace: true }); return; }
     const next = new URLSearchParams(params);
     next.delete("id");
     next.delete("from");
@@ -232,7 +242,7 @@ export function CatalogsPage() {
 
   return <div className={styles.page}>
     <PageHeader title={id ? "Запись справочника" : "Справочники"} subtitle={id ? "Данные из последней загрузки 1С" : "Товары, категории, поставщики и склады из 1С"} actions={<Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={() => setReload((value) => value + 1)}>Обновить</Button>} />
-    {id ? <Card title={record?.name ?? "Карточка справочника"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={closeDetail}>К списку</Button>}>
+    {id ? <Card title={record?.name ?? "Карточка справочника"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={15} />} onClick={closeDetail}>{recommendationReturn(params.get("from")) ? "К рекомендации" : "К списку"}</Button>}>
       {detailError ? <ErrorState title="Не удалось открыть запись" text={detailError} onRetry={() => setReload((value) => value + 1)} /> : detailLoading || !record ? <CatalogSkeleton detail /> : <div className={styles.detail}>
         {kind === "products" ? <ProductQuality product={record as ProductRecord} /> : null}
         <RecordFields record={record} kind={kind} category={category} supplier={supplier} />

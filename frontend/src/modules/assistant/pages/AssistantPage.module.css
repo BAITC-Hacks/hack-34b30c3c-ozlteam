@@ -9,9 +9,17 @@
 
 .welcome {
   display: grid;
-  gap: var(--sp-6);
+  gap: var(--sp-4);
   justify-items: center;
-  padding: clamp(var(--sp-6), 8vh, 90px) 0 var(--sp-4);
+  padding: var(--sp-3) 0 0;
+}
+
+.orbStage {
+  display: grid;
+  place-items: center;
+  width: min(100%, 760px);
+  min-height: 330px;
+  overflow: visible;
 }
 
 .hello {
@@ -27,7 +35,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--gap-cards);
-  width: min(100%, 720px);
+  width: min(100%, 760px);
+  margin: 0 auto;
 }
 
 .prompt {
@@ -218,4 +227,9 @@
   .prompt:hover {
     transform: none;
   }
+}
+
+@media (max-width: 560px) {
+  .orbStage { min-height: 250px; }
+  .prompts { grid-template-columns: minmax(0, 1fr); }
 }

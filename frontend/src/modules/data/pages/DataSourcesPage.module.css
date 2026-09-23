@@ -13,6 +13,16 @@
 .form .fileControl input[type="file"] { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; opacity: 0; clip-path: inset(50%); }
 .form textarea { resize: vertical; min-height: 80px; }
 .form input:focus-visible, .form textarea:focus-visible, .textButton:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.formatGuide { display: grid; gap: var(--sp-1); padding: var(--sp-3); border-radius: var(--r-s); background: var(--sunken); color: var(--mut); font-size: var(--fs-xs); }
+.formatGuide strong { color: var(--ink); }
+.formatGuide p, .mappingHint { margin: 0; }
+.formatGuide code { overflow-wrap: anywhere; color: var(--ink); }
+.mappingEditor { display: grid; gap: var(--sp-2); }
+.mappingEditor > strong { color: var(--ink); font-size: var(--fs-sm); }
+.mappingHint { color: var(--mut); font-size: var(--fs-xs); line-height: 1.5; }
+.mappingRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: var(--sp-2); min-width: 0; }
+.mappingRow > label { min-width: 0; }
+.mappingRow > button { margin-bottom: 2px; }
 .form button { justify-self: start; }
 .hint { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-xs); }
 .advanced { color: var(--mut); font-size: var(--fs-xs); }
@@ -37,5 +47,5 @@
 .skeletonRow { height: 70px; width: 100%; }
 @keyframes shimmer { to { background-position-x: -200%; } }
 @media (max-width: 900px) { .forms { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 560px) { .form button { width: 100%; } }
+@media (max-width: 560px) { .form button { width: 100%; } .mappingRow { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .skeleton i, .skeletonRow { animation: none; background: var(--sunken); } }

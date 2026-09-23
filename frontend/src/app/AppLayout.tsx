@@ -1,4 +1,4 @@
-import { BookOpen, Boxes, ClipboardList, Container, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart } from "lucide-react";
+import { BookOpen, Boxes, ClipboardList, Container, Database, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -21,6 +21,7 @@ const WORK: NavItem[] = [
   { to: "/recommendations", label: "Расчёты", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
   { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
+  { to: "/assistant", label: "Помощник по закупкам", icon: <Sparkles size={17} strokeWidth={1.8} /> },
 ];
 
 const DATA: NavItem[] = [
@@ -28,8 +29,8 @@ const DATA: NavItem[] = [
   { to: "/data/catalogs", label: "Справочники", icon: <BookOpen size={17} strokeWidth={1.8} /> },
 ];
 
-const MOBILE_PRIMARY = WORK;
-const MOBILE_REST = DATA;
+const MOBILE_PRIMARY = WORK.slice(0, 3);
+const MOBILE_REST = [WORK[3], ...DATA];
 
 function initials(fullName: string): string {
   return fullName

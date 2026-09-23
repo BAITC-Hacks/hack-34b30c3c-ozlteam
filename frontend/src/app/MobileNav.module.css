@@ -14,6 +14,7 @@
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    overflow: visible;
     background: color-mix(in srgb, var(--panel) 86%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
     border-top: 1px solid var(--line);
@@ -52,6 +53,45 @@
 
   .activeCell {
     color: var(--ac-ink);
+  }
+
+  .assistantCell {
+    position: relative;
+    padding: 0 1px 4px;
+    justify-content: flex-end;
+    color: var(--ac-ink);
+    white-space: nowrap;
+  }
+
+  .assistantOrb {
+    position: absolute;
+    bottom: 17px;
+    left: 50%;
+    width: 64px;
+    height: 64px;
+    transform: translateX(-50%);
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    transition: transform var(--t-press);
+  }
+
+  .assistantLabel {
+    position: relative;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .assistantCell:active .assistantOrb {
+    transform: translateX(-50%) scale(.96);
+  }
+
+  .activeAssistantCell .assistantOrb {
+    filter: brightness(1.2);
+  }
+
+  .assistantCell:focus-visible {
+    outline-offset: 4px;
   }
 
   .scrim {
@@ -215,5 +255,9 @@
   .sheet,
   .scrim {
     transition-duration: 1ms;
+  }
+
+  .assistantOrb {
+    transition: none;
   }
 }

@@ -1,6 +1,6 @@
 import { ArrowLeft, RotateCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "../../../app/PageHeader";
 import { Alert, Badge, Button, Card, EmptyState, Table, Td, Th, Tr } from "../../../shared/ui";
@@ -27,6 +27,22 @@ function date(value: string | null | undefined): string { return value ? new Dat
 function display(value: number | string | null | undefined): string { return value == null || value === "" ? "—" : /^-?\d+(\.\d+)?$/.test(String(value)) ? qty(value) : String(value); }
 function explanation(value: string): string { return value.replace(/\b\d+\.\d{4,}\b/g, (match) => qty(match)); }
 function inboundStatus(value: string): string { return ({ in_transit: "В пути", confirmed: "Подтверждено", planned: "Запланировано", received: "Получено" } as Record<string, string>)[value] ?? value; }
+const warningText: Record<string, string> = {
+  missing_client_ids_day_level_outliers_only: "Нет обезличенных ID клиентов: крупные продажи проверены только по дням.",
+  insufficient_history_for_annual_seasonality: "Истории недостаточно для годового сезонного профиля.",
+  stale_stock_snapshot: "Снимок остатков старше даты расчёта более чем на день.",
+  overdue_inbound_excluded: "Просроченные поставки не учтены как будущие поступления.",
+  missing_supplier: "Не указан поставщик товара — заказ заблокирован.",
+  missing_lead_time: "Не указан срок поставки — заказ заблокирован.",
+  missing_sales_history: "Нет истории отгрузок по товару — заказ заблокирован.",
+  stockout_without_reference: "Все наблюдения пришлись на отсутствие товара: восстановить спрос не из чего.",
+  incomplete_source_sync: "Один из источников отмечен как неполный — заказ заблокирован.",
+  horizon_exceeds_730_days: "Срок поставки с периодом пересмотра превышает 730 дней.",
+  missing_stock_snapshot: "Нет снимка остатка на дату расчёта — заказ заблокирован.",
+  invalid_pack_size: "Некорректная кратность упаковки — заказ заблокирован.",
+  incomplete_sources: "В расчёте использованы неполные источники данных.",
+};
+function warnings(values: string[]): string { return values.map((value) => warningText[value] ?? `Код предупреждения: ${value}`).join(" · "); }
 
 function returnPath(input: string | null): string {
   if (!input || !input.startsWith("/") || input.startsWith("//")) return "/recommendations";
@@ -78,12 +94,16 @@ export function RecommendationDetailPage() {
   const { recommendationId } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [detail, setDetail] = useState<SavedRecommendationDetail | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
   const back = returnPath(params.get("from"));
+  const here = `${location.pathname}${location.search}${location.hash}`;
+  const stockPath = `/inventory?${new URLSearchParams({ tab: "stocks", warehouse: detail?.warehouse_id ?? "", product: detail?.product_id ?? "", from: here })}`;
+  const productPath = `/data/catalogs?${new URLSearchParams({ tab: "products", id: detail?.product_id ?? "", from: here })}`;
   const history = useMemo(() => monthlyHistory(detail?.details.history ?? []), [detail]);
   const chartHistory = useMemo(() => history.slice(-24), [history]);
   const forecast = useMemo(() => detail?.details.forecast.map((point) => ({ date: point.date, value: number(point.quantity) })) ?? [], [detail]);
@@ -106,16 +126,17 @@ export function RecommendationDetailPage() {
   const breakdown = detail?.details.breakdown;
   const horizon = breakdown?.horizon_days;
   return <div className={styles.page}>
-    <PageHeader title={detail?.name ?? "Обоснование заказа"} subtitle={detail ? `${detail.sku} · ${detail.unit} · расчёт на ${date(run?.as_of)}` : "Расчёт по товару"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={16} />} onClick={() => navigate(back, { replace: true })}>К расчётам</Button>} />
+    <PageHeader title={detail?.name ?? "Обоснование заказа"} subtitle={detail ? `${detail.sku} · ${detail.unit} · расчёт на ${date(run?.as_of)}` : "Расчёт по товару"} actions={<Button variant="secondary" size="sm" icon={<ArrowLeft size={16} />} onClick={() => navigate(back, { replace: true })}>{back.startsWith("/orders") ? "К заказу" : "К расчётам"}</Button>} />
     {loading ? <Skeleton /> : error ? <><Alert tone="danger" title="Не удалось открыть рекомендацию">{error}</Alert><Button variant="secondary" icon={<RotateCw size={16} />} onClick={() => setRetry((current) => current + 1)}>Повторить</Button></> : detail && breakdown ? <>
       <Card title="Рекомендация" subtitle="Количество для пополнения склада">
         <div className={styles.hero}><strong>{qty(detail.recommended_quantity)} <small>{detail.unit}</small></strong><Badge tone={detail.status === "blocked" ? "danger" : detail.urgency === "critical" ? "danger" : detail.urgency === "high" ? "warning" : "neutral"}>{detail.status === "blocked" ? "Расчёт заблокирован" : detail.urgency === "critical" ? "Критично" : detail.urgency === "high" ? "Высокая срочность" : detail.urgency === "none" ? "Заказ не нужен" : "Планово"}</Badge></div>
         <p className={styles.summary}>{explanation(detail.explanation)}</p>
         {detail.order_id ? <Alert tone="info" title="Рекомендация уже включена в заказ" action={<Button variant="secondary" size="sm" onClick={() => navigate(`/orders?id=${encodeURIComponent(detail.order_id!)}`)}>Открыть заказ</Button>}>Повторно создать заказ по этой рекомендации нельзя.</Alert> : null}
+        <div className={styles.relatedLinks}><Button variant="secondary" size="sm" onClick={() => navigate(stockPath)}>Остатки товара на складе</Button><Button variant="secondary" size="sm" onClick={() => navigate(productPath)}>Карточка товара</Button></div>
         <div className={styles.facts}><span>Срок поставки: <b>{display(breakdown.lead_time_days)} дн.</b></span><span>Горизонт: <b>{display(horizon)} дн.</b></span><span>Дефицит ожидается: <b>{date(String(breakdown.shortage_date ?? ""))}</b></span><span>Дата расчёта: <b>{date(run?.as_of)}</b></span></div>
       </Card>
 
-      {detail.details.warnings.length ? <Alert tone="warning" title="Замечания к расчёту">{detail.details.warnings.join(" · ")}</Alert> : null}
+      {detail.details.warnings.length ? <Alert tone="warning" title="Замечания к расчёту">{warnings(detail.details.warnings)}</Alert> : null}
 
       <Card title="Как получено количество" subtitle="Прогноз и страховой запас за вычетом остатка и поставок в пути; затем округление">
         <div className={styles.formula}>{fields.map(([key, label]) => <div key={key} className={key === "recommended_quantity" ? styles.total : undefined}><span>{label}</span><strong>{display(breakdown[key])} {detail.unit}</strong></div>)}</div>
@@ -126,24 +147,25 @@ export function RecommendationDetailPage() {
         <Card title="История спроса" subtitle={`Фактические продажи и скорректированный спрос · ${detail.details.history.length} дн. за ${history.length} мес.`}>
           <Chart points={chartHistory} secondLabel="Спрос после корректировок" />
           {history.length > chartHistory.length ? <p className={styles.muted}>На графике последние {chartHistory.length} из {history.length} мес.; таблица ниже содержит всю историю.</p> : null}
-          <div className={styles.facts}><span>Продано: <b>{display(breakdown.raw_sales)} {detail.unit}</b></span><span>После корректировок: <b>{display(breakdown.corrected_sales)} {detail.unit}</b></span><span>Упущенный спрос: <b>{display(breakdown.lost_demand)} {detail.unit}</b></span><span>Дней без товара: <b>{detail.details.history.filter((point) => point.stockout).length}</b></span></div>
-          <details className={styles.disclosure}><summary>Показать месяцы</summary><Table><thead><Tr><Th>Месяц</Th><Th numeric>Продажи</Th><Th numeric>Спрос</Th><Th>Дефицит</Th></Tr></thead><tbody>{history.map((point) => <Tr key={point.date}><Td>{point.date}</Td><Td numeric>{qty(point.value)}</Td><Td numeric>{qty(point.secondary)}</Td><Td>{point.stockout ? "Был" : "Нет"}</Td></Tr>)}</tbody></Table></details>
+          <div className={styles.facts}><span>Продано: <b>{display(breakdown.raw_sales)} {detail.unit}</b></span><span>После корректировок: <b>{display(breakdown.corrected_sales)} {detail.unit}</b></span><span>Оценка упущенного спроса: <b>{display(breakdown.lost_demand)} {detail.unit}</b></span><span>Дней с подтверждённым отсутствием: <b>{detail.details.history.filter((point) => point.stockout).length}</b></span></div>
+          <p className={styles.muted}>Отсутствие отмечается только для загруженных подтверждённых периодов; ноль не доказывает, что дефицита не было.</p>
+          <details className={styles.disclosure}><summary>Показать месяцы</summary><Table><thead><Tr><Th>Месяц</Th><Th numeric>Продажи</Th><Th numeric>Спрос</Th><Th>Дефицит</Th></Tr></thead><tbody>{history.map((point) => <Tr key={point.date}><Td>{point.date}</Td><Td numeric>{qty(point.value)}</Td><Td numeric>{qty(point.secondary)}</Td><Td>{point.stockout ? "Отмечен" : "Не отмечен"}</Td></Tr>)}</tbody></Table></details>
         </Card>
         <Card title="Прогноз" subtitle={`Дневной спрос на горизонт расчёта · ${detail.details.forecast.length} дн.`}>
           <Chart points={forecast} />
-          <div className={styles.facts}><span>За горизонт: <b>{display(breakdown.forecast_quantity)} {detail.unit}</b></span><span>Включён устойчивый тренд и сезонный коэффициент</span></div>
+          <div className={styles.facts}><span>За горизонт: <b>{display(breakdown.forecast_quantity)} {detail.unit}</b></span><span>Сезонность и тренд показаны, если их удалось оценить по истории</span></div>
           <details className={styles.disclosure}><summary>Показать прогноз по дням</summary><div className={styles.scrollTable}><Table><thead><Tr><Th>Дата</Th><Th numeric>Спрос</Th><Th numeric>Сезонность</Th><Th numeric>Прирост</Th><Th numeric>Темп роста</Th></Tr></thead><tbody>{detail.details.forecast.map((point) => <Tr key={point.date}><Td>{date(point.date)}</Td><Td numeric>{qty(point.quantity)}</Td><Td numeric>{display(point.seasonal_factor)}</Td><Td numeric>{display(point.trend_increment)}</Td><Td numeric>{display(point.growth_rate)}</Td></Tr>)}</tbody></Table></div></details>
         </Card>
       </div>
 
       <Card title="Разовые крупные продажи" subtitle={`Исключены из регулярного спроса · ${detail.details.excluded_sales.length}`}>
-        {detail.details.excluded_sales.length ? <><p className={styles.muted}>Всего исключено: {display(breakdown.excluded_quantity)} {detail.unit}. ID клиентов обезличены.</p><div className={styles.scrollTable}><Table><thead><Tr><Th>Дата</Th><Th>Клиент</Th><Th numeric>Продано</Th><Th numeric>Порог</Th><Th>Причина</Th></Tr></thead><tbody>{detail.details.excluded_sales.map((sale, index) => <Tr key={`${sale.date}-${index}`}><Td>{date(sale.date)}</Td><Td>{sale.client_id ?? "—"}</Td><Td numeric>{qty(sale.quantity)}</Td><Td numeric>{qty(sale.threshold)}</Td><Td>{sale.reason}</Td></Tr>)}</tbody></Table></div></> : <EmptyState title="Разовых крупных продаж нет" text="В истории этого товара исключённых заказов не найдено." />}
+        {detail.details.excluded_sales.length ? <><p className={styles.muted}>Всего исключено: {display(breakdown.excluded_quantity)} {detail.unit}. ID клиентов обезличены, когда они переданы источником.</p><div className={styles.scrollTable}><Table><thead><Tr><Th>Дата</Th><Th>Клиент</Th><Th numeric>Продано</Th><Th numeric>Порог</Th><Th>Причина</Th></Tr></thead><tbody>{detail.details.excluded_sales.map((sale, index) => <Tr key={`${sale.date}-${index}`}><Td>{date(sale.date)}</Td><Td>{sale.client_id ?? "—"}</Td><Td numeric>{qty(sale.quantity)}</Td><Td numeric>{qty(sale.threshold)}</Td><Td>{sale.reason}</Td></Tr>)}</tbody></Table></div></> : <EmptyState title="Исключённых продаж нет" text="Алгоритм не отметил разовые крупные продажи в доступной истории. Без ID клиентов проверка ограничена дневными объёмами." />}
       </Card>
 
       <Card title="Товары в пути" subtitle={`Учтены в потребности · ${detail.details.inbound.length}`}>
         {detail.details.inbound.length ? <div className={styles.scrollTable}><Table><thead><Tr><Th>Ожидаемая дата</Th><Th numeric>Количество</Th><Th>Статус</Th></Tr></thead><tbody>{detail.details.inbound.map((item, index) => <Tr key={`${item.expected_date}-${index}`}><Td>{date(item.expected_date)}</Td><Td numeric>{qty(item.quantity)} {detail.unit}</Td><Td>{inboundStatus(item.status)}</Td></Tr>)}</tbody></Table></div> : <p className={styles.muted}>Поступлений в пути нет.</p>}
       </Card>
-      {run ? <Card title="Данные расчёта" subtitle={`Версия алгоритма ${run.algorithm_version}`}><div className={styles.facts}>{run.source_versions.map((source) => <span key={source.source_id}>Источник {source.source_id}: <b>версия {source.revision}</b>{source.complete ? "" : " · не полон"}</span>)}</div>{run.warnings.length ? <p className={styles.muted}>{run.warnings.join(" · ")}</p> : null}</Card> : null}
+      {run ? <Card title="Данные расчёта" subtitle={`Версия алгоритма ${run.algorithm_version}`}><div className={styles.facts}>{run.source_versions.map((source) => <span key={source.source_id}>Источник {source.source_id}: <b>версия {source.revision}</b>{source.complete ? "" : " · не полон"}</span>)}</div>{run.warnings.length ? <p className={styles.muted}>{warnings(run.warnings)}</p> : null}</Card> : null}
     </> : <EmptyState title="Обоснование недоступно" text="Попробуйте открыть рекомендацию ещё раз из списка расчётов." />}
   </div>;
 }
