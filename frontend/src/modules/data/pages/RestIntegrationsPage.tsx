@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Database, FileJson, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Database, FileText, Plus } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -7,7 +7,6 @@ import { PageHeader } from "../../../app/PageHeader";
 import { returnPath } from "../../../shared/navigation/returnPath";
 import {
   Alert,
-  Badge,
   Button,
   Card,
   EmptyState,
@@ -17,19 +16,23 @@ import {
 } from "../../../shared/ui";
 import { useCurrentUser } from "../../auth";
 import { createSource, listSources } from "../api/data";
-import { listReportKinds, listReports } from "../api/reports";
-import type { RestReport } from "../api/reports";
-import { reportError, RestReportEditor } from "../components/RestReportEditor";
-import styles from "../components/RestReports.module.css";
+import { listReportKinds, listReports, type RestReport } from "../api/reports";
+import { RestReportEditor } from "../components/RestReportEditor";
+import {
+  friendlyReportError,
+  reportKindDescription,
+  reportKindTitle,
+} from "../lib/reportPresentation";
 import skeleton from "./DataSourcesPage.module.css";
+import styles from "./RestIntegrationsPage.module.css";
 
-function ReportSkeleton() {
+function LoadingReports() {
   return (
     <div
       className={skeleton.skeleton}
       role="status"
       aria-busy="true"
-      aria-label="Загружаем настройки интеграции"
+      aria-label="Загружаем отчёты"
     >
       <div aria-hidden="true">
         <i />
@@ -40,18 +43,15 @@ function ReportSkeleton() {
         <i />
         <i />
         <i />
-        <i />
       </div>
     </div>
   );
 }
 
 export function RestIntegrationsPage() {
-  const { data: user } = useCurrentUser();
+  const { data: user, isPending: userPending } = useCurrentUser();
   const canRead = Boolean(user?.permissions.includes("integrations.read"));
   const canWrite = Boolean(user?.permissions.includes("integrations.write"));
-  const canPreview =
-    canWrite && Boolean(user?.permissions.includes("imports.write"));
   const canApply = Boolean(user?.permissions.includes("imports.write"));
   const location = useLocation();
   const navigate = useNavigate();
@@ -115,7 +115,8 @@ export function RestIntegrationsPage() {
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
-        next.set("source", id);
+        if (id) next.set("source", id);
+        else next.delete("source");
         next.delete("report");
         next.delete("kind");
         return next;
@@ -146,38 +147,53 @@ export function RestIntegrationsPage() {
       setSourceName("");
     },
   });
+  function openSources() {
+    addSource.reset();
+    setSourceOpen(true);
+  }
   const error = sources.error ?? kinds.error;
-  const initialLoading = canRead && (sources.isPending || kinds.isPending);
+  const errorCopy = friendlyReportError(
+    error instanceof Error ? error.message : "Не удалось открыть отчёты",
+  );
+  const loading =
+    userPending || (canRead && (sources.isPending || kinds.isPending));
 
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Интеграция с 1С"
-        subtitle="REST-отчёты и сопоставление с форматом нашей базы"
+        title="Данные из 1С"
+        subtitle={
+          selection
+            ? "Подключите отчёт и проверьте данные перед загрузкой"
+            : "Ваши отчёты для расчёта закупок"
+        }
         actions={
           <Button
             variant="secondary"
             size="sm"
             icon={<ArrowLeft size={16} strokeWidth={1.8} />}
-            onClick={() => navigate(back, { replace: true })}
+            disabled={busy}
+            onClick={() =>
+              selection ? selectReport(null) : navigate(back, { replace: true })
+            }
           >
-            Назад
+            {selection ? "К отчётам" : "К источникам"}
           </Button>
         }
       />
-      {!canRead ? (
-        <Alert tone="warning" title="Нет доступа">
-          Для просмотра настроек нужно право integrations.read.
+      {loading ? (
+        <LoadingReports />
+      ) : !canRead ? (
+        <Alert tone="warning" title="Нужен доступ к данным">
+          Попросите администратора открыть вам раздел интеграции с 1С.
         </Alert>
-      ) : null}
-      {error ? (
+      ) : error ? (
         <Alert
           tone="danger"
-          title="Не удалось загрузить интеграции"
+          title={errorCopy.title}
           action={
             <Button
               variant="secondary"
-              size="sm"
               onClick={() => {
                 void sources.refetch();
                 void kinds.refetch();
@@ -187,142 +203,147 @@ export function RestIntegrationsPage() {
             </Button>
           }
         >
-          {reportError(error)}
+          {errorCopy.message}
         </Alert>
-      ) : null}
-      {initialLoading ? (
-        <ReportSkeleton />
-      ) : canRead && !error ? (
+      ) : (
         <>
-          <Card
-            title="База учёта"
-            subtitle="Одна база 1С может содержать любые бренды и поставщиков"
-            actions={
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Plus size={15} strokeWidth={1.8} />}
-                disabled={!canWrite || busy}
-                onClick={() => {
-                  addSource.reset();
-                  setSourceOpen(true);
-                }}
-              >
-                Добавить базу
-              </Button>
-            }
-          >
-            <div className={styles.sourceBar}>
-              <Select
-                label="Источник данных"
-                value={sourceId}
-                disabled={busy}
-                onChange={(event) => selectSource(event.target.value)}
-              >
-                <option value="">Выберите базу</option>
-                {sources.data?.map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-              {source ? (
-                <div className={styles.sourceStatus}>
-                  <Badge tone={source.complete ? "success" : "warning"}>
-                    {source.complete
-                      ? "Выгрузка согласована"
-                      : "Выгрузка не завершена"}
-                  </Badge>
-                  <span>Версия {source.revision}</span>
-                  <span>
-                    {source.synced_at
-                      ? `Обновлена ${new Date(source.synced_at).toLocaleString("ru-RU")}`
-                      : "Данные ещё не применялись"}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-            {!sources.data?.length ? (
-              <p className={styles.hint}>
-                Добавьте базу, затем настройте адрес и поля каждого отчёта.
-              </p>
-            ) : null}
-          </Card>
-          <div className={styles.storageNote}>
-            <Database size={18} strokeWidth={1.8} aria-hidden="true" />
-            <p>
-              Храним у нас в PostgreSQL: настройки отчётов, сопоставления,
-              результаты проверок и применённые данные. Ключ доступа остаётся на
-              сервере.
-            </p>
-          </div>
           {source ? (
-            <div className={styles.workspace}>
-              <Card
-                title="REST-отчёты"
-                subtitle="Настройки сохраняются для следующих загрузок"
-                actions={
+            <div className={styles.sourceLine}>
+              <Database size={18} strokeWidth={1.8} aria-hidden="true" />
+              <div>
+                <strong>{source.name}</strong>
+                <span>
+                  {source.synced_at
+                    ? `Последняя загрузка: ${new Date(source.synced_at).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" })}`
+                    : "Данные ещё не загружались"}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={openSources}
+              >
+                Сменить
+              </Button>
+            </div>
+          ) : sources.data?.length ? (
+            <Alert
+              tone="warning"
+              title="Выберите вашу базу 1С"
+              action={
+                <Button variant="secondary" onClick={openSources}>
+                  Выбрать базу
+                </Button>
+              }
+            >
+              Выбранная база больше недоступна.
+            </Alert>
+          ) : (
+            <Card
+              title="Подключите вашу 1С"
+              subtitle="Добавьте базу, из которой будете загружать отчёты"
+            >
+              <div className={styles.empty}>
+                <p>
+                  Настройте подключение один раз. Затем достаточно выбрать отчёт
+                  и загрузить свежие данные.
+                </p>
+                <Button
+                  variant="dark"
+                  disabled={!canWrite}
+                  onClick={openSources}
+                >
+                  Добавить базу 1С
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {source &&
+            (reports.isPending ? (
+              <LoadingReports />
+            ) : reports.error ? (
+              <Alert
+                tone="danger"
+                title="Не удалось открыть список отчётов"
+                action={
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={<Plus size={15} strokeWidth={1.8} />}
-                    disabled={
-                      !canWrite ||
-                      busy ||
-                      !kinds.data?.length ||
-                      reports.isPending
-                    }
-                    onClick={() => selectReport("new")}
+                    variant="secondary"
+                    onClick={() => void reports.refetch()}
                   >
-                    Добавить
+                    Повторить
                   </Button>
                 }
               >
-                {reports.isPending ? (
-                  <ReportSkeleton />
-                ) : reports.error ? (
-                  <Alert
-                    tone="danger"
-                    title="Не удалось загрузить отчёты"
-                    action={
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => void reports.refetch()}
-                      >
-                        Повторить
-                      </Button>
-                    }
-                  >
-                    {reportError(reports.error)}
-                  </Alert>
-                ) : reports.data?.length ? (
-                  <div className={styles.reportList}>
+                Проверьте соединение и попробуйте ещё раз.
+              </Alert>
+            ) : selection && kinds.data?.length ? (
+              <div className={styles.editor}>
+                {selection === "new" || profile ? (
+                  <RestReportEditor
+                    key={`${sourceId}:${selection}`}
+                    sourceId={sourceId}
+                    profile={profile}
+                    kinds={kinds.data}
+                    defaultKind={params.get("kind")}
+                    canWrite={canWrite}
+                    canPreview={canWrite && canApply}
+                    canApply={canApply}
+                    onSaved={saved}
+                    onApplied={() => {
+                      void queryClient.invalidateQueries({
+                        queryKey: ["rest-integration-sources"],
+                      });
+                    }}
+                    onBusy={setBusy}
+                  />
+                ) : (
+                  <EmptyState
+                    title="Отчёт не найден"
+                    text="Вернитесь к списку и выберите другой отчёт."
+                  />
+                )}
+              </div>
+            ) : (
+              <>
+                <div className={styles.listHeader}>
+                  <h2>Ваши отчёты</h2>
+                  {reports.data?.length ? (
+                    <Button
+                      variant="dark"
+                      icon={<Plus size={16} strokeWidth={1.8} />}
+                      disabled={!canWrite}
+                      onClick={() => selectReport("new")}
+                    >
+                      Добавить отчёт
+                    </Button>
+                  ) : null}
+                </div>
+                {reports.data?.length ? (
+                  <div className={styles.reports}>
                     {reports.data.map((report) => (
                       <button
+                        className={styles.report}
                         type="button"
                         key={report.id}
-                        className={`${styles.reportRow} ${selection === report.id ? styles.selected : ""}`}
-                        disabled={busy}
-                        aria-pressed={selection === report.id}
                         onClick={() => selectReport(report.id)}
+                        aria-label={`Открыть отчёт «${report.name}»`}
                       >
-                        <FileJson
-                          size={18}
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        <span>
-                          <strong>{report.name}</strong>
-                          <small>
-                            {kinds.data?.find(
-                              (item) => item.kind === report.kind,
-                            )?.title ?? report.kind}
-                          </small>
+                        <span className={styles.reportIcon}>
+                          <FileText
+                            size={20}
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                          />
                         </span>
-                        <ArrowLeft
-                          className={styles.openArrow}
-                          size={16}
+                        <span className={styles.reportCopy}>
+                          <strong>{report.name}</strong>
+                          <span>{reportKindTitle(report.kind)}</span>
+                          <small>{reportKindDescription(report.kind)}</small>
+                        </span>
+                        <ArrowRight
+                          size={18}
                           strokeWidth={1.8}
                           aria-hidden="true"
                         />
@@ -330,88 +351,39 @@ export function RestIntegrationsPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState
-                    title="Отчётов пока нет"
-                    text="Добавьте первый REST-отчёт этой базы."
-                  />
-                )}
-                <p className={styles.hint}>
-                  Сначала справочники: категории, поставщики, склады, товары.
-                  Затем факты: отгрузки, остатки, путь, отсутствие товара и
-                  прирост.
-                </p>
-              </Card>
-              {kinds.data?.length && (selection === "new" || profile) ? (
-                <RestReportEditor
-                  key={`${sourceId}:${selection}:${params.get("kind") ?? ""}`}
-                  sourceId={sourceId}
-                  profile={profile}
-                  kinds={kinds.data}
-                  defaultKind={params.get("kind")}
-                  canWrite={canWrite}
-                  canPreview={canPreview}
-                  canApply={canApply}
-                  onSaved={saved}
-                  onApplied={() => {
-                    void queryClient.invalidateQueries({
-                      queryKey: ["rest-integration-sources"],
-                    });
-                  }}
-                  onClose={() => selectReport(null)}
-                  onBusy={setBusy}
-                />
-              ) : (
-                <Card
-                  title="Все данные для пополнения"
-                  subtitle="Выберите отчёт слева или добавьте новый"
-                >
-                  <div className={styles.kindGrid}>
-                    {kinds.data?.map((item) => (
-                      <button
-                        key={item.kind}
-                        type="button"
-                        className={styles.kindRow}
-                        disabled={
-                          !canWrite ||
-                          reports.isPending ||
-                          Boolean(reports.error)
-                        }
-                        onClick={() => {
-                          setParams(
-                            (current) => {
-                              const next = new URLSearchParams(current);
-                              next.set("source", sourceId);
-                              next.set("report", "new");
-                              next.set("kind", item.kind);
-                              return next;
-                            },
-                            { replace: true, state: location.state },
-                          );
-                        }}
+                  <Card
+                    title="Добавьте первый отчёт"
+                    subtitle="Например, остатки товаров или отгрузки за период"
+                  >
+                    <div className={styles.empty}>
+                      <p>
+                        Выберите данные, укажите ссылку на отчёт и проверьте
+                        результат. Ссылку можно получить у специалиста, который
+                        обслуживает вашу 1С.
+                      </p>
+                      <Button
+                        variant="dark"
+                        icon={<Plus size={16} strokeWidth={1.8} />}
+                        disabled={!canWrite}
+                        onClick={() => selectReport("new")}
                       >
-                        <FileJson
-                          size={17}
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        <span>{item.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className={styles.hint}>
-                    Для каждого отчёта задайте свой REST-адрес. Поддерживается
-                    JSON с массивом строк. Готовность подключения проверяется
-                    реальным запросом.
-                  </p>
-                </Card>
-              )}
-            </div>
-          ) : null}
+                        Добавить отчёт
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+                <p className={styles.footnote}>
+                  Перед обновлением вы увидите полученные данные и сможете их
+                  проверить.
+                </p>
+              </>
+            ))}
         </>
-      ) : null}
+      )}
+
       <Modal
         id="create-rest-source"
-        title="Добавить базу 1С"
+        title={sources.data?.length ? "Ваша база 1С" : "Добавить базу 1С"}
         open={sourceOpen}
         onOpenChange={(open) => {
           if (!addSource.isPending) setSourceOpen(open);
@@ -419,51 +391,68 @@ export function RestIntegrationsPage() {
         closeOnEscape={!addSource.isPending}
         closeOnBackdrop={!addSource.isPending}
         showClose={!addSource.isPending}
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              disabled={addSource.isPending}
-              onClick={() => setSourceOpen(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              type="submit"
-              form="rest-source-form"
-              disabled={!sourceName.trim() || !canWrite}
-              loading={addSource.isPending}
-            >
-              Добавить базу
-            </Button>
-          </>
-        }
       >
-        <form
-          id="rest-source-form"
-          className={styles.stack}
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (canWrite && sourceName.trim()) addSource.mutate();
-          }}
-        >
-          {addSource.error ? (
-            <Alert tone="danger">{reportError(addSource.error)}</Alert>
+        <div className={styles.modalBody}>
+          {sources.data?.length ? (
+            <Select
+              label="Выберите базу"
+              value={source?.id ?? ""}
+              disabled={addSource.isPending}
+              onChange={(event) => {
+                selectSource(event.target.value);
+                setSourceOpen(false);
+              }}
+            >
+              <option value="" disabled>
+                Выберите базу
+              </option>
+              {sources.data.map((item) => (
+                <option value={item.id} key={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
           ) : null}
-          <Field
-            label="Название базы"
-            placeholder="1С Электрокомплект"
-            value={sourceName}
-            required
-            maxLength={200}
-            disabled={addSource.isPending}
-            onChange={(event) => setSourceName(event.target.value)}
-          />
-          <p className={styles.hint}>
-            Выберите понятное название конкретной базы учёта. REST-адреса
-            настраиваются отдельно для каждого отчёта.
-          </p>
-        </form>
+          {canWrite ? (
+            <form
+              className={styles.modalBody}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (sourceName.trim() && !addSource.isPending)
+                  addSource.mutate();
+              }}
+            >
+              {addSource.error ? (
+                <Alert tone="danger" title="Не удалось добавить базу">
+                  Попробуйте ещё раз. Если ошибка повторяется, обратитесь к
+                  администратору.
+                </Alert>
+              ) : null}
+              <Field
+                label={
+                  sources.data?.length
+                    ? "Или добавьте другую базу"
+                    : "Как называется ваша база?"
+                }
+                placeholder="Например, 1С Электрокомплект"
+                hint="Название поможет отличать эту базу от других."
+                value={sourceName}
+                required
+                maxLength={200}
+                disabled={addSource.isPending}
+                onChange={(event) => setSourceName(event.target.value)}
+              />
+              <Button
+                type="submit"
+                variant="dark"
+                disabled={!sourceName.trim()}
+                loading={addSource.isPending}
+              >
+                Добавить базу
+              </Button>
+            </form>
+          ) : null}
+        </div>
       </Modal>
     </div>
   );
