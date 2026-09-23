@@ -5,6 +5,7 @@ The industry changed on 21.09.2026 — the team is now on track 05, Logistics, a
 material in the prototype no longer applies. The selected case is now supplier replenishment
 for Электрокомплект (23.09.2026); read `docs/hackathon/tracklogic.md` before domain work.
 It records the supplied case, real workbook schemas, data gaps and 1C/UUIDv7 requirements.
+Read `docs/TEAM_HANDOFF.md` and `docs/replenishment-case.md` for the team's demo flow.
 The old `TrackLogic/hackalem_ai_context.txt` is historical construction brainstorming,
 not current requirements or official hackathon rules. The shell, roles, mock
 data and the assistant prompt are already adapted to logistics; the scaffold, design system and UI
@@ -23,7 +24,15 @@ When creating or changing forms, detail pages, or Back buttons, read `.agents/sk
 Before any UI or visual design work read `.agents/skills/apple-design/SKILL.md` (vendored, see its `SOURCE.md`).
 Before bot changes read `.agents/skills/telegram-bot/SKILL.md`.
 Before touching the manifest, service worker, install prompts, push notifications or planning a mobile demo read `.agents/skills/pwa-delivery/SKILL.md`.
-Before publishing Git changes read `.agents/skills/git-publish/SKILL.md`; follow its single-commit and branch merge workflow.
+Before pulling or pushing Git changes read `.agents/skills/git-team-workflow/SKILL.md`.
+Before publishing Git changes also read `.agents/skills/git-publish/SKILL.md`; follow its single-commit and branch merge workflow.
+
+Team Git shorthand: a user message `ПУШ` means publish the current work to Git; `ПУЛЛ` means
+synchronize the current branch from Git. Before every push, fetch and integrate the latest remote
+changes, then resolve conflicts while preserving all three collaborators' work. Check Git status
+and remote changes regularly during shared work; never discard another collaborator's changes.
+After completing a change task, auto-push if you have reviewed and approved the entire diff and
+relevant checks pass; do not auto-push read-only, unfinished or explicitly local-only work.
 
 - Development starts with `make dev` (uses `.env.local` via `scripts/dev.sh`). Follow README.md for checks.
 - Preserve hot reload and source bind mounts. Dependency changes require updating lock files.

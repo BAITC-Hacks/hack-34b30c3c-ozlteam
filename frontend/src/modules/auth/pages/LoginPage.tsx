@@ -25,7 +25,12 @@ export function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      password: import.meta.env.DEV ? "demo-local-12345" : "",
+    },
+  });
 
   if (user) {
     const from = (location.state as { from?: string } | null)?.from ?? "/";

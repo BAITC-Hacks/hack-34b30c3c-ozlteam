@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.access import require_permission
 from app.core.database import get_session
 from app.core.errors import ERROR_RESPONSES
+from app.Domains.Replenishment.controllers.preview import router as preview_router
 from app.Domains.Replenishment.dependencies import get_replenishment_service
 from app.Domains.Replenishment.DTO.calculation import CreateCalculation
 from app.Domains.Replenishment.resources.calculation import (
@@ -113,3 +114,6 @@ async def overview(
     from app.Domains.Procurement.services.order_service import count_draft_orders
 
     return await service.overview(warehouse_id, await count_draft_orders(session, warehouse_id))
+
+
+router.include_router(preview_router)

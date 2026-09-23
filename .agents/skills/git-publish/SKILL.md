@@ -1,11 +1,11 @@
 ---
 name: git-publish
-description: Publish this project's changes when the user says «залить в гит», «запушить изменения» or requests a push to a named branch. Collect current changes into one commit, synchronize remote branches, resolve conflicts and follow the agreed two-branch merge sequence.
+description: Publish this project's changes on an explicit push request or after a completed, verified change task under the team's auto-push rule. Synchronize remote branches and resolve conflicts before push.
 ---
 
 # Публикация изменений в Git
 
-Этот skill фиксирует согласованный с пользователем workflow. Применяй его по запросу публикации, а не автоматически после редактирования файлов. Создание или редактирование самого skill не означает запрос выполнить commit/push.
+Этот skill фиксирует согласованный с пользователем workflow. Применяй его по запросу публикации или по командному правилу автопуша из [git-team-workflow](../git-team-workflow/SKILL.md) после завершения и личной проверки всей задачи. Само редактирование файла ещё не означает, что работа готова к публикации.
 
 ## Значение команды
 
