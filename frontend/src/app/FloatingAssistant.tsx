@@ -65,12 +65,16 @@ export function FloatingAssistant() {
 
     root.current?.querySelector("textarea")?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
+      // A portalled modal owns keyboard input until it closes.
+      if (event.defaultPrevented || root.current?.closest("[inert]")) return;
       if (event.key === "Escape") {
         setIsOpen(false);
         trigger.current?.focus();
       }
     };
     const closeOnOutside = (event: MouseEvent) => {
+      // Context/history dialogs live outside this root in ModalProvider's portal.
+      if (root.current?.closest("[inert]")) return;
       if (!root.current?.contains(event.target as Node)) setIsOpen(false);
     };
     window.addEventListener("keydown", closeOnEscape);
