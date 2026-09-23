@@ -208,7 +208,7 @@ export function UiKitPage() {
         <div className={styles.demoSurface}>
           <div className={styles.avatarGrid}>
             <div className={styles.avatarExample}>
-              <Avatar name="Поток ИИ" src="/icon-192.png" size="xl" status="online" loading={avatarLoading} />
+              <Avatar name="План закупок" src="/icon-192.png" size="xl" status="online" loading={avatarLoading} />
               <div><strong>Изображение</strong><span>С индикатором статуса</span></div>
             </div>
             <div className={styles.avatarExample}>

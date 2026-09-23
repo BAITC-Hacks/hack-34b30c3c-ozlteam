@@ -63,7 +63,7 @@ export function LoginPage() {
           <span className={styles.mark} aria-hidden="true">
             <Container size={15} strokeWidth={1.8} />
           </span>
-          Поток ИИ
+          План закупок
         </span>
 
         <div>

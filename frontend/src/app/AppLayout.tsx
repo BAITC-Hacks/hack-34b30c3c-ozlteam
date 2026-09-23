@@ -135,7 +135,7 @@ export function AppLayout() {
             <span className={styles.mark} aria-hidden="true">
               <Container size={19} strokeWidth={1.8} />
             </span>
-            <span className={styles.brandName}>Поток ИИ</span>
+            <span className={styles.brandName}>План закупок</span>
             <Button
               className={styles.hideMenu}
               variant="ghost"

@@ -9,10 +9,10 @@ export default defineConfig({
       registerType: "prompt",
       devOptions: { enabled: false },
       manifest: {
-        name: "Hackalem Starter",
-        short_name: "Hackalem",
+        name: "План закупок",
+        short_name: "Закупки",
         lang: "ru",
-        description: "Стартовый проект команды",
+        description: "Расчёт пополнения склада и подготовка заказов поставщикам",
         theme_color: "#172c35",
         background_color: "#f5f4ef",
         display: "standalone",
