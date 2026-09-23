@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Три направления — журнал работ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Schibsted+Grotesk:wght@400;500;700&family=Syne:wght@600;700;800&family=Unbounded:wght@400;600;800&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li){overflow-wrap:anywhere}
+body{margin:0;background:#0a0a0b;color:#e8e8ea;font:16px/1.5 Archivo,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit}
+
+/* ---------- нейтральная панель демки, не часть дизайна ---------- */
+.demo-bar{position:sticky;top:0;z-index:50;background:#0a0a0b;border-bottom:1px solid #232327}
+.demo-in{max-width:1200px;margin:0 auto;padding:10px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.demo-in .t{font-size:12px;color:#77777e;margin-right:6px}
+.sw{padding:8px 13px;min-height:34px;border:1px solid #2c2c31;border-radius:6px;background:transparent;color:#b6b6bd;font-size:13px;cursor:pointer;transition:color .15s,border-color .15s,background .15s,transform .08s}
+.sw:hover{color:#fff;border-color:#4a4a52}
+.sw:active{transform:scale(.97)}
+.sw:focus-visible{outline:2px solid #6ea8ff;outline-offset:2px}
+.sw[aria-pressed="true"]{background:#fff;border-color:#fff;color:#0a0a0b;font-weight:600}
+.hint{max-width:1200px;margin:0 auto;padding:14px 18px 0;font-size:13px;color:#77777e}
+.v{display:none}
+.v.on{display:block}
+@media(prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+
+/* ============================================================
+   1 · МОНОЛИТ — ночная смена, залитый бетон, свет прожектора
+   ============================================================ */
+#monolit{
+  --bg:#0c0b0a; --bg2:#16140f; --pale:#e9e3d7; --dim:#8b8478; --rust:#c4661f;
+  background:var(--bg);color:var(--pale);font-family:Archivo,system-ui,sans-serif;
+  position:relative;padding:0 0 132px;min-height:760px;
+}
+#monolit::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.055;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#monolit::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(72% 42% at 22% -6%,rgba(196,102,31,.16),transparent 68%);
+}
+.m-wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 34px}
+.m-top{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:26px 0 0;font-size:14px;color:var(--dim)}
+.m-logo{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--pale)}
+.m-head{padding:74px 0 44px}
+.m-head h1{
+  margin:0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:clamp(4.2rem,14.5vw,11.5rem);line-height:.8;letter-spacing:-.055em;
+  color:var(--pale);text-transform:lowercase;
+}
+.m-head h1 span{display:block}
+.m-head h1 span:last-child{margin-left:.44em;color:#4a4640}
+.m-meta{display:flex;gap:26px;align-items:baseline;margin-top:30px;flex-wrap:wrap;font-size:15px;color:var(--dim);max-width:46ch;line-height:1.45}
+.m-tally{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:46px;line-height:.8;letter-spacing:-.04em;color:var(--rust)}
+
+.m-slabs{margin:0;padding:0;list-style:none;border-top:1px solid #2a2721}
+.m-slabs li{
+  position:relative;display:flex;align-items:flex-start;gap:26px;
+  padding:22px 0 24px;border-bottom:1px solid #201e19;background:linear-gradient(180deg,rgba(233,227,215,.028),transparent 58%);
+}
+.m-slabs li:hover{background:linear-gradient(180deg,rgba(233,227,215,.06),transparent 62%)}
+.m-slab-t{flex:1 1 auto;min-width:0;font-size:20px;line-height:1.3;letter-spacing:-.011em;color:var(--pale);font-weight:500}
+.m-slab-w{flex:none;width:180px;font-size:13px;color:#6c665c;line-height:1.4;padding-top:5px}
+.m-strike{flex:none;border:0;background:none;color:#5e5850;cursor:pointer;padding:6px 2px;font-size:14px;border-bottom:1px solid transparent;transition:color .18s,border-color .18s}
+.m-strike:hover{color:var(--rust);border-bottom-color:var(--rust)}
+.m-strike:focus-visible{outline:2px solid var(--rust);outline-offset:3px}
+.m-slabs li[data-new]{animation:mSet .5s cubic-bezier(.2,.7,.3,1)}
+@keyframes mSet{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.m-empty{padding:56px 0 40px;max-width:34ch;font-size:19px;line-height:1.45;color:#6c665c}
+
+.m-bay{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  background:var(--bg2);border-top:1px solid #2f2b23;
+}
+.m-bay-in{max-width:1180px;margin:0 auto;padding:22px 34px;display:flex;gap:14px;align-items:center}
+.m-bay input{
+  flex:1 1 auto;min-width:0;height:56px;padding:0 4px;border:0;border-bottom:2px solid #3a352b;background:transparent;
+  color:var(--pale);font:500 20px/1 Archivo,sans-serif;letter-spacing:-.01em;transition:border-color .2s
+}
+.m-bay input::placeholder{color:#5c564c;font-weight:400}
+.m-bay input:focus{outline:none;border-bottom-color:var(--rust)}
+.m-bay input:focus-visible{outline:2px solid var(--rust);outline-offset:6px}
+.m-pour{
+  flex:none;height:56px;padding:0 30px;border:0;background:var(--rust);color:#120f0b;
+  font:600 16px/1 Archivo,sans-serif;letter-spacing:-.005em;cursor:pointer;
+  transition:background .18s,transform .09s
+}
+.m-pour:hover{background:#d9761f}
+.m-pour:active{transform:scale(.98)}
+.m-pour:disabled{background:#332e27;color:#6c665c;cursor:not-allowed;transform:none}
+.m-pour:focus-visible{outline:2px solid var(--pale);outline-offset:3px}
+@media(max-width:720px){
+  .m-wrap,.m-bay-in{padding-left:20px;padding-right:20px}
+  .m-slabs li{flex-wrap:wrap;gap:10px}
+  .m-slab-w{width:auto;order:3;padding-top:0}
+  .m-bay-in{flex-direction:column;align-items:stretch}
+  .m-pour{width:100%}
+  #monolit{padding-bottom:168px}
+}
+
+/* ============================================================
+   2 · РАЗРЕЗ — размерная линия действительно измеряет список
+   ============================================================ */
+#razrez{
+  --paper:#fbfaf7; --ink:#0a0a0a; --grey:#6e6d69; --signal:#e8340c; --construct:#9bb7d4;
+  background:var(--paper);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,sans-serif;
+  min-height:760px;padding:0 0 70px;
+}
+.r-wrap{max-width:1120px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:104px minmax(0,1fr);gap:0}
+.r-rail{position:relative;border-right:1px solid var(--ink)}
+.r-rail::before{content:"";position:absolute;top:0;bottom:0;right:-1px;width:1px;background:var(--ink)}
+.r-side{grid-column:1;position:relative}
+.r-main{grid-column:2;padding-left:34px}
+
+.r-top{display:flex;justify-content:space-between;align-items:baseline;gap:18px;padding:26px 0 0;font-size:14px;color:var(--grey)}
+.r-logo{font-family:Syne,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.028em;color:var(--ink)}
+.r-head{padding:58px 0 34px;position:relative}
+.r-head h1{
+  margin:0;font-family:Syne,sans-serif;font-weight:800;
+  font-size:clamp(3rem,8.2vw,6.1rem);line-height:.92;letter-spacing:-.045em;
+}
+.r-head h1 i{font-style:normal;display:block;padding-left:.06em}
+.r-lead{margin:22px 0 0;max-width:44ch;font-size:16px;line-height:1.55;color:var(--grey)}
+.r-tally{position:absolute;top:52px;right:0;font-family:Syne,sans-serif;font-weight:800;font-size:clamp(3.4rem,7.5vw,5.6rem);line-height:.8;letter-spacing:-.05em;color:var(--construct)}
+
+.r-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--ink)}
+.r-list li{position:relative;display:flex;align-items:baseline;gap:22px;padding:19px 0;border-bottom:1px solid #dedcd6}
+.r-list li::before{
+  content:"";position:absolute;left:-34px;top:50%;width:34px;height:1px;background:var(--construct);
+  transform-origin:left center;
+}
+.r-list li:hover::before{background:var(--signal)}
+.r-dim{
+  position:absolute;left:-104px;top:50%;transform:translateY(-50%);width:70px;text-align:right;
+  font-family:Syne,sans-serif;font-weight:600;font-size:12px;color:var(--construct);letter-spacing:.01em
+}
+.r-t{flex:1 1 auto;min-width:0;font-size:17px;line-height:1.4;font-weight:500;letter-spacing:-.008em}
+.r-w{flex:none;font-size:13px;color:var(--grey)}
+.r-cut{flex:none;border:0;background:none;padding:4px 0;color:var(--grey);font-size:13px;cursor:pointer;border-bottom:1px solid #d2d0c9;transition:color .18s,border-color .18s}
+.r-cut:hover{color:var(--signal);border-bottom-color:var(--signal)}
+.r-cut:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+.r-list li[data-new]{animation:rDraw .42s cubic-bezier(.2,.7,.3,1)}
+.r-list li[data-new]::before{animation:rLine .42s cubic-bezier(.2,.7,.3,1)}
+@keyframes rDraw{from{opacity:0}to{opacity:1}}
+@keyframes rLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.r-empty{padding:52px 0;max-width:36ch;font-size:17px;line-height:1.5;color:var(--grey)}
+
+.r-entry{display:flex;gap:0;margin-top:40px;border:1px solid var(--ink)}
+.r-entry input{
+  flex:1 1 auto;min-width:0;height:54px;padding:0 16px;border:0;background:transparent;
+  font:400 16px/1 "Schibsted Grotesk",sans-serif;color:var(--ink)
+}
+.r-entry input::placeholder{color:#9a9993}
+.r-entry input:focus{outline:none;background:#fff}
+.r-entry input:focus-visible{outline:2px solid var(--signal);outline-offset:-2px}
+.r-entry button{
+  flex:none;height:54px;padding:0 26px;border:0;border-left:1px solid var(--ink);background:var(--ink);color:var(--paper);
+  font:700 15px/1 Syne,sans-serif;letter-spacing:-.01em;cursor:pointer;transition:background .18s,transform .09s
+}
+.r-entry button:hover{background:var(--signal)}
+.r-entry button:active{transform:scale(.985)}
+.r-entry button:disabled{background:#d2d0c9;color:#8c8b86;cursor:not-allowed;transform:none}
+.r-entry button:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+@media(max-width:720px){
+  .r-wrap{grid-template-columns:56px minmax(0,1fr);padding:0 18px}
+  .r-main{padding-left:20px}
+  .r-list li::before{left:-20px;width:20px}
+  .r-dim{left:-56px;width:38px;font-size:10px}
+  .r-tally{position:static;display:block;margin-top:18px}
+  .r-w{display:none}
+}
+
+/* ============================================================
+   3 · ПОДВЕС — всё висит на балке, запись опускается краном
+   ============================================================ */
+#podves{
+  --dark:#141413; --beam:#1d1d1b; --hi:#f2e900; --white:#fff; --mute:#8e8d85;
+  background:var(--dark);color:var(--white);font-family:Archivo,system-ui,sans-serif;
+  min-height:760px;padding:0 0 70px;
+}
+.p-beam{background:var(--beam);border-bottom:4px solid var(--hi);position:relative}
+.p-beam::after{
+  content:"";position:absolute;left:0;right:0;bottom:-4px;height:4px;
+  background:repeating-linear-gradient(115deg,var(--hi) 0 16px,var(--dark) 16px 30px);
+}
+.p-beam-in{max-width:1160px;margin:0 auto;padding:20px 32px 30px;display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.p-logo{font-family:Unbounded,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.03em}
+.p-shift{font-size:13px;color:var(--mute)}
+.p-wrap{max-width:1160px;margin:0 auto;padding:0 32px;position:relative}
+.p-head{padding:0 0 34px;position:relative}
+.p-head h1{
+  margin:0;padding-top:50px;font-family:Unbounded,sans-serif;font-weight:800;
+  font-size:clamp(2.4rem,6.6vw,5rem);line-height:.98;letter-spacing:-.045em;color:var(--hi);max-width:16ch
+}
+.p-head p{margin:20px 0 0;max-width:40ch;font-size:16px;line-height:1.55;color:var(--mute)}
+.p-tally{position:absolute;top:50px;right:0;font-family:Unbounded,sans-serif;font-weight:800;font-size:clamp(2.6rem,6vw,4.4rem);line-height:.9;letter-spacing:-.05em;color:#2e2e2b}
+
+.p-list{margin:0;padding:0;list-style:none;display:grid;gap:16px}
+.p-list li{
+  position:relative;display:flex;align-items:center;gap:20px;
+  background:#1b1b19;border:1px solid #2a2a27;padding:19px 22px;
+  transition:border-color .18s,transform .18s
+}
+.p-list li::before{           /* трос до балки */
+  content:"";position:absolute;left:34px;bottom:100%;width:1px;height:16px;background:#3a3a35
+}
+.p-list li:first-child::before{height:34px}
+.p-list li:hover{border-color:var(--hi);transform:translateY(-2px)}
+.p-hook{flex:none;width:11px;height:11px;border:2px solid var(--hi);border-radius:50%;background:transparent}
+.p-t{flex:1 1 auto;min-width:0;font-size:17px;line-height:1.4;font-weight:500;letter-spacing:-.008em}
+.p-w{flex:none;font-size:13px;color:var(--mute)}
+.p-off{flex:none;border:1px solid #35352f;background:transparent;color:var(--mute);padding:8px 13px;font-size:13px;cursor:pointer;transition:color .18s,border-color .18s,background .18s}
+.p-off:hover{color:var(--dark);background:var(--hi);border-color:var(--hi)}
+.p-off:focus-visible{outline:2px solid var(--hi);outline-offset:3px}
+.p-list li[data-new]{animation:pLower .58s cubic-bezier(.28,.9,.34,1.08)}
+@keyframes pLower{0%{opacity:0;transform:translateY(-46px)}70%{opacity:1;transform:translateY(3px)}100%{transform:none}}
+.p-empty{padding:50px 0;max-width:34ch;font-size:17px;line-height:1.5;color:var(--mute)}
+
+.p-pendant{margin-top:36px;display:flex;gap:0;border:1px solid #35352f;background:#1b1b19}
+.p-pendant input{
+  flex:1 1 auto;min-width:0;height:56px;padding:0 18px;border:0;background:transparent;color:var(--white);
+  font:400 16px/1 Archivo,sans-serif
+}
+.p-pendant input::placeholder{color:#6b6b64}
+.p-pendant input:focus{outline:none;background:#212120}
+.p-pendant input:focus-visible{outline:2px solid var(--hi);outline-offset:-2px}
+.p-pendant button{
+  flex:none;height:56px;padding:0 28px;border:0;background:var(--hi);color:var(--dark);
+  font:800 15px/1 Unbounded,sans-serif;letter-spacing:-.02em;cursor:pointer;transition:filter .18s,transform .09s
+}
+.p-pendant button:hover{filter:brightness(1.08)}
+.p-pendant button:active{transform:scale(.985)}
+.p-pendant button:disabled{background:#35352f;color:#6b6b64;cursor:not-allowed;transform:none;filter:none}
+.p-pendant button:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+@media(max-width:720px){
+  .p-wrap,.p-beam-in{padding-left:18px;padding-right:18px}
+  .p-tally{position:static;display:block;margin-top:16px}
+  .p-list li{flex-wrap:wrap;gap:12px}
+  .p-w{width:100%;order:3}
+  .p-pendant{flex-direction:column}
+  .p-pendant button{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="demo-in">
+    <span class="t">Направление</span>
+    <button class="sw" data-go="monolit" aria-pressed="true">1 · Монолит</button>
+    <button class="sw" data-go="razrez" aria-pressed="false">2 · Разрез</button>
+    <button class="sw" data-go="podves" aria-pressed="false">3 · Подвес</button>
+  </div>
+</div>
+<p class="hint">Экран рабочий: впишите строку и добавьте, запись можно снять. Контент — журнал работ на объекте, чтобы было видно дизайн на настоящих формулировках, а не на «заметке номер один».</p>
+
+<!-- ================= 1 · МОНОЛИТ ================= -->
+<div class="v on" id="monolit">
+  <div class="m-wrap">
+    <div class="m-top">
+      <span class="m-logo">hackalem</span>
+      <span>объект 4, вторая смена</span>
+    </div>
+
+    <div class="m-head">
+      <h1><span>журнал</span><span>работ</span></h1>
+      <div class="m-meta">
+        <span class="m-tally" id="m-tally">4</span>
+        <span>Что бригада сделала и что осталось. Запись видят все, кто вышел на смену.</span>
+      </div>
+    </div>
+
+    <ul class="m-slabs" id="m-list"></ul>
+    <p class="m-empty" id="m-empty" hidden>Смена началась, записей пока нет. Впишите первую внизу.</p>
+  </div>
+
+  <form class="m-bay" id="m-form">
+    <div class="m-bay-in">
+      <input id="m-input" maxlength="200" placeholder="Что сделали или что нужно сделать" autocomplete="off" aria-label="Новая запись журнала">
+      <button class="m-pour" type="submit" disabled>Записать</button>
+    </div>
+  </form>
+</div>
+
+<!-- ================= 2 · РАЗРЕЗ ================= -->
+<div class="v" id="razrez">
+  <div class="r-wrap">
+    <div class="r-side r-rail"></div>
+    <div class="r-main">
+      <div class="r-top">
+        <span class="r-logo">hackalem</span>
+        <span>объект 4 · вторая смена</span>
+      </div>
+
+      <div class="r-head">
+        <h1>Журнал<i>работ</i></h1>
+        <p class="r-lead">Разрез по смене: каждая запись занимает своё место и получает размер. Сверху — самое раннее.</p>
+        <span class="r-tally" id="r-tally">4</span>
+      </div>
+
+      <ul class="r-list" id="r-list"></ul>
+      <p class="r-empty" id="r-empty" hidden>Пока пусто. Первая запись задаст отметку, от которой считаются остальные.</p>
+
+      <form class="r-entry" id="r-form">
+        <input id="r-input" maxlength="200" placeholder="Что сделали или что нужно сделать" autocomplete="off" aria-label="Новая запись журнала">
+        <button type="submit" disabled>Записать</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 3 · ПОДВЕС ================= -->
+<div class="v" id="podves">
+  <div class="p-beam">
+    <div class="p-beam-in">
+      <span class="p-logo">hackalem</span>
+      <span class="p-shift">объект 4, вторая смена</span>
+    </div>
+  </div>
+  <div class="p-wrap">
+    <div class="p-head">
+      <h1>Журнал работ</h1>
+      <p>Каждая запись висит на смене, пока её не снимут. Новая опускается сверху.</p>
+      <span class="p-tally" id="p-tally">4</span>
+    </div>
+
+    <ul class="p-list" id="p-list"></ul>
+    <p class="p-empty" id="p-empty" hidden>На смене ничего не висит. Добавьте первую запись.</p>
+
+    <form class="p-pendant" id="p-form">
+      <input id="p-input" maxlength="200" placeholder="Что сделали или что нужно сделать" autocomplete="off" aria-label="Новая запись журнала">
+      <button type="submit" disabled>Записать</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var seq = 5;
+  var notes = [
+    { id: 1, t: 'Залить плиту на осях 3–5', w: 'сегодня, 07:40' },
+    { id: 2, t: 'Принять арматуру, партия А-412', w: 'сегодня, 09:15' },
+    { id: 3, t: 'Снять опалубку с колонн второго этажа', w: 'сегодня, 11:02' },
+    { id: 4, t: 'Вызвать геодезиста на разбивку осей', w: 'сегодня, 13:30' }
+  ];
+
+  var views = {
+    monolit: {
+      list: 'm-list', empty: 'm-empty', tally: 'm-tally', form: 'm-form', input: 'm-input',
+      row: function (n) {
+        var li = document.createElement('li');
+        var t = document.createElement('span'); t.className = 'm-slab-t'; t.textContent = n.t;
+        var w = document.createElement('span'); w.className = 'm-slab-w'; w.textContent = n.w;
+        var b = document.createElement('button'); b.className = 'm-strike'; b.type = 'button';
+        b.textContent = 'снять'; b.setAttribute('aria-label', 'Снять запись: ' + n.t);
+        li.appendChild(t); li.appendChild(w); li.appendChild(b);
+        return { li: li, btn: b };
+      }
+    },
+    razrez: {
+      list: 'r-list', empty: 'r-empty', tally: 'r-tally', form: 'r-form', input: 'r-input',
+      row: function (n, i, total) {
+        var li = document.createElement('li');
+        var d = document.createElement('span'); d.className = 'r-dim';
+        d.textContent = ((total - i) * 120) + ' мм';
+        var t = document.createElement('span'); t.className = 'r-t'; t.textContent = n.t;
+        var w = document.createElement('span'); w.className = 'r-w'; w.textContent = n.w;
+        var b = document.createElement('button'); b.className = 'r-cut'; b.type = 'button';
+        b.textContent = 'снять'; b.setAttribute('aria-label', 'Снять запись: ' + n.t);
+        li.appendChild(d); li.appendChild(t); li.appendChild(w); li.appendChild(b);
+        return { li: li, btn: b };
+      }
+    },
+    podves: {
+      list: 'p-list', empty: 'p-empty', tally: 'p-tally', form: 'p-form', input: 'p-input',
+      row: function (n) {
+        var li = document.createElement('li');
+        var h = document.createElement('span'); h.className = 'p-hook'; h.setAttribute('aria-hidden', 'true');
+        var t = document.createElement('span'); t.className = 'p-t'; t.textContent = n.t;
+        var w = document.createElement('span'); w.className = 'p-w'; w.textContent = n.w;
+        var b = document.createElement('button'); b.className = 'p-off'; b.type = 'button';
+        b.textContent = 'снять'; b.setAttribute('aria-label', 'Снять запись: ' + n.t);
+        li.appendChild(h); li.appendChild(t); li.appendChild(w); li.appendChild(b);
+        return { li: li, btn: b };
+      }
+    }
+  };
+
+  function renderAll(newId) {
+    Object.keys(views).forEach(function (k) {
+      var v = views[k];
+      var list = document.getElementById(v.list);
+      var empty = document.getElementById(v.empty);
+      document.getElementById(v.tally).textContent = notes.length;
+      list.innerHTML = '';
+      list.hidden = notes.length === 0;
+      empty.hidden = notes.length > 0;
+      notes.forEach(function (n, i) {
+        var made = v.row(n, i, notes.length);
+        if (n.id === newId) made.li.setAttribute('data-new', '');
+        made.btn.onclick = function () { notes = notes.filter(function (x) { return x.id !== n.id; }); renderAll(); };
+        list.appendChild(made.li);
+      });
+    });
+  }
+
+  Object.keys(views).forEach(function (k) {
+    var v = views[k];
+    var form = document.getElementById(v.form);
+    var input = document.getElementById(v.input);
+    var btn = form.querySelector('button[type=submit]');
+    input.addEventListener('input', function () { btn.disabled = input.value.trim().length === 0; });
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var val = input.value.trim();
+      if (!val) return;
+      var id = seq++;
+      notes = notes.concat([{ id: id, t: val, w: 'только что' }]);
+      Object.keys(views).forEach(function (o) {
+        var oi = document.getElementById(views[o].input);
+        oi.value = ''; document.getElementById(views[o].form).querySelector('button[type=submit]').disabled = true;
+      });
+      renderAll(id);
+      input.focus();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.sw'), function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.sw'), function (o) { o.setAttribute('aria-pressed', 'false'); });
+      Array.prototype.forEach.call(document.querySelectorAll('.v'), function (o) { o.classList.remove('on'); });
+      b.setAttribute('aria-pressed', 'true');
+      document.getElementById(b.getAttribute('data-go')).classList.add('on');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

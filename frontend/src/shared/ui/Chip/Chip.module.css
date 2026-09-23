@@ -1,0 +1,70 @@
+.chip {
+  display: inline-flex;
+  min-height: var(--ctl-sm);
+  padding: 0 var(--sp-3);
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    box-shadow var(--t-hover),
+    transform var(--t-press);
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(.98);
+  transition-duration: 0s;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.pressed {
+  color: var(--panel);
+  background: var(--ink);
+  box-shadow: none;
+}
+
+.count {
+  color: var(--mut);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.pressed .count {
+  color: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+.chip:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover:not(:disabled) {
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .pressed:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ink) 88%, var(--panel));
+  }
+}
+
+@media (pointer: coarse) {
+  .chip {
+    min-height: var(--touch);
+  }
+}

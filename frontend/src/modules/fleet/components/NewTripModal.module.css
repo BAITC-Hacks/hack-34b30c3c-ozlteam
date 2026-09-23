@@ -1,0 +1,62 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+/* Расчёт отделён от полей утопленной подложкой: это результат, а не ввод. */
+.plan {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-s);
+  background: var(--sunken);
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.chain {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.numbers {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+}
+
+.numbers div {
+  display: grid;
+  gap: 2px;
+}
+
+.numbers dt {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+}
+
+.numbers dd {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.price dd {
+  color: var(--ac-ink);
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,330 @@
+/* Рабочая область занимает окно целиком, а навигация лежит поверх неё отдельной
+   плавающей карточкой — как постоянный инструмент, а не часть контента страницы. */
+
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: var(--shell);
+}
+
+.sidebarSlot {
+  flex: 0 0 calc(var(--side-w) + var(--frame));
+  width: calc(var(--side-w) + var(--frame));
+  min-width: 0;
+  transition:
+    flex-basis var(--t-panel),
+    width var(--t-panel);
+}
+
+.sidebarSlot[data-hidden] {
+  flex-basis: 0;
+  width: 0;
+}
+
+.side {
+  position: sticky;
+  top: var(--frame);
+  flex: none;
+  width: var(--side-w);
+  height: calc(100vh - var(--frame) - var(--frame));
+  height: calc(100dvh - var(--frame) - var(--frame));
+  display: flex;
+  flex-direction: column;
+  margin: var(--frame) 0 var(--frame) var(--frame);
+  padding: var(--sp-5) var(--sp-3) var(--sp-3);
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: var(--sh-side);
+  overflow: hidden;
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-hover),
+    visibility 0s;
+  will-change: transform;
+}
+
+.sidebarSlot[data-hidden] .side {
+  transform: translateX(calc(-100% - var(--frame)));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-hover),
+    visibility 0s linear var(--t-hover);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--touch);
+  padding: 0 var(--sp-2);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+
+.hideMenu {
+  margin-left: auto;
+  flex: none;
+  color: var(--mut);
+}
+
+.hideMenu:hover:not(:disabled) {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.showMenu {
+  position: fixed;
+  top: var(--frame);
+  left: var(--frame);
+  z-index: 40;
+  width: var(--ctl);
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(calc(-1 * var(--sp-2)));
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-hover),
+    visibility 0s linear var(--t-hover);
+}
+
+.showMenu[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-hover),
+    visibility 0s;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: var(--stamp-size);
+  height: var(--stamp-size);
+  border-radius: var(--r-xs);
+  background: var(--stamp);
+  color: var(--panel);
+  flex: none;
+}
+
+.navigationFrame {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: var(--sp-6);
+}
+
+.navigationFrame::before,
+.navigationFrame::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: var(--sp-6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-hover);
+  z-index: 1;
+}
+
+.navigationFrame::before {
+  top: 0;
+  background: linear-gradient(to top, transparent, var(--panel));
+}
+
+.navigationFrame::after {
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent, var(--panel));
+}
+
+.navigationFrame[data-fade-top]::before,
+.navigationFrame[data-fade-bottom]::after {
+  opacity: 1;
+}
+
+.navigation {
+  height: 100%;
+  padding: 0 var(--sp-1) var(--sp-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.navigation::-webkit-scrollbar {
+  display: none;
+}
+
+.navSection + .navSection {
+  margin-top: var(--sp-6);
+}
+
+.group {
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-cap);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--faint);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--touch);
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-s);
+  color: var(--mut);
+  text-decoration: none;
+  font-size: var(--fs-body);
+  font-weight: 400;
+  transition:
+    background var(--t-hover),
+    color var(--t-hover),
+    filter var(--t-hover);
+}
+
+.link + .link {
+  margin-top: 2px;
+}
+
+.link > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.active {
+  background: var(--ac-soft);
+  color: var(--ac-ink);
+  font-weight: 500;
+}
+
+.count {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: var(--mut);
+  background: var(--sunken);
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+}
+
+.active .count {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.me {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--sp-2);
+  border-radius: var(--r-s);
+  background: var(--sunken);
+  min-width: 0;
+}
+
+.avatar {
+  width: var(--ctl);
+  height: var(--ctl);
+  border-radius: 50%;
+  background: var(--ac);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  flex: none;
+}
+
+.who {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+}
+
+.who b {
+  display: block;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.who span {
+  display: block;
+  color: var(--mut);
+  /* Длинная почта иначе уезжает под кнопку выхода. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    background: var(--sunken);
+    color: var(--ink);
+    transition-duration: 0s;
+  }
+
+  .link.active:hover {
+    background: var(--ac-soft);
+    color: var(--ac-ink);
+    filter: brightness(.96);
+  }
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-6) 48px;
+  display: grid;
+  gap: var(--gap-blocks);
+  align-content: start;
+  max-width: var(--content-max);
+  transition: padding-left var(--t-panel);
+}
+
+.sidebarHidden {
+  padding-left: calc(var(--touch) + var(--sp-6));
+}
+
+@media (max-width: 900px) {
+  .sidebarSlot,
+  .side {
+    display: none;
+  }
+
+  .showMenu {
+    display: none;
+  }
+
+  .main,
+  .sidebarHidden {
+    /* Нижний отступ = высота панели + домашний индикатор, иначе она накрывает последний блок. */
+    padding: var(--sp-4) var(--sp-4)
+      calc(var(--mobile-bar-h) + var(--sp-5) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebarSlot,
+  .side,
+  .showMenu,
+  .main {
+    transition-duration: 1ms;
+  }
+}

@@ -1,0 +1,70 @@
+/* Строка-вывод: иконка → смысл и следующий шаг → действие. */
+
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-s);
+  font-size: var(--fs-sm);
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.body {
+  min-width: 0;
+  /* Базис 0, иначе на узком экране текст своей шириной выталкивает себя под иконку. */
+  flex: 1 1 0;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.detail {
+  margin: 2px 0 0;
+  line-height: var(--lh-body);
+}
+
+.action {
+  flex: none;
+  margin-left: var(--sp-2);
+}
+
+.info {
+  background: var(--ac-soft);
+  color: var(--ac-ink);
+}
+
+.warning {
+  background: var(--wr-soft);
+  color: var(--wr-ink);
+}
+
+.danger {
+  background: var(--er-soft);
+  color: var(--er-ink);
+}
+
+@media (max-width: 560px) {
+  .insight {
+    flex-wrap: wrap;
+  }
+
+  .action {
+    margin-left: 34px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .insight {
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+}

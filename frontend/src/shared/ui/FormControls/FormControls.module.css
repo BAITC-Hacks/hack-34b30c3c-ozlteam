@@ -1,0 +1,133 @@
+.control {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.label {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: var(--r-s);
+  outline: 2px solid transparent;
+  outline-offset: -1px;
+  color: var(--ink);
+  background: var(--sunken);
+  font: inherit;
+  font-size: 13.5px;
+  transition:
+    background-color var(--t-hover),
+    outline-color var(--t-hover);
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus-visible,
+.input:focus {
+  outline-color: var(--ac);
+  background: var(--panel);
+}
+
+.input:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}
+
+.selectWrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.select {
+  height: var(--ctl);
+  padding: 0 38px 0 14px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select:disabled {
+  cursor: not-allowed;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.8px solid var(--mut);
+  border-bottom: 1.8px solid var(--mut);
+  pointer-events: none;
+  rotate: 45deg;
+  translate: 0 -70%;
+}
+
+.textarea {
+  min-height: 92px;
+  padding: 10px 14px;
+  line-height: var(--lh-body);
+  resize: vertical;
+}
+
+.hasError .input,
+.hasError .input:focus {
+  outline-color: var(--er);
+  background: var(--panel);
+}
+
+.hint,
+.error,
+.counter {
+  font-size: var(--fs-cap);
+}
+
+.hint,
+.counter {
+  color: var(--mut);
+}
+
+.error,
+.counterOver {
+  color: var(--er-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .input:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sunken) 70%, var(--bg));
+    transition-duration: 0s;
+  }
+}
+
+@media (pointer: coarse) {
+  .select {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .input {
+    outline-color: var(--ink);
+  }
+}

@@ -1,0 +1,45 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap-cards);
+}
+
+.controls {
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+}
+
+/* Три колонки: рейсы — хронология — разбор. Порядок повторяет ход мысли логиста:
+   какой рейс, что случилось, что делать. */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.05fr) minmax(0, 1.05fr);
+  gap: var(--gap-cards);
+  align-items: start;
+}
+
+.stack {
+  display: grid;
+  gap: var(--gap-cards);
+}
+
+@media (max-width: 1240px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .stack {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .columns,
+  .stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

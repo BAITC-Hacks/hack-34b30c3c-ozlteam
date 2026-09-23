@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Десять концепций — AI на стройке</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;600;800&family=Cormorant:ital,wght@0,300;0,500;1,300&family=Cuprum:wght@400;600;700&family=Golos+Text:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,500;1,7..72,300&family=Onest:wght@300;400;600&family=Oranienbaum&family=Prata&family=Rubik+Mono+One&family=Ruslan+Display&family=Tektur:wght@400;600;800&family=Unbounded:wght@300;600;900&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li){overflow-wrap:anywhere}
+body{margin:0;background:#191919;color:#cfcfc9;font:15px/1.5 "Golos Text",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.head{max-width:1500px;margin:0 auto;padding:34px 26px 8px}
+.head h1{margin:0;font-family:"Ruslan Display",serif;font-size:clamp(28px,4vw,50px);line-height:1;color:#f2f0ea;letter-spacing:.01em}
+.head p{margin:14px 0 0;max-width:70ch;color:#8e8e88;font-size:14.5px}
+.grid{max-width:1500px;margin:0 auto;padding:26px 26px 90px;display:grid;gap:34px 26px;grid-template-columns:repeat(auto-fill,minmax(372px,1fr))}
+.item{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{height:322px;overflow:hidden;position:relative;isolation:isolate}
+.spec{font-size:12.5px;line-height:1.5;color:#8e8e88;display:grid;gap:5px}
+.spec b{color:#e6e4dd;font-weight:600;font-size:13px;letter-spacing:.01em}
+.spec dl{margin:0;display:grid;grid-template-columns:74px minmax(0,1fr);gap:3px 10px}
+.spec dt{color:#66665f}
+.spec dd{margin:0}
+.sw{display:inline-flex;gap:4px;vertical-align:-2px}
+.sw i{width:13px;height:13px;display:block;outline:1px solid rgba(255,255,255,.14)}
+@media(prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}
+
+/* ═══ 1 · АРМАТУРА — швейцарский панк-брутализм ═══ */
+.c1{background:#0b0b0b;color:#c9c2b4;display:grid;grid-template-rows:auto 1fr auto;padding:18px 20px;cursor:crosshair}
+.c1 .top{display:flex;justify-content:space-between;font:600 11px/1 "Golos Text";letter-spacing:.2em;text-transform:uppercase;color:#6d685d}
+.c1 .big{font-family:"Ruslan Display",serif;font-size:104px;line-height:.78;color:#ff2d00;margin-left:-6px;align-self:center}
+.c1 .big em{font-style:normal;color:#c9c2b4;font-size:42px}
+.c1 .bot{font-size:13.5px;line-height:1.35;max-width:26ch}
+.c1 .rule{position:absolute;left:0;right:0;bottom:0;height:14px;background:repeating-linear-gradient(90deg,#c9c2b4 0 1px,transparent 1px 12px);transform:scaleY(0);transform-origin:bottom;transition:transform .28s cubic-bezier(.2,.8,.3,1)}
+.c1:hover .rule{transform:scaleY(1)}
+
+/* ═══ 2 · ОПАЛУБКА — конструктивизм ═══ */
+.c2{background:#dcd6c6;color:#111;overflow:hidden}
+.c2 .band{position:absolute;left:-18%;right:-18%;top:38%;height:72px;background:#d6260f;transform:rotate(-13deg);display:flex;align-items:center;gap:22px;padding:0 40px;transition:transform .32s cubic-bezier(.2,.8,.3,1)}
+.c2:hover .band{transform:rotate(-9deg) translateY(-6px)}
+.c2 .band span{font-family:"Ruslan Display",serif;font-size:30px;color:#f4f0e4;white-space:nowrap;line-height:1}
+.c2 .t{position:absolute;top:20px;left:22px;font-family:"Ruslan Display",serif;font-size:44px;line-height:.88;max-width:8ch;color:#111}
+.c2 .b{position:absolute;bottom:18px;left:22px;right:22px;font-size:13px;line-height:1.4;max-width:30ch}
+.c2 .dot{position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:#111}
+
+/* ═══ 3 · ВОЗДУХ — ваби-саби ═══ */
+.c3{background:#ede8de;color:#2a2724;padding:30px 34px;display:flex;flex-direction:column;justify-content:space-between;font-family:Cormorant,serif}
+.c3 .enso{position:absolute;top:26px;right:30px;width:74px;height:74px;border:2px solid #8a6a4f;border-radius:50%;border-right-color:transparent;transform:rotate(18deg);opacity:.85;transition:transform .6s cubic-bezier(.2,.8,.3,1)}
+.c3:hover .enso{transform:rotate(220deg)}
+.c3 h3{margin:0;font-weight:300;font-size:38px;line-height:1.1;letter-spacing:-.01em;max-width:11ch}
+.c3 .n{font-size:60px;font-weight:300;line-height:1;color:#8a6a4f}
+.c3 p{margin:0;font-family:"Golos Text",sans-serif;font-size:13px;line-height:1.6;color:#6d675e;max-width:30ch}
+
+/* ═══ 4 · VOGUE 96 — журнальная верстка ═══ */
+.c4{background:#f2efe9;color:#12100e;padding:24px 26px;display:grid;grid-template-rows:auto 1fr;gap:10px}
+.c4 .kicker{font-family:Commissioner,sans-serif;font-weight:300;font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:#7e2b3a;border-bottom:1px solid #12100e;padding-bottom:7px}
+.c4 .body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px}
+.c4 .drop{font-family:Oranienbaum,serif;font-size:126px;line-height:.72;color:#7e2b3a}
+.c4 .cols{font-family:Commissioner,sans-serif;font-weight:300;font-size:12.5px;line-height:1.62;column-count:2;column-gap:16px;column-rule:1px solid rgba(18,16,14,.16)}
+.c4 .cap{font-family:Oranienbaum,serif;font-size:21px;line-height:1.18;margin-bottom:7px;column-span:all}
+.c4 .sig{position:absolute;right:-40px;top:50%;transform:rotate(90deg);font-family:Commissioner,sans-serif;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#9a938a}
+
+/* ═══ 5 · КАЛЬКА — надпечатка слоёв ═══ */
+.c5{background:#d8d4c8;color:#1b1b19;font-family:Tektur,sans-serif;padding:20px 22px;overflow:hidden}
+.c5 .layer{position:absolute;inset:44px 22px 20px}
+.c5 .plan{border:1px solid rgba(27,27,25,.5);background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(27,27,25,.14) 30px 31px),repeating-linear-gradient(0deg,transparent 0 30px,rgba(27,27,25,.14) 30px 31px)}
+.c5 .fact{border:1px solid #2f6e5a;background:rgba(47,110,90,.16);mix-blend-mode:multiply;transform:translate(14px,10px);transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.c5:hover .fact{transform:translate(26px,18px)}
+.c5 h3{margin:0;font-weight:800;font-size:17px;letter-spacing:.02em;text-transform:uppercase}
+.c5 .tag{position:absolute;left:34px;bottom:34px;background:#2f6e5a;color:#e9e6dc;font-size:11.5px;font-weight:600;padding:5px 9px;letter-spacing:.04em;z-index:3}
+.c5 .tag2{position:absolute;right:34px;top:70px;background:#1b1b19;color:#d8d4c8;font-size:11.5px;font-weight:600;padding:5px 9px;z-index:3}
+
+/* ═══ 6 · ТАБЕЛЬ — форма со штампом ═══ */
+.c6{background:#e8e3d3;color:#16160f;font-family:Cuprum,sans-serif;padding:0;display:grid;grid-template-rows:auto 1fr}
+.c6 .hd{border-bottom:2px solid #16160f;padding:11px 18px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.c6 table{width:100%;border-collapse:collapse;font-size:13px;align-self:start}
+.c6 td{border-bottom:1px solid rgba(22,22,15,.25);padding:8px 18px}
+.c6 td:last-child{text-align:right;font-weight:700}
+.c6 .stamp{position:absolute;right:18px;bottom:16px;border:3px solid #9b2c1e;color:#9b2c1e;font-size:15px;font-weight:700;letter-spacing:.14em;padding:7px 13px;transform:rotate(-11deg) scale(.86);opacity:0;transition:opacity .2s,transform .3s cubic-bezier(.2,.9,.3,1.1);text-transform:uppercase}
+.c6[data-stamped="1"] .stamp{opacity:1;transform:rotate(-11deg) scale(1)}
+.c6 .act{position:absolute;left:18px;bottom:18px;border:1px solid #16160f;background:transparent;color:#16160f;font-family:Cuprum,sans-serif;font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:7px 13px;cursor:pointer}
+.c6 .act:hover{background:#16160f;color:#e8e3d3}
+
+/* ═══ 7 · МОНОЛИТ — тёплая пыль, гигантский шрифт ═══ */
+.c7{background:#14110d;color:#e7dfd2;font-family:Unbounded,sans-serif;padding:20px 22px;display:flex;flex-direction:column;justify-content:space-between}
+.c7::before{content:"";position:absolute;inset:0;background:radial-gradient(64% 44% at 16% 0%,rgba(192,122,44,.3),transparent 66%);z-index:-1}
+.c7 .lab{font-weight:300;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:#8d8474}
+.c7 .huge{font-weight:900;font-size:clamp(46px,7vw,72px);line-height:.84;letter-spacing:-.04em;color:#c07a2c}
+.c7 .huge b{display:block;color:#e7dfd2;font-weight:300;font-size:.34em;letter-spacing:-.01em;margin-top:10px}
+.c7 p{margin:0;font-family:Onest,sans-serif;font-size:13px;line-height:1.55;color:#9a9284;max-width:32ch;font-weight:300}
+
+/* ═══ 8 · РУЛЕТКА — шкала вместо полосы ═══ */
+.c8{background:#efede6;color:#101010;font-family:Tektur,sans-serif;padding:22px;display:flex;flex-direction:column;justify-content:space-between}
+.c8 h3{margin:0;font-weight:600;font-size:19px;letter-spacing:.01em;text-transform:uppercase;max-width:20ch}
+.c8 .tape{position:relative;height:74px;border-top:2px solid #101010;margin-top:10px}
+.c8 .tick{position:absolute;top:0;width:1px;background:#101010}
+.c8 .tick.big{height:22px}.c8 .tick.sm{height:11px;background:rgba(16,16,16,.45)}
+.c8 .tick span{position:absolute;top:26px;left:0;transform:translateX(-50%);font-size:10.5px;color:#5c5c56;white-space:nowrap}
+.c8 .cursor{position:absolute;top:-8px;bottom:16px;width:3px;background:#4a5d23;transition:left .34s cubic-bezier(.2,.8,.3,1)}
+.c8 .cursor b{position:absolute;top:-19px;left:50%;transform:translateX(-50%);background:#4a5d23;color:#efede6;font-size:11px;padding:2px 7px;white-space:nowrap}
+.c8 p{margin:0;font-family:Commissioner,sans-serif;font-weight:300;font-size:12.5px;line-height:1.5;color:#5c5c56;max-width:34ch}
+
+/* ═══ 9 · ШОВ — карточка разрывается по сварке ═══ */
+.c9{background:#1a1714;color:#d6cfc2;font-family:"Golos Text",sans-serif;cursor:pointer}
+.c9 .half{position:absolute;left:0;right:0;overflow:hidden;transition:transform .34s cubic-bezier(.2,.8,.3,1)}
+.c9 .up{top:0;height:52%;border-bottom:3px solid #b2481f}
+.c9 .dn{bottom:0;height:48%}
+.c9:hover .up{transform:translateY(-9px)}
+.c9:hover .dn{transform:translateY(9px)}
+.c9 .up .in{padding:20px 22px}
+.c9 .dn .in{padding:16px 22px}
+.c9 .k{font-family:"Rubik Mono One",sans-serif;font-size:30px;line-height:1.06;color:#d6cfc2;letter-spacing:-.01em}
+.c9 .k em{font-style:normal;color:#b2481f}
+.c9 p{margin:0;font-size:13px;line-height:1.5;color:#8d857a;max-width:34ch}
+.c9 .seam{position:absolute;left:0;right:0;top:52%;height:3px;background:repeating-linear-gradient(90deg,#b2481f 0 7px,#7a2f13 7px 13px);z-index:2}
+
+/* ═══ 10 · ПРОТОКОЛ — одна типографика ═══ */
+.c10{background:#fbfaf6;color:#141414;padding:28px 30px;display:flex;flex-direction:column;justify-content:space-between;font-family:Literata,serif}
+.c10 .no{font-family:Prata,serif;font-size:12px;letter-spacing:.18em;color:#5b5347;text-transform:uppercase}
+.c10 h3{margin:0;font-family:Prata,serif;font-weight:400;font-size:27px;line-height:1.22;letter-spacing:-.005em;max-width:18ch}
+.c10 .line{border-bottom:1px solid #141414;padding-bottom:4px;margin-top:16px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:12.5px;font-weight:300}
+.c10 .line i{font-style:italic;color:#5b5347}
+.c10 .sign{font-style:italic;font-weight:300;font-size:12.5px;color:#5b5347;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Десять концепций</h1>
+  <p>Один и тот же продукт — ИИ, который ведёт стройку, — в десяти несовместимых эстетиках. Содержимое настоящее: отклонение по арматуре, срыв срока, выбор поставщика. Наведите курсор: в каждой карточке живёт своё микровзаимодействие. Ни одного скругления 8 или 12 пикселей, ни одной стоковой иконки, ни Inter, ни Roboto, ни Montserrat.</p>
+</div>
+
+<div class="grid">
+
+<!-- 1 -->
+<div class="item">
+  <div class="card c1">
+    <div class="top"><span>Отклонение 07</span><span>Этаж 3 / захватка Б</span></div>
+    <div class="big">250<em> мм вместо 200</em></div>
+    <div class="bot">Шаг стержней не сойдётся с КЖ-14. Скрытые работы не примут.</div>
+    <div class="rule" aria-hidden="true"></div>
+  </div>
+  <div class="spec">
+    <b>1 · Арматура</b>
+    <dl>
+      <dt>Философия</dt><dd>Швейцарский панк-брутализм: сетка соблюдена до миллиметра, а внутрь неё загнан крик. Число важнее слова — им и бьём.</dd>
+      <dt>Шрифты</dt><dd>Ruslan Display (акциденция) + Golos Text (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#0b0b0b"></i><i style="background:#c9c2b4"></i><i style="background:#ff2d00"></i></span> смоль, грязный бетон, сигнал</dd>
+      <dt>Элемент</dt><dd>Измерительная линейка вырастает снизу по наведению и «меряет» карточку. На скролле она заменяет полосу прокрутки: страница размечена в миллиметрах, а не в процентах.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="item">
+  <div class="card c2">
+    <div class="dot" aria-hidden="true"></div>
+    <div class="t">Срок<br>горит</div>
+    <div class="band"><span>+6 ДНЕЙ</span><span>МОНОЛИТ 4–8</span><span>+6 ДНЕЙ</span></div>
+    <div class="b">Бетон подтверждён на 9 октября, заливка стоит на 6-е. Кладка вернёт четыре дня из шести.</div>
+  </div>
+  <div class="spec">
+    <b>2 · Опалубка</b>
+    <dl>
+      <dt>Философия</dt><dd>Советский конструктивизм без цитатничества: диагональ как несущая конструкция, круг как противовес, никакой ностальгии по плакату.</dd>
+      <dt>Шрифты</dt><dd>Ruslan Display + Golos Text</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#dcd6c6"></i><i style="background:#111111"></i><i style="background:#d6260f"></i></span> газетная бумага, чёрный, киноварь</dd>
+      <dt>Элемент</dt><dd>Диагональная лента с бегущими данными. При скролле ленты соседних блоков идут навстречу друг другу — страница не едет, а проворачивается.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="item">
+  <div class="card c3">
+    <div class="enso" aria-hidden="true"></div>
+    <h3>Уверенность не абсолютна</h3>
+    <div>
+      <div class="n">92</div>
+      <p>Модель нашла расхождение и назвала лист. Решение остаётся за человеком — круг не замкнут.</p>
+    </div>
+  </div>
+  <div class="spec">
+    <b>3 · Воздух</b>
+    <dl>
+      <dt>Философия</dt><dd>Ваби-саби: незавершённость как честность. ИИ не притворяется точным, незамкнутый круг — его признание в сомнении.</dd>
+      <dt>Шрифты</dt><dd>Cormorant (акциденция) + Golos Text (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#ede8de"></i><i style="background:#2a2724"></i><i style="background:#8a6a4f"></i></span> рисовая бумага, тушь, сырая глина</dd>
+      <dt>Элемент</dt><dd>Энсо вместо полосы уверенности: разрыв круга равен недостающим процентам. По наведению круг дописывается одним оборотом. Скролл замедляется на пустотах — паузы держат так же, как текст.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="item">
+  <div class="card c4">
+    <div class="kicker">Закупка · бетон B25 · 300 м³</div>
+    <div class="body">
+      <div class="drop">Н</div>
+      <div class="cols">
+        <div class="cap">Не самый дешёвый</div>
+        е берите дешёвого. «СтройБетон-Н» просит на 214 тысяч меньше, но срывал сроки дважды из семи и возит чужими миксерами. Позиция лежит на критическом пути: день простоя стоит дороже всей разницы.
+      </div>
+    </div>
+    <div class="sig">Рекомендация · 79%</div>
+  </div>
+  <div class="spec">
+    <b>4 · Vogue 96</b>
+    <dl>
+      <dt>Философия</dt><dd>Журнальная верстка девяностых: решение подано как редакционная статья. ИИ не всплывашка, а колумнист, который отвечает за мнение.</dd>
+      <dt>Шрифты</dt><dd>Oranienbaum (акциденция) + Commissioner Light (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#f2efe9"></i><i style="background:#12100e"></i><i style="background:#7e2b3a"></i></span> мелованная бумага, типографская чернь, грязный бордо</dd>
+      <dt>Элемент</dt><dd>Буквица, которая начинает фразу, и колонцифра, повёрнутая по корешку. Скролл листает развороты целиком, а не пикселями, — как бумагу.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="item">
+  <div class="card c5">
+    <h3>Факт поверх проекта</h3>
+    <div class="layer plan" aria-hidden="true"></div>
+    <div class="layer fact" aria-hidden="true"></div>
+    <span class="tag2">проект</span>
+    <span class="tag">факт · сдвиг 14 мм</span>
+  </div>
+  <div class="spec">
+    <b>5 · Калька</b>
+    <dl>
+      <dt>Философия</dt><dd>Надпечатка: правда не в отчёте, а в зазоре между двумя листами. Отклонение видно физически, его не нужно объяснять словами.</dd>
+      <dt>Шрифты</dt><dd>Tektur (акциденция) + Golos Text (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#d8d4c8"></i><i style="background:#1b1b19"></i><i style="background:#2f6e5a"></i></span> калька, графит, грязная зелень</dd>
+      <dt>Элемент</dt><dd>Два слоя с режимом умножения. По наведению верхний уезжает — расхождение растёт на глазах. Скролл раздвигает слои по всей странице: чем ниже, тем дальше факт от проекта.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="item">
+  <div class="card c6" data-stamped="0" id="card6">
+    <div class="hd"><span>Ведомость закупки</span><span>№ 114</span></div>
+    <table>
+      <tr><td>Бетон B25 W6 F150</td><td>300 м³</td></tr>
+      <tr><td>Нужен к</td><td>06.10</td></tr>
+      <tr><td>Подтверждено</td><td>120 м³</td></tr>
+      <tr><td>Дефицит</td><td>180 м³</td></tr>
+    </table>
+    <button class="act" type="button" id="stamp6">Согласовать</button>
+    <span class="stamp" aria-hidden="true">Принято</span>
+  </div>
+  <div class="spec">
+    <b>6 · Табель</b>
+    <dl>
+      <dt>Философия</dt><dd>Бланк строгой отчётности, доведённый до графики. Стройка живёт бумагой — не прячем это за карточками, а делаем формой.</dd>
+      <dt>Шрифты</dt><dd>Cuprum (акциденция) + Golos Text (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#e8e3d3"></i><i style="background:#16160f"></i><i style="background:#9b2c1e"></i></span> писчая бумага, типографская чернь, штемпельный сурик</dd>
+      <dt>Элемент</dt><dd>Штамп. Нажмите «Согласовать» — оттиск падает под углом, как настоящий. Подтверждение занимает место, а не исчезает тостом: решение остаётся на документе.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="item">
+  <div class="card c7">
+    <span class="lab">Прогноз по корпусу Б</span>
+    <div class="huge">06.05.27<b>на шесть дней позже договора</b></div>
+    <p>Темп монолита 4,1 дня на захватку против 3,5 по плану. Замер по трём захваткам — выборка мала, уверенность 74%.</p>
+  </div>
+  <div class="spec">
+    <b>7 · Монолит</b>
+    <dl>
+      <dt>Философия</dt><dd>Ночная смена под прожектором. Тёмное здесь не «тёмная тема», а время суток: тёплая пыль в луче, без единой неоновой плашки.</dd>
+      <dt>Шрифты</dt><dd>Unbounded 900 (акциденция) + Onest Light (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#14110d"></i><i style="background:#e7dfd2"></i><i style="background:#c07a2c"></i></span> ночной битум, извёстка, грязная охра</dd>
+      <dt>Элемент</dt><dd>Дата во всю карточку — прогноз нельзя пролистать мимо. При скролле световое пятно смещается за курсором, будто прожектор ведут рукой.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="item">
+  <div class="card c8" id="card8">
+    <h3>Освоение бюджета</h3>
+    <div class="tape" id="tape8"></div>
+    <p>86,4 млн из 184,2. Наведите на шкалу — курсор идёт за рукой, как рулетка по стене.</p>
+  </div>
+  <div class="spec">
+    <b>8 · Рулетка</b>
+    <dl>
+      <dt>Философия</dt><dd>На стройке ничего не измеряют процентами. Деньги и сроки получают ту же шкалу, что бетон, — с делениями и числами.</dd>
+      <dt>Шрифты</dt><dd>Tektur (акциденция) + Commissioner Light (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#efede6"></i><i style="background:#101010"></i><i style="background:#4a5d23"></i></span> известковая белизна, чернь, грязный хаки</dd>
+      <dt>Элемент</dt><dd>Рулетка вместо полосы прогресса: крупные деления с суммами, мелкие между ними. Курсор следует за указателем. На странице этой же лентой размечена вертикаль — скролл отсчитывает метры.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="item">
+  <div class="card c9">
+    <div class="half up"><div class="in">
+      <div class="k">Шов<br><em>не сойдётся</em></div>
+    </div></div>
+    <span class="seam" aria-hidden="true"></span>
+    <div class="half dn"><div class="in">
+      <p>Модель сверила геометрию с КЖ-14 и нашла расхождение на 50 мм. Наведите — карточка разойдётся по шву.</p>
+    </div></div>
+  </div>
+  <div class="spec">
+    <b>9 · Шов</b>
+    <dl>
+      <dt>Философия</dt><dd>Брутализм с фактурой: интерфейс сварен из кусков, и сварка видна. Расхождение показано разрывом самой карточки, а не значком.</dd>
+      <dt>Шрифты</dt><dd>Rubik Mono One (акциденция) + Golos Text (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#1a1714"></i><i style="background:#d6cfc2"></i><i style="background:#b2481f"></i></span> окалина, известковая пыль, ржавчина</dd>
+      <dt>Элемент</dt><dd>Разрыв по шву. При скролле страницы швы расходятся сильнее — содержимое буквально расползается, пока отклонение не закрыто.</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="item">
+  <div class="card c10">
+    <span class="no">Акт освидетельствования · 12.09.2026</span>
+    <h3>Скрытые работы приняты без замечаний</h3>
+    <div>
+      <div class="line"><span>Армирование, оси 2–3</span><i>соответствует</i></div>
+      <div class="line"><span>Защитный слой, 25 мм</span><i>соответствует</i></div>
+      <div class="line"><span>Шаг стержней, 200 мм</span><i>соответствует</i></div>
+      <div class="sign">Проверено моделью, подтверждено прорабом</div>
+    </div>
+  </div>
+  <div class="spec">
+    <b>10 · Протокол</b>
+    <dl>
+      <dt>Философия</dt><dd>Ни одной плашки и ни одной иконки — только типографика и линия подписи. Радикальный контраст тишиной: рядом с девятью громкими это самая заметная карточка.</dd>
+      <dt>Шрифты</dt><dd>Prata (акциденция) + Literata Light (корпус)</dd>
+      <dt>Палитра</dt><dd><span class="sw"><i style="background:#fbfaf6"></i><i style="background:#141414"></i><i style="background:#5b5347"></i></span> бумага, чернь, грязный серо-коричневый</dd>
+      <dt>Элемент</dt><dd>Строка с линией под ней — как графа в акте. Скролл не двигает страницу, а перелистывает акт по одному пункту: одна прокрутка — одна строка, и она дописывается на месте.</dd>
+    </dl>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function(){
+  /* 6 · штамп */
+  var b6=document.getElementById('stamp6'),c6=document.getElementById('card6');
+  if(b6) b6.addEventListener('click',function(){
+    var on=c6.getAttribute('data-stamped')==='1';
+    c6.setAttribute('data-stamped',on?'0':'1');
+    b6.textContent=on?'Согласовать':'Снять согласование';
+  });
+
+  /* 8 · рулетка */
+  var tape=document.getElementById('tape8');
+  if(tape){
+    var MAX=200, DONE=86.4;
+    for(var v=0;v<=MAX;v+=10){
+      var big=v%50===0;
+      var t=document.createElement('span');
+      t.className='tick '+(big?'big':'sm');
+      t.style.left=(v/MAX*100)+'%';
+      if(big){var s=document.createElement('span');s.textContent=v+' млн';t.appendChild(s);}
+      tape.appendChild(t);
+    }
+    var cur=document.createElement('span');cur.className='cursor';
+    cur.style.left=(DONE/MAX*100)+'%';
+    var lab=document.createElement('b');lab.textContent='86,4 млн';cur.appendChild(lab);
+    tape.appendChild(cur);
+    var card8=document.getElementById('card8');
+    card8.addEventListener('pointermove',function(e){
+      var r=tape.getBoundingClientRect();
+      var p=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+      cur.style.transition='none';
+      cur.style.left=(p*100)+'%';
+      lab.textContent=(p*MAX).toFixed(1).replace('.',',')+' млн';
+    });
+    card8.addEventListener('pointerleave',function(){
+      cur.style.transition='';
+      cur.style.left=(DONE/MAX*100)+'%';
+      lab.textContent='86,4 млн';
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+/* Экран ассистента: пустое состояние по центру, диалог лентой, ввод внизу. */
+
+.room {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-height: 60vh;
+}
+
+.welcome {
+  display: grid;
+  gap: var(--sp-6);
+  justify-items: center;
+  padding: clamp(var(--sp-6), 8vh, 90px) 0 var(--sp-4);
+}
+
+.hello {
+  margin: 0;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -1px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.prompts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--gap-cards);
+  width: min(100%, 720px);
+}
+
+.prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--t-lift),
+    box-shadow var(--t-lift);
+}
+
+.prompt:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-2);
+}
+
+.prompt:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.promptIcon {
+  width: var(--stamp-size);
+  height: var(--stamp-size);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-s);
+  background: var(--stamp);
+  color: #fff;
+}
+
+.promptBody {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.promptBody b {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.promptBody span {
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.thread {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.mine,
+.theirs {
+  max-width: 88%;
+  padding: 11px 15px;
+  border-radius: var(--r);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  white-space: pre-wrap;
+}
+
+.mine {
+  justify-self: end;
+  background: var(--ac);
+  color: #fff;
+  border-bottom-right-radius: var(--r-xs);
+}
+
+.theirs {
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  border-bottom-left-radius: var(--r-xs);
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--mut);
+  font-size: var(--fs-sm);
+}
+
+.error {
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.composer {
+  position: sticky;
+  bottom: var(--sp-4);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: var(--sp-3);
+  border-radius: var(--r);
+  background: var(--panel);
+  box-shadow: var(--sh-2);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 180px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--deco);
+}
+
+.send {
+  width: var(--ctl-sm);
+  height: var(--ctl-sm);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ac);
+  color: #fff;
+  cursor: pointer;
+  transition: filter var(--t-hover);
+}
+
+.send:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.send:disabled {
+  background: rgba(20, 21, 26, 0.1);
+  color: var(--faint);
+  cursor: not-allowed;
+}
+
+.send:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.note {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  color: var(--deco);
+  font-size: var(--fs-micro);
+  text-align: center;
+}
+
+/* Пальцем в кружок 30 px не попасть: на тач-экране растём до минимальной цели. */
+@media (pointer: coarse) {
+  .send {
+    width: var(--touch);
+    height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt {
+    transition: none;
+  }
+
+  .prompt:hover {
+    transform: none;
+  }
+}

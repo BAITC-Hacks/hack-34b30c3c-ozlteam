@@ -1,0 +1,264 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: #172c35;
+  background: #f5f4ef;
+  font-synthesis: none;
+  font-weight: 400;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input {
+  font: inherit;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+.page {
+  max-width: 1120px;
+  margin: auto;
+  padding: 0 40px;
+}
+header {
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #d9dcd4;
+}
+.brand {
+  text-decoration: none;
+  color: inherit;
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  transition: opacity var(--t-hover);
+}
+.brand span {
+  color: #778e2e;
+  margin-right: 12px;
+}
+.badge,
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 650;
+}
+.badge {
+  border: 1px solid #ccd1c6;
+  border-radius: 24px;
+  padding: 7px 12px;
+}
+.intro {
+  padding: 64px 0 38px;
+  max-width: 740px;
+}
+.eyebrow {
+  color: #6b7947;
+  margin: 0 0 14px;
+}
+h1 {
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.1;
+  letter-spacing: -2.4px;
+  margin: 0 0 24px;
+  font-weight: 600;
+}
+h1 span {
+  color: #78866a;
+}
+.intro > p:last-child {
+  font-size: 17px;
+  color: #64716d;
+  max-width: 520px;
+}
+.workspace {
+  background: #fff;
+  border: 1px solid #dce0d6;
+  border-radius: 20px;
+  padding: 32px;
+  margin: 0 0 48px;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.section-heading .eyebrow {
+  margin-bottom: 7px;
+}
+h2 {
+  font-size: 24px;
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+.count {
+  border-radius: 50%;
+  background: #eff2e9;
+  min-width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #d4dbd1;
+  border-radius: 9px;
+  padding: 13px;
+  background: #fafbf8;
+}
+.button {
+  cursor: pointer;
+  background: #243d37;
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 11px 20px;
+  font-weight: 550;
+  font-size: 13px;
+  transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover);
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.button-quiet {
+  background: transparent;
+  color: #66726b;
+  border-color: #e0e5dc;
+}
+@media (hover: hover) and (pointer: fine) {
+  .brand:hover {
+    opacity: 0.72;
+    transition-duration: 0s;
+  }
+
+  .button:hover:not(:disabled) {
+    background: #3a554a;
+    transition-duration: 0s;
+  }
+
+  .button-quiet:hover:not(:disabled) {
+    background: #f1f4ec;
+  }
+}
+.empty-state {
+  text-align: center;
+  padding: 38px 12px 12px;
+  color: #748078;
+}
+.empty-state > span {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  background: #edf1e5;
+  color: #687b3a;
+  border-radius: 12px;
+  font-size: 26px;
+}
+.empty-state h3 {
+  color: #35463e;
+  font-size: 16px;
+  margin: 13px 0 6px;
+}
+.empty-state p {
+  font-size: 13px;
+  margin: 0;
+}
+.note-list {
+  padding: 0;
+  margin: 25px 0 0;
+  list-style: none;
+}
+.note-list li {
+  padding: 17px 0;
+  border-top: 1px solid #e8ece3;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: center;
+}
+.note-list strong {
+  font-size: 15px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.note-list time {
+  display: block;
+  font-size: 11px;
+  color: #849086;
+  margin-top: 4px;
+}
+.loading {
+  color: #768174;
+  font-size: 14px;
+}
+.pwa-update {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  max-width: calc(100% - 32px);
+  padding: 16px;
+  border: 1px solid #ccd1c6;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 25px;
+  font-size: 11px;
+  color: #7a857b;
+}
+@media (max-width: 600px) {
+  .page {
+    padding: 0 20px;
+  }
+  header {
+    height: 80px;
+  }
+  .badge {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .intro {
+    padding-top: 40px;
+  }
+  h1 {
+    letter-spacing: -1.5px;
+  }
+  .workspace {
+    padding: 20px;
+  }
+  footer {
+    gap: 12px;
+    flex-direction: column;
+  }
+  .note-list li {
+    align-items: flex-start;
+  }
+}

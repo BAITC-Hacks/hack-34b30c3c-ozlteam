@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI CRM — десять каркасов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Onest:wght@400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li,td,th){overflow-wrap:anywhere}
+body{margin:0;background:#101114;color:#d8d9dd;font:15px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+.bar{position:sticky;top:0;z-index:90;background:#101114;border-bottom:1px solid #212328}
+.bar-in{max-width:1440px;margin:0 auto;padding:9px 18px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bar-in span.t{font-size:11.5px;color:#6b6e76;margin-right:6px}
+.sw{padding:7px 11px;min-height:32px;border:1px solid #2a2c32;border-radius:7px;background:transparent;color:#aeb1b8;font-size:12.5px;cursor:pointer;transition:color .14s,border-color .14s,background .14s,transform .08s}
+.sw:hover{color:#fff;border-color:#454852}
+.sw:active{transform:scale(.97)}
+.sw:focus-visible{outline:2px solid #6ea8ff;outline-offset:2px}
+.sw[aria-pressed="true"]{background:#fff;border-color:#fff;color:#101114;font-weight:600}
+.note{max-width:1440px;margin:0 auto;padding:12px 18px 0;font-size:12.5px;color:#6b6e76;line-height:1.55}
+.stage{max-width:1440px;margin:0 auto;padding:16px 18px 40px}
+.cap{font-size:12.5px;color:#6b6e76;margin:0 0 10px;line-height:1.5}
+.cap b{color:#e4e5e9;font-weight:600}
+.v[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}
+
+/* ═══════════ общий язык: Metronic × Apple ═══════════ */
+.app{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --bg:#f4f4f6; --panel:#fff; --panel2:#fafafb; --sunken:#f0f0f3;
+  --bd:#e5e6ea; --hair:rgba(20,21,26,.07);
+  --ink:#14151a; --mut:#6b6f76; --faint:#9a9ea6;
+  --ac:#1b84ff; --ac-soft:rgba(27,132,255,.1);
+  --ok:#17c653; --ok-soft:rgba(23,198,83,.12);
+  --wr:#f6b100; --wr-soft:rgba(246,177,0,.14);
+  --er:#f8285a; --er-soft:rgba(248,40,90,.1);
+  --r:8px; --r-s:6px; --row:44px; --fs:13.5px;
+  --side:#1e1e2d; --side-ink:#b5b7c8; --side-active:#fff; --side-hover:rgba(255,255,255,.06); --side-bd:rgba(255,255,255,.07);
+  font-family:var(--font);color:var(--ink);
+  border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 20px 60px rgba(0,0,0,.4);
+  height:720px;display:flex;background:var(--bg);font-size:var(--fs);
+}
+.app *{font-family:inherit}
+.num{font-variant-numeric:tabular-nums}
+
+/* сайдбар */
+.sb{flex:none;width:230px;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;gap:2px;padding:12px 10px;overflow:auto}
+.sb .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;color:#fff;font-weight:600;font-size:14.5px;letter-spacing:-.2px}
+.sb .brand i{width:22px;height:22px;border-radius:6px;background:var(--ac);display:block;flex:none}
+.sb h5{margin:12px 0 3px;padding:0 8px;font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(181,183,200,.55)}
+.sb a{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r-s);color:inherit;text-decoration:none;font-size:13px}
+.sb a:hover{background:var(--side-hover);color:#fff}
+.sb a[aria-current]{background:var(--ac);color:#fff;font-weight:500}
+.sb a b{margin-left:auto;font-size:11px;font-weight:600;background:rgba(255,255,255,.12);padding:1px 6px;border-radius:20px}
+.sb a[aria-current] b{background:rgba(255,255,255,.22)}
+.ico{width:16px;height:16px;flex:none;border-radius:4px;background:currentColor;opacity:.5}
+.sb a[aria-current] .ico{opacity:1}
+
+/* рабочая область */
+.main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+.top{flex:none;background:var(--panel);border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;gap:12px;min-height:56px;flex-wrap:wrap}
+.crumb{font-size:12px;color:var(--faint)}
+.top h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.2px}
+.top .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.search{display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--bd);border-radius:var(--r-s);background:var(--panel2);color:var(--faint);font-size:12.5px;min-width:180px}
+.kbd{margin-left:auto;border:1px solid var(--bd);border-radius:4px;padding:0 4px;font-size:10.5px;color:var(--mut);background:var(--panel)}
+.avat{width:30px;height:30px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:11.5px;font-weight:600;flex:none}
+.body{flex:1 1 auto;overflow:auto;padding:16px 18px}
+
+.btn{height:32px;padding:0 13px;border:0;border-radius:var(--r-s);background:var(--ac);color:#fff;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:active{filter:brightness(.93)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.sec{background:var(--panel);color:var(--ink);border:1px solid var(--bd)}
+.btn.sec:hover{background:var(--sunken)}
+.btn.quiet{background:transparent;color:var(--ac);padding:0 7px}
+.btn.sm{height:27px;font-size:12px;padding:0 10px}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.tile{background:var(--panel);border:1px solid var(--bd);border-radius:var(--r);padding:14px 15px}
+.tile h4{margin:0;font-size:12px;font-weight:500;color:var(--mut)}
+.tile b{display:block;font-size:23px;line-height:29px;font-weight:600;letter-spacing:-.4px;margin-top:4px}
+.tile .d{font-size:11.5px;margin-top:1px;color:var(--mut)}
+.up{color:var(--er)}.good{color:var(--ok)}.warn{color:var(--wr)}
+
+.panel{background:var(--panel);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-top:14px}
+.panel>header{display:flex;align-items:center;gap:9px;padding:11px 15px;border-bottom:1px solid var(--bd)}
+.panel>header h2{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.panel>header .sub{font-size:11.5px;color:var(--mut)}
+.panel>header .right{margin-left:auto;display:flex;gap:7px}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-weight:500;color:var(--mut);font-size:11.5px;padding:8px 15px;background:var(--panel2);border-bottom:1px solid var(--bd);white-space:nowrap;position:sticky;top:0;z-index:1}
+table.t td{padding:0 15px;height:var(--row);border-bottom:1px solid var(--hair);vertical-align:middle}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:hover{background:var(--panel2)}
+table.t td.r,table.t th.r{text-align:right;white-space:nowrap}
+.bdg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.bdg.g{background:var(--ok-soft);color:#0f8f3c}
+.bdg.w{background:var(--wr-soft);color:#8a6100}
+.bdg.e{background:var(--er-soft);color:#c21344}
+.bdg.b{background:var(--ac-soft);color:#0b5fc4}
+.bdg.n{background:var(--sunken);color:var(--mut)}
+.mtr{height:5px;border-radius:3px;background:var(--sunken);overflow:hidden;min-width:54px;display:block}
+.mtr i{display:block;height:100%;border-radius:3px}
+.who{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.who i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:600;color:#fff;font-style:normal}
+
+/* блок ИИ */
+.ai{border:1px solid var(--bd);border-left:3px solid var(--ac);border-radius:var(--r);background:var(--panel);overflow:hidden}
+.ai-h{display:flex;gap:11px;padding:13px 15px;align-items:flex-start}
+.ai-i{flex:none;width:26px;height:26px;border-radius:7px;background:var(--ac-soft);color:var(--ac);display:grid;place-items:center}
+.ai-t{font-size:13.5px;font-weight:600;letter-spacing:-.1px;line-height:19px}
+.ai-s{font-size:12.5px;color:var(--mut);margin-top:3px;line-height:18px}
+.ai-a{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.conf{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mut)}
+.conf .mtr{width:46px;min-width:46px}
+.ai-w{border-top:1px solid var(--bd);padding:11px 15px;background:var(--panel2);font-size:12px;line-height:18px;color:var(--mut)}
+
+/* ───── В1 Классика: как есть ───── */
+/* ───── В2 Светлый сайдбар ───── */
+.v2 .app{--side:#f7f7f9;--side-ink:#4a4e57;--side-hover:rgba(20,21,26,.05);--side-bd:var(--bd)}
+.v2 .sb{border-right:1px solid var(--bd)}
+.v2 .sb .brand{color:var(--ink)}
+.v2 .sb a[aria-current]{background:var(--ac-soft);color:#0b5fc4}
+.v2 .sb a b{background:rgba(20,21,26,.07);color:var(--mut)}
+.v2 .panel{border-left:0;border-right:0;border-radius:0;margin-left:-18px;margin-right:-18px}
+.v2 .tile{border-radius:0;border-left:0;border-right:0}
+.v2 .tiles{gap:0;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;background:var(--bd)}
+.v2 .tile{border:0;background:var(--panel);outline:.5px solid var(--bd)}
+
+/* ───── В3 Рельс + вторичная панель ───── */
+.v3 .sb{width:60px;padding:12px 8px;align-items:center}
+.v3 .sb .brand{padding:6px 0 14px}
+.v3 .sb .brand span,.v3 .sb h5,.v3 .sb a span,.v3 .sb a b{display:none}
+.v3 .sb a{justify-content:center;padding:9px 0;width:40px}
+.v3 .ico{width:18px;height:18px}
+.col2{flex:none;width:262px;background:var(--panel);border-right:1px solid var(--bd);display:flex;flex-direction:column}
+.col2 header{padding:14px 15px 10px;border-bottom:1px solid var(--bd)}
+.col2 header h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px}
+.col2 header p{margin:3px 0 0;font-size:12px;color:var(--mut)}
+.col2 .list{flex:1 1 auto;overflow:auto}
+.col2 .it{padding:11px 15px;border-bottom:1px solid var(--hair);cursor:pointer;display:grid;gap:3px}
+.col2 .it:hover{background:var(--panel2)}
+.col2 .it[aria-selected="true"]{background:var(--ac-soft);box-shadow:inset 3px 0 0 var(--ac)}
+.col2 .it .n{font-size:13px;font-weight:600;letter-spacing:-.1px}
+.col2 .it .m{font-size:11.5px;color:var(--mut);display:flex;gap:7px;align-items:center}
+
+/* ───── В4 Верхняя навигация ───── */
+.v4 .app{flex-direction:column}
+.topnav{flex:none;background:var(--panel);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px;padding:0 16px;min-height:52px;flex-wrap:wrap}
+.topnav .brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px;letter-spacing:-.2px;margin-right:14px}
+.topnav .brand i{width:22px;height:22px;border-radius:6px;background:var(--ac);display:block}
+.topnav a{padding:7px 11px;border-radius:var(--r-s);color:var(--mut);text-decoration:none;font-size:13px}
+.topnav a:hover{background:var(--sunken);color:var(--ink)}
+.topnav a[aria-current]{background:var(--sunken);color:var(--ink);font-weight:600}
+.topnav .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.subnav{flex:none;background:var(--panel);border-bottom:1px solid var(--bd);display:flex;gap:2px;padding:0 16px}
+.subnav a{padding:10px 11px;font-size:12.5px;color:var(--mut);text-decoration:none;border-bottom:2px solid transparent}
+.subnav a[aria-current]{color:var(--ink);font-weight:600;border-bottom-color:var(--ac)}
+
+/* ───── В5 Плотный режим ───── */
+.v5 .app{--row:32px;--fs:12.5px;--r:6px;--r-s:5px}
+.v5 table.t{font-size:12px}
+.v5 table.t td{padding:0 12px}
+.v5 table.t th{padding:6px 12px;font-size:11px}
+.v5 .tile{padding:10px 12px}
+.v5 .tile b{font-size:19px;line-height:24px;margin-top:2px}
+.v5 .top{min-height:46px}
+.v5 .body{padding:12px 14px}
+.v5 .sb a{padding:5px 8px;font-size:12.5px}
+.v5 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1px solid var(--bd);background:var(--panel);border-radius:20px;padding:3px 10px;font-size:11.5px;color:var(--mut);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ───── В6 Панель ИИ справа ───── */
+.aside{flex:none;width:310px;background:var(--panel);border-left:1px solid var(--bd);display:flex;flex-direction:column}
+.aside header{padding:13px 15px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.aside header h2{margin:0;font-size:13.5px;font-weight:600}
+.aside .feed{flex:1 1 auto;overflow:auto;padding:12px;display:grid;gap:10px;align-content:start}
+.aside .ask{border-top:1px solid var(--bd);padding:11px 12px;display:flex;gap:7px}
+.aside .ask input{flex:1 1 auto;min-width:0;height:32px;border:1px solid var(--bd);border-radius:var(--r-s);padding:0 10px;font-size:12.5px;background:var(--panel2);color:var(--ink)}
+.aside .ask input:focus{outline:none;border-color:var(--ac);background:var(--panel)}
+
+/* ───── В7 Инбокс решений ───── */
+.v7 .col2{width:330px}
+.v7 .inbox-body{flex:1 1 auto;overflow:auto;padding:18px 22px;background:var(--panel)}
+.v7 .kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:9px 14px;font-size:13px;margin-top:14px}
+.v7 .kv dt{color:var(--mut)}
+.v7 .kv dd{margin:0}
+.v7 .actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--bd);flex-wrap:wrap;align-items:center}
+.v7 .hint{font-size:11.5px;color:var(--faint);margin-left:auto}
+
+/* ───── В8 Тёмная ───── */
+.v8 .app{
+  --bg:#131417;--panel:#191b1f;--panel2:#1e2025;--sunken:#23262c;
+  --bd:#282b31;--hair:rgba(255,255,255,.055);
+  --ink:#e6e8ec;--mut:#9298a2;--faint:#6d737c;
+  --ac:#3d8bfd;--ac-soft:rgba(61,139,253,.16);
+  --ok-soft:rgba(23,198,83,.16);--wr-soft:rgba(246,177,0,.16);--er-soft:rgba(248,40,90,.16);
+  --side:#0f1013;--side-ink:#9298a2;--side-hover:rgba(255,255,255,.05);
+}
+.v8 .bdg.g{color:#4ade80}.v8 .bdg.w{color:#fbbf24}.v8 .bdg.e{color:#fb7185}.v8 .bdg.b{color:#7eb0ff}
+
+/* ───── В9 Вкладки объектов ───── */
+.tabs{flex:none;display:flex;gap:1px;background:var(--sunken);border-bottom:1px solid var(--bd);padding:0 8px;overflow:auto}
+.tabs .tb{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;color:var(--mut);background:transparent;border:0;border-top:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs .tb[aria-selected="true"]{background:var(--panel);color:var(--ink);font-weight:600;border-top-color:var(--ac)}
+.tabs .tb x{font-style:normal;color:var(--faint);font-size:14px;line-height:1}
+.tabs .tb:hover{color:var(--ink)}
+
+/* ───── В10 Фокус на объекте ───── */
+.objhead{flex:none;background:var(--panel);border-bottom:1px solid var(--bd);padding:16px 20px 0}
+.objhead .row1{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.objhead .cover{width:52px;height:52px;border-radius:10px;background:linear-gradient(150deg,#3a3f4a,#22262e);flex:none}
+.objhead h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.4px}
+.objhead .meta{font-size:12.5px;color:var(--mut);margin-top:3px}
+.objhead .kpis{display:flex;gap:26px;margin:14px 0 0;flex-wrap:wrap}
+.objhead .kpi{display:grid;gap:1px}
+.objhead .kpi span{font-size:11.5px;color:var(--mut)}
+.objhead .kpi b{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.objhead .tabsrow{display:flex;gap:2px;margin-top:14px}
+.objhead .tabsrow a{padding:9px 11px;font-size:12.5px;color:var(--mut);text-decoration:none;border-bottom:2px solid transparent}
+.objhead .tabsrow a[aria-current]{color:var(--ink);font-weight:600;border-bottom-color:var(--ac)}
+</style>
+</head>
+<body>
+<div class="bar"><div class="bar-in" id="swbar"><span class="t">Каркас</span></div></div>
+<p class="note">Один и тот же продукт в десяти оболочках. Меняется не стиль, а устройство рабочего места: где навигация, какая плотность, где живёт ИИ. Визуальный язык общий — плоские панели, волосяные границы, один синий акцент, никаких градиентов.</p>
+<div class="stage" id="stage"></div>
+<script>
+(function(){
+/* ───────────── данные ───────────── */
+var OBJ=[
+  {n:'ЖК «Северный», корпус Б',m:'монолит · 12 этажей',d:5,p:47},
+  {n:'Объект 7, паркинг',m:'сборный ж/б · 2 уровня',d:12,p:74},
+  {n:'Склад на Заводской',m:'металлокаркас',d:2,p:91}
+];
+var DEV=[
+  {t:'Шаг арматуры 250 мм вместо 200',o:'Этаж 3, захватка Б',k:'Монолит',kc:'#1b84ff',w:'МТ',c:92,s:'Требует решения',sc:'e'},
+  {t:'Защитный слой 18 мм при норме 25',o:'Этаж 3, оси 2–4',k:'Монолит',kc:'#1b84ff',w:'МТ',c:87,s:'Требует решения',sc:'e'},
+  {t:'Отметка перекрытия ниже проектной на 12 мм',o:'Этаж 2',k:'Геодезия',kc:'#17c653',w:'АК',c:71,s:'На проверке',sc:'w'},
+  {t:'Опалубка снята раньше набора прочности',o:'Колонны, этаж 2',k:'Монолит',kc:'#1b84ff',w:'ПС',c:64,s:'На проверке',sc:'w'},
+  {t:'Маркировка партии арматуры не читается',o:'Склад приёмки',k:'Снабжение',kc:'#f6b100',w:'ПС',c:95,s:'Закрыто',sc:'g'}
+];
+var TILES=[
+  {h:'Бюджет освоен',b:'86,4 млн',d:'из 184,2 млн · 47%'},
+  {h:'Отклонение по смете',b:'+2,1%',d:'+3,9 млн к плану',c:'up'},
+  {h:'Прогноз срока',b:'+6 дней',d:'критический путь: монолит',c:'warn'},
+  {h:'Открытых отклонений',b:'5',d:'2 требуют решения'}
+];
+var NAV=[
+  {h:'Работа',items:[
+    {k:'dash',t:'Сводка'},{k:'dev',t:'Отклонения',b:'5'},{k:'est',t:'Смета'},
+    {k:'mat',t:'Материалы',b:'3'},{k:'buy',t:'Закупки',b:'2'},{k:'sch',t:'График'}
+  ]},
+  {h:'Справочники',items:[{k:'obj',t:'Объекты'},{k:'con',t:'Подрядчики'},{k:'sup',t:'Поставщики'}]}
+];
+
+/* ───────────── мелкие кирпичи ───────────── */
+function h(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function frag(html){var t=document.createElement('template');t.innerHTML=html.trim();return t.content;}
+function sidebar(active,brandText){
+  var sb=h('aside','sb');
+  var br=h('div','brand');br.appendChild(h('i'));br.appendChild(h('span',null,brandText||'Стройка ИИ'));sb.appendChild(br);
+  NAV.forEach(function(sec){
+    sb.appendChild(h('h5',null,sec.h));
+    sec.items.forEach(function(it){
+      var a=h('a');a.href='#0';a.onclick=function(){return false;};
+      if(it.k===active)a.setAttribute('aria-current','page');
+      a.appendChild(h('span','ico'));a.appendChild(h('span',null,it.t));
+      if(it.b)a.appendChild(h('b',null,it.b));
+      sb.appendChild(a);
+    });
+  });
+  return sb;
+}
+function topbar(title,crumb){
+  var t=h('div','top');
+  var box=h('div');box.appendChild(h('div','crumb',crumb));box.appendChild(h('h1',null,title));
+  t.appendChild(box);
+  var r=h('div','right');
+  r.appendChild(frag('<span class="search">Поиск по объекту<span class="kbd">⌘K</span></span>'));
+  r.appendChild(frag('<button class="btn sec" type="button">Отчёт</button>'));
+  r.appendChild(frag('<button class="btn" type="button">Действие</button>'));
+  r.appendChild(frag('<span class="avat">СЕ</span>'));
+  t.appendChild(r);return t;
+}
+function tiles(){
+  var g=h('div','tiles');
+  TILES.forEach(function(x){
+    var t=h('div','tile');t.appendChild(h('h4',null,x.h));
+    var b=h('b',(x.c||'')+' num',x.b);t.appendChild(b);
+    t.appendChild(h('div','d',x.d));g.appendChild(t);
+  });
+  return g;
+}
+function aiBlock(id,compact){
+  var box=h('div','ai');
+  box.appendChild(frag(
+    '<div class="ai-h"><span class="ai-i"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>'+
+    '<div style="flex:1 1 auto;min-width:0">'+
+    '<div class="ai-t">Бетон на 4-й этаж придёт позже, чем нужен по графику</div>'+
+    '<div class="ai-s">Заливка стоит на 6 октября, подтверждённая поставка — 9-го. Сдвиг тянет опалубку и кладку: прогноз по корпусу +6 дней.</div>'+
+    '<div class="ai-a"><button class="btn sm" type="button">Подобрать поставщика</button>'+
+    '<button class="btn sec sm" type="button">Сдвинуть этап</button>'+
+    '<button class="btn quiet sm why" type="button" data-t="'+id+'">Почему</button>'+
+    '<span class="conf">88%<span class="mtr"><i style="width:88%;background:var(--ac)"></i></span></span></div></div></div>'+
+    '<div class="ai-w" id="'+id+'" hidden>График: старт 06.10, критический путь. Договор П-114: окно 09.10. Потребность 420 м³, склад 0 — бетон не хранится. История «МонолитПро»: сдвиг старта более двух дней даёт в среднем 4,8 дня отставания.</div>'
+  ));
+  if(compact)box.querySelector('.ai-s').style.display='none';
+  return box;
+}
+function devTable(limit){
+  var p=h('div','panel');
+  p.appendChild(frag('<header><h2>Отклонения</h2><span class="sub">найдено моделью по фото обходов</span><span class="right"><button class="btn sec sm" type="button">Все</button></span></header>'));
+  var wrap=h('div');wrap.style.cssText='max-height:100%;overflow:auto';
+  var tb=h('table','t');
+  tb.appendChild(frag('<thead><tr><th>Что нашла модель</th><th>Место</th><th>Раздел</th><th>Прораб</th><th style="width:120px">Уверенность</th><th class="r">Статус</th></tr></thead>'));
+  var body=h('tbody');
+  DEV.slice(0,limit||DEV.length).forEach(function(d){
+    var tr=h('tr');
+    tr.appendChild(h('td',null,d.t)).style.fontWeight='500';
+    tr.appendChild(h('td',null,d.o)).style.color='var(--mut)';
+    var k=h('td');k.appendChild(frag('<span class="bdg n"><span style="width:7px;height:7px;border-radius:2px;background:'+d.kc+';display:inline-block"></span>'+d.k+'</span>'));tr.appendChild(k);
+    var w=h('td');w.appendChild(frag('<span class="who"><i style="background:'+d.kc+'">'+d.w+'</i>'+d.w+'</span>'));tr.appendChild(w);
+    var c=h('td');c.appendChild(frag('<span style="display:inline-flex;align-items:center;gap:8px"><span class="num" style="font-weight:600;font-size:12px">'+d.c+'%</span><span class="mtr"><i style="width:'+d.c+'%;background:'+(d.c>=85?'var(--ok)':d.c>=70?'var(--ac)':'var(--wr)')+'"></i></span></span>'));tr.appendChild(c);
+    var s=h('td','r');s.appendChild(frag('<span class="bdg '+d.sc+'">'+d.s+'</span>'));tr.appendChild(s);
+    body.appendChild(tr);
+  });
+  tb.appendChild(body);wrap.appendChild(tb);p.appendChild(wrap);
+  return p;
+}
+function objList(){
+  var c=h('div','col2');
+  c.appendChild(frag('<header><h2>Объекты</h2><p>3 активных · 19 отклонений</p></header>'));
+  var l=h('div','list');
+  OBJ.forEach(function(o,i){
+    var it=h('div','it');it.setAttribute('aria-selected',i===0?'true':'false');
+    it.appendChild(h('div','n',o.n));
+    it.appendChild(frag('<div class="m">'+o.m+' · <span class="bdg '+(o.d>4?'e':'n')+'">'+o.d+'</span></div>'));
+    it.onclick=function(){
+      Array.prototype.forEach.call(l.children,function(x){x.setAttribute('aria-selected','false');});
+      it.setAttribute('aria-selected','true');
+    };
+    l.appendChild(it);
+  });
+  c.appendChild(l);return c;
+}
+function main(title,crumb,build){
+  var m=h('div','main');m.appendChild(topbar(title,crumb));
+  var b=h('div','body');build(b);m.appendChild(b);return m;
+}
+
+/* ───────────── десять каркасов ───────────── */
+var VAR=[
+ {id:'v1',n:'1 · Классика',d:'Канон админки: тёмный сайдбар, светлый холст, карточки-панели. То, что человек узнаёт с первого взгляда и не переучивается.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));
+    a.appendChild(main('Сводка по объекту','Объекты / ЖК «Северный», корпус Б',function(b){
+      b.appendChild(tiles());
+      var w=h('div');w.style.marginTop='14px';w.appendChild(aiBlock('w1'));b.appendChild(w);
+      b.appendChild(devTable());
+    }));return a;}},
+
+ {id:'v2',n:'2 · Светлый сайдбар',d:'Apple-подход: светлая навигация, контент без карточек — на волосяных линиях во всю ширину. Тише и легче, меньше рамок в поле зрения.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));
+    a.appendChild(main('Сводка по объекту','Объекты / ЖК «Северный», корпус Б',function(b){
+      b.appendChild(tiles());
+      var w=h('div');w.style.marginTop='14px';w.appendChild(aiBlock('w2'));b.appendChild(w);
+      b.appendChild(devTable());
+    }));return a;}},
+
+ {id:'v3',n:'3 · Рельс и список',d:'Три колонки, как в почте: узкий рельс разделов, список объектов, содержимое. Переключение между объектами без ухода со страницы.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));a.appendChild(objList());
+    a.appendChild(main('ЖК «Северный», корпус Б','5 отклонений · вторая смена',function(b){
+      b.appendChild(tiles());
+      var w=h('div');w.style.marginTop='14px';w.appendChild(aiBlock('w3'));b.appendChild(w);
+      b.appendChild(devTable(3));
+    }));return a;}},
+
+ {id:'v4',n:'4 · Верхняя навигация',d:'Меню сверху, под ним вкладки раздела. Всю ширину отдаём таблице — выигрыш, когда колонок много, а разделов мало.',
+  build:function(){
+    var a=h('div','app');
+    var tn=h('div','topnav');
+    tn.appendChild(frag('<span class="brand"><i></i>Стройка ИИ</span>'));
+    ['Сводка','Отклонения','Смета','Материалы','Закупки','График'].forEach(function(t,i){
+      tn.appendChild(frag('<a href="#0" onclick="return false"'+(i===1?' aria-current="page"':'')+'>'+t+'</a>'));
+    });
+    tn.appendChild(frag('<span class="right"><span class="search">Поиск<span class="kbd">⌘K</span></span><span class="avat">СЕ</span></span>'));
+    a.appendChild(tn);
+    var sn=h('div','subnav');
+    ['Все','Требуют решения','На проверке','Закрытые'].forEach(function(t,i){
+      sn.appendChild(frag('<a href="#0" onclick="return false"'+(i===0?' aria-current="page"':'')+'>'+t+'</a>'));
+    });
+    a.appendChild(sn);
+    var b=h('div','body');b.appendChild(aiBlock('w4'));b.appendChild(devTable());
+    a.appendChild(b);a.style.flexDirection='column';return a;}},
+
+ {id:'v5',n:'5 · Плотный режим',d:'Строки 32 px, шрифт 12, фильтры-чипы. Для тех, кто живёт в таблице весь день и хочет видеть двадцать строк, а не восемь.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dev'));
+    a.appendChild(main('Отклонения','ЖК «Северный», корпус Б · 19 записей',function(b){
+      var ch=h('div','chips');
+      ['Все 19','Требуют решения 2','На проверке 2','Закрытые 15','Монолит','Геодезия','Снабжение'].forEach(function(t,i){
+        var c=h('button','chip');c.type='button';c.textContent=t;c.setAttribute('aria-pressed',i===0?'true':'false');
+        c.onclick=function(){
+          Array.prototype.forEach.call(ch.children,function(x){x.setAttribute('aria-pressed','false');});
+          c.setAttribute('aria-pressed','true');
+        };
+        ch.appendChild(c);
+      });
+      b.appendChild(ch);b.appendChild(tiles());
+      var p=devTable();p.style.marginTop='12px';b.appendChild(p);
+    }));return a;}},
+
+ {id:'v6',n:'6 · Панель ИИ справа',d:'Ассистент всегда на экране, а не во всплывашке: предложения, обоснования и поле вопроса. Контент при этом остаётся нетронутым.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));
+    a.appendChild(main('Сводка по объекту','Объекты / ЖК «Северный», корпус Б',function(b){
+      b.appendChild(tiles());b.appendChild(devTable(4));
+    }));
+    var side=h('aside','aside');
+    side.appendChild(frag('<header><span class="ai-i" style="width:24px;height:24px"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span><h2>Ассистент</h2><span class="btn quiet sm" style="margin-left:auto">Очистить</span></header>'));
+    var f=h('div','feed');
+    f.appendChild(aiBlock('w6a'));
+    f.appendChild(frag('<div class="ai"><div class="ai-h"><span class="ai-i"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span><div style="flex:1 1 auto;min-width:0"><div class="ai-t">Смета: 14 позиций выше рынка</div><div class="ai-s">Потенциал −4,1 млн без смены марок.</div><div class="ai-a"><button class="btn sm" type="button">Открыть</button><span class="conf">81%<span class="mtr"><i style="width:81%;background:var(--ac)"></i></span></span></div></div></div></div>'));
+    side.appendChild(f);
+    side.appendChild(frag('<div class="ask"><input placeholder="Спросить по объекту" aria-label="Вопрос ассистенту"><button class="btn" type="button">→</button></div>'));
+    a.appendChild(side);return a;}},
+
+ {id:'v7',n:'7 · Инбокс решений',d:'Главный экран — не дашборд, а очередь: слева то, что ждёт вас, справа карточка с решением. Цель дня — разобрать список до нуля.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dev'));
+    var c=h('div','col2');
+    c.appendChild(frag('<header><h2>Требует вас</h2><p>2 решения · 3 на проверке</p></header>'));
+    var l=h('div','list');
+    DEV.forEach(function(d,i){
+      var it=h('div','it');it.setAttribute('aria-selected',i===0?'true':'false');
+      it.appendChild(h('div','n',d.t));
+      it.appendChild(frag('<div class="m">'+d.o+' · <span class="bdg '+d.sc+'">'+d.s+'</span></div>'));
+      it.onclick=function(){Array.prototype.forEach.call(l.children,function(x){x.setAttribute('aria-selected','false');});it.setAttribute('aria-selected','true');};
+      l.appendChild(it);
+    });
+    c.appendChild(l);a.appendChild(c);
+    var m=h('div','main');m.appendChild(topbar('Шаг арматуры 250 мм вместо 200','Отклонение 1 из 5'));
+    var b=h('div','inbox-body');
+    b.appendChild(aiBlock('w7'));
+    b.appendChild(frag('<dl class="kv"><dt>Место</dt><dd>Этаж 3, захватка Б, оси 2–3</dd><dt>Основание</dt><dd>Лист КЖ-14, узел 3</dd><dt>Уверенность</dt><dd>92% · кадр 7 из 14</dd><dt>Последствие</dt><dd>Скрытые работы не примут без переармирования 2,4 м²</dd><dt>Кого касается</dt><dd><span class="who"><i style="background:#1b84ff">МТ</i>Марат, МонолитПро</span></dd></dl>'));
+    b.appendChild(frag('<div class="actions"><button class="btn" type="button">Подтвердить и назначить</button><button class="btn sec" type="button">Это не ошибка</button><button class="btn sec" type="button">Отложить</button><span class="hint">J / K — следующее, Enter — подтвердить</span></div>'));
+    m.appendChild(b);a.appendChild(m);return a;}},
+
+ {id:'v8',n:'8 · Тёмная',d:'Тот же каркас в тёмной теме: графит и приглушённый синий, без свечения и кислоты. Для вечерних смен и для тех, кому светлое режет глаза.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));
+    a.appendChild(main('Сводка по объекту','Объекты / ЖК «Северный», корпус Б',function(b){
+      b.appendChild(tiles());
+      var w=h('div');w.style.marginTop='14px';w.appendChild(aiBlock('w8'));b.appendChild(w);
+      b.appendChild(devTable());
+    }));return a;}},
+
+ {id:'v9',n:'9 · Вкладки объектов',d:'Как в редакторе кода: несколько объектов открыты одновременно, переключение мгновенное. Для тех, кто ведёт три стройки разом.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('dash'));
+    var m=h('div','main');
+    var tabs=h('div','tabs');
+    ['ЖК «Северный», корпус Б','Объект 7, паркинг','Смета 114','График монолита'].forEach(function(t,i){
+      var b2=h('button','tb');b2.type='button';b2.setAttribute('aria-selected',i===0?'true':'false');
+      b2.appendChild(h('span',null,t));b2.appendChild(h('x',null,'×'));
+      b2.onclick=function(){Array.prototype.forEach.call(tabs.children,function(x){x.setAttribute('aria-selected','false');});b2.setAttribute('aria-selected','true');};
+      tabs.appendChild(b2);
+    });
+    m.appendChild(tabs);m.appendChild(topbar('ЖК «Северный», корпус Б','Сводка'));
+    var b=h('div','body');b.appendChild(tiles());
+    var w=h('div');w.style.marginTop='14px';w.appendChild(aiBlock('w9'));b.appendChild(w);
+    b.appendChild(devTable(3));m.appendChild(b);a.appendChild(m);return a;}},
+
+ {id:'v10',n:'10 · Фокус на объекте',d:'Шапка объекта с ключевыми цифрами и вкладками разделов под ней. Навигация уходит на второй план: вы внутри одной стройки, а не бродите по меню.',
+  build:function(){
+    var a=h('div','app');a.appendChild(sidebar('obj'));
+    var m=h('div','main');
+    var oh=h('div','objhead');
+    oh.appendChild(frag('<div class="row1"><span class="cover"></span><div><h1>ЖК «Северный», корпус Б</h1><div class="meta">Монолит · 12 этажей · срок до 30.04.2027 · МонолитПро</div></div><span style="margin-left:auto;display:flex;gap:8px"><button class="btn sec" type="button">Отчёт</button><button class="btn" type="button">Пересчитать план</button></span></div>'));
+    oh.appendChild(frag('<div class="kpis"><div class="kpi"><span>Готовность</span><b class="num">47%</b></div><div class="kpi"><span>Освоено</span><b class="num">86,4 млн</b></div><div class="kpi"><span>Смета</span><b class="num up">+2,1%</b></div><div class="kpi"><span>Прогноз</span><b class="num warn">+6 дней</b></div><div class="kpi"><span>Отклонений</span><b class="num">5</b></div></div>'));
+    var tr=h('div','tabsrow');
+    ['Сводка','Отклонения','Смета','Материалы','Закупки','График','Документы'].forEach(function(t,i){
+      tr.appendChild(frag('<a href="#0" onclick="return false"'+(i===0?' aria-current="page"':'')+'>'+t+'</a>'));
+    });
+    oh.appendChild(tr);m.appendChild(oh);
+    var b=h('div','body');b.appendChild(aiBlock('w10'));b.appendChild(devTable(4));
+    m.appendChild(b);a.appendChild(m);return a;}}
+];
+
+/* ───────────── сборка ───────────── */
+var bar=document.getElementById('swbar'), stage=document.getElementById('stage');
+VAR.forEach(function(v,i){
+  var b=h('button','sw');b.type='button';b.textContent=v.n;b.setAttribute('aria-pressed',i===0?'true':'false');
+  b.onclick=function(){
+    Array.prototype.forEach.call(bar.querySelectorAll('.sw'),function(x){x.setAttribute('aria-pressed','false');});
+    Array.prototype.forEach.call(stage.children,function(x){x.hidden=true;});
+    b.setAttribute('aria-pressed','true');
+    document.getElementById('box-'+v.id).hidden=false;
+    window.scrollTo({top:0,behavior:'instant'});
+  };
+  bar.appendChild(b);
+
+  var box=h('div','v '+v.id);box.id='box-'+v.id;if(i!==0)box.hidden=true;
+  var cap=h('p','cap');cap.appendChild(h('b',null,v.n.replace(/^\d+ · /,'')));
+  cap.appendChild(document.createTextNode(' — '+v.d));
+  box.appendChild(cap);box.appendChild(v.build());
+  stage.appendChild(box);
+});
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest && e.target.closest('.why');
+  if(!b)return;
+  var t=document.getElementById(b.getAttribute('data-t'));
+  if(!t)return;
+  var open=t.hidden;t.hidden=!open;
+  b.textContent=open?'Скрыть':'Почему';
+  b.setAttribute('aria-expanded',open?'true':'false');
+});
+})();
+</script>
+</body>
+</html>

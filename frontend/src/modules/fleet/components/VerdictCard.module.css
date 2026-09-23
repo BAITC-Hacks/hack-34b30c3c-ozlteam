@@ -1,0 +1,43 @@
+.wrap {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: var(--stamp-size);
+  height: var(--stamp-size);
+  border-radius: var(--r-xs);
+  background: var(--sunken);
+  color: var(--ink);
+  flex: none;
+}
+
+.titles {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--fs-sm);
+}
+
+.meta {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Честная подпись: зал должен понимать, отвечает модель или заготовка. */
+.source {
+  margin: 0;
+  font-size: var(--fs-micro);
+  color: var(--faint);
+}

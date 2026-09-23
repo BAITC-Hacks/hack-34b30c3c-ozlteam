@@ -1,0 +1,159 @@
+/* Кнопка. Анатомия и состояния — docs/design-system.md §5. */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: var(--ctl);
+  padding: 0 15px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: var(--ac);
+  color: var(--panel);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--t-press),
+    background var(--t-hover),
+    color var(--t-hover);
+}
+
+/* отклик на нажатие, не на отпускание */
+.btn:active:not(:disabled) {
+  transform: scale(.98);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+/* на синем фоне кольцо фокуса чернильное */
+.primary:focus-visible {
+  outline-color: var(--ink);
+}
+
+.secondary {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+/* Тёмная — одно главное действие раздела, не больше одной на экран. */
+.dark {
+  background: var(--stamp);
+  color: #fff;
+}
+
+.dark:hover:not(:disabled) {
+  filter: brightness(1.25);
+}
+
+.dark:focus-visible {
+  outline-color: var(--ink);
+  outline-offset: 3px;
+}
+
+.secondary:hover:not(:disabled) {
+  filter: none;
+  background: var(--sunken);
+}
+
+.ghost {
+  padding: 0 8px;
+  background: transparent;
+  color: var(--ac-ink);
+  box-shadow: none;
+}
+
+.danger {
+  background: transparent;
+  color: var(--er-ink);
+  box-shadow: var(--sh-1);
+}
+
+.sm {
+  height: var(--ctl-sm);
+  padding: 0 11px;
+  font-size: var(--fs-xs);
+  border-radius: var(--r-xs);
+}
+
+.sm.ghost {
+  padding: 0 8px;
+}
+
+.btn:disabled {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--faint);
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* содержимое остаётся в потоке: ширина кнопки не скачет */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.isLoading .label {
+  visibility: hidden;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: inherit;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) {
+    background: var(--ac-hover);
+    transition-duration: 0s;
+  }
+
+  .secondary:hover:not(:disabled) {
+    filter: none;
+    background: var(--sunken);
+  }
+
+  .ghost:hover:not(:disabled) {
+    filter: none;
+    background: var(--ac-soft);
+  }
+
+  .danger:hover:not(:disabled) {
+    filter: none;
+    background: var(--er-soft);
+  }
+}
+
+/* цели нажатия на касании — не меньше --touch */
+@media (pointer: coarse) {
+  .btn {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .secondary,
+  .danger,
+  .ghost {
+    box-shadow: inset 0 0 0 1px var(--ink);
+  }
+}

@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Журнал работ — четыре композиции</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Gabarito:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li){overflow-wrap:anywhere}
+body{margin:0;background:#0a0a0b;color:#e8e8ea;font:16px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+.demo-bar{position:sticky;top:0;z-index:60;background:#0a0a0b;border-bottom:1px solid #232327}
+.demo-in{max-width:1320px;margin:0 auto;padding:10px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.demo-in .t{font-size:12px;color:#77777e;margin-right:6px}
+.sw{padding:8px 13px;min-height:34px;border:1px solid #2c2c31;border-radius:6px;background:transparent;color:#b6b6bd;font-size:13px;cursor:pointer;transition:color .15s,border-color .15s,background .15s,transform .08s}
+.sw:hover{color:#fff;border-color:#4a4a52}
+.sw:active{transform:scale(.97)}
+.sw:focus-visible{outline:2px solid #6ea8ff;outline-offset:2px}
+.sw[aria-pressed="true"]{background:#fff;border-color:#fff;color:#0a0a0b;font-weight:600}
+.hint{max-width:1320px;margin:0 auto;padding:13px 18px 0;font-size:13px;color:#77777e;line-height:1.5}
+.v[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+
+/* ============================================================
+   A · СМЕНА — ось времени, видны часы и пробелы между ними
+   ============================================================ */
+#smena{--bg:#f7f5f1;--ink:#1c1a16;--mu:#7b7568;--ln:#e2ded4;--ac:#e2571f;--now:#1c1a16;
+  background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;min-height:800px;padding-bottom:56px}
+.s-wrap{max-width:860px;margin:0 auto;padding:0 24px}
+.s-top{display:flex;justify-content:space-between;align-items:center;padding:22px 0;font-size:14px;color:var(--mu)}
+.s-logo{font-weight:800;font-size:18px;letter-spacing:-.03em;color:var(--ink)}
+.s-head{padding:24px 0 30px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.s-head h1{margin:0;font-size:clamp(1.9rem,4.4vw,2.7rem);line-height:1.05;letter-spacing:-.035em;font-weight:800}
+.s-head p{margin:8px 0 0;color:var(--mu);font-size:15.5px}
+.s-prog{flex:none;text-align:right}
+.s-prog b{display:block;font-size:30px;line-height:1;letter-spacing:-.04em;font-weight:800}
+.s-prog span{font-size:13.5px;color:var(--mu)}
+
+.s-line{position:relative;margin:0;padding:0;list-style:none;border-left:2px solid var(--ln);margin-left:52px}
+.s-h{position:relative;min-height:34px;padding:0 0 0 24px}
+.s-h.has{min-height:auto;padding-bottom:12px}
+.s-clock{position:absolute;left:-52px;top:-2px;width:42px;text-align:right;font-size:13px;font-weight:600;color:#b5ad9e;font-variant-numeric:tabular-nums}
+.s-h.has .s-clock{color:var(--ink)}
+.s-h::before{content:"";position:absolute;left:-2px;top:2px;width:2px;height:14px;background:var(--ln)}
+.s-h.has::before{background:var(--ink);height:22px}
+.s-card{background:#fff;border:1px solid var(--ln);border-radius:10px;padding:13px 15px;display:flex;gap:13px;align-items:flex-start;margin-bottom:8px}
+.s-card:hover{border-color:#c9c2b4}
+.s-k{flex:none;width:4px;align-self:stretch;border-radius:99px;min-height:34px}
+.s-b{flex:1 1 auto;min-width:0}
+.s-t{font-size:15.5px;font-weight:600;letter-spacing:-.011em;line-height:1.35}
+.s-m{font-size:13px;color:var(--mu);margin-top:3px}
+.s-x{flex:none;border:0;background:transparent;color:#b5ad9e;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:13px}
+.s-x:hover{color:var(--ac);background:#fbeae2}
+.s-x:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.s-nowrow{position:relative;height:0;border-top:2px dashed var(--now);margin:14px 0 18px;list-style:none}
+.s-nowrow span{position:absolute;left:-52px;top:-9px;font-size:12px;font-weight:700;background:var(--bg);padding-right:6px;color:var(--now)}
+.s-card[data-new]{animation:sIn .38s cubic-bezier(.2,.75,.3,1)}
+@keyframes sIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.s-new{margin:26px 0 0 52px;display:flex;gap:9px}
+.s-new input{flex:1 1 auto;min-width:0;height:46px;border:1px solid var(--ln);border-radius:10px;background:#fff;padding:0 14px;font-size:15.5px;color:var(--ink)}
+.s-new input:focus{outline:none;border-color:var(--ac)}
+.s-new input:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.s-new button{flex:none;height:46px;padding:0 20px;border:0;border-radius:10px;background:var(--ink);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s,transform .09s}
+.s-new button:hover{background:var(--ac)}
+.s-new button:active{transform:scale(.98)}
+.s-new button:disabled{background:#ddd8cd;color:#9c9488;cursor:not-allowed;transform:none}
+.s-new button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(max-width:620px){.s-line,.s-new{margin-left:44px}.s-clock{left:-44px;width:36px;font-size:12px}.s-nowrow span{left:-44px}}
+
+/* ============================================================
+   B · ДОСКА — стадии как колонки, запись едет вправо
+   ============================================================ */
+#doska{--bg:#eceef1;--card:#fff;--ink:#16181d;--mu:#727883;--ln:#dcdfe4;
+  background:var(--bg);color:var(--ink);font-family:"Familjen Grotesk",system-ui,sans-serif;min-height:800px;padding-bottom:44px}
+.d-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 26px;background:var(--card);border-bottom:1px solid var(--ln);flex-wrap:wrap}
+.d-logo{font-weight:700;font-size:18px;letter-spacing:-.03em}
+.d-sub{font-size:14px;color:var(--mu)}
+.d-cols{display:grid;grid-template-columns:repeat(3,minmax(250px,1fr));gap:14px;padding:20px 26px;align-items:start;overflow-x:auto}
+.d-col{background:rgba(255,255,255,.55);border:1px solid var(--ln);border-radius:14px;padding:12px;display:grid;gap:10px;align-content:start;min-height:220px}
+.d-ch{display:flex;align-items:center;gap:8px;padding:2px 4px}
+.d-cd{width:9px;height:9px;border-radius:3px;flex:none}
+.d-ch h2{margin:0;font-size:14.5px;font-weight:700;letter-spacing:-.015em}
+.d-ch b{margin-left:auto;font-size:13px;color:var(--mu);font-weight:600}
+.d-card{background:var(--card);border:1px solid var(--ln);border-radius:11px;padding:13px;display:grid;gap:9px;box-shadow:0 1px 2px rgba(22,24,29,.05)}
+.d-card:hover{border-color:#bfc4cc}
+.d-ct{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.35}
+.d-cm{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mu)}
+.d-av{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
+.d-acts{display:flex;gap:6px;margin-left:auto}
+.d-go,.d-rm{border:1px solid var(--ln);background:transparent;border-radius:7px;padding:4px 9px;font-size:12.5px;color:var(--mu);cursor:pointer;transition:background .14s,color .14s,border-color .14s}
+.d-go:hover{background:var(--ink);border-color:var(--ink);color:#fff}
+.d-rm:hover{color:#d93a34;border-color:#f0bfbc;background:#fdf0ef}
+.d-go:focus-visible,.d-rm:focus-visible{outline:2px solid #2f6bff;outline-offset:1px}
+.d-card[data-new]{animation:dIn .34s cubic-bezier(.2,.75,.3,1)}
+@keyframes dIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.d-none{font-size:13px;color:#9aa0a9;padding:14px 4px}
+.d-new{display:flex;gap:9px;margin:0 26px;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:9px}
+.d-new input{flex:1 1 auto;min-width:0;height:42px;border:0;background:transparent;padding:0 10px;font-size:15px;color:var(--ink)}
+.d-new input:focus{outline:none}
+.d-new input:focus-visible{outline:2px solid #2f6bff;outline-offset:-2px;border-radius:9px}
+.d-new button{flex:none;height:42px;padding:0 18px;border:0;border-radius:9px;background:var(--ink);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;transition:filter .14s,transform .09s}
+.d-new button:hover{filter:brightness(1.35)}
+.d-new button:active{transform:scale(.98)}
+.d-new button:disabled{background:#d3d7dd;color:#8d939c;cursor:not-allowed;transform:none;filter:none}
+.d-new button:focus-visible{outline:2px solid #2f6bff;outline-offset:2px}
+@media(max-width:820px){.d-cols{grid-template-columns:repeat(3,minmax(230px,1fr))}}
+
+/* ============================================================
+   C · ПЛАН — записи стоят на схеме этажа, а не в списке
+   ============================================================ */
+#plan{--bg:#10131a;--pan:#161a23;--ln:#232936;--fg:#e7eaf0;--mu:#8b94a5;--dim:#5b6475;--ac:#4fd1c5;--hot:#ff7a45;
+  background:var(--bg);color:var(--fg);font-family:Manrope,system-ui,sans-serif;min-height:800px;display:grid;grid-template-columns:minmax(0,1fr) 348px}
+.p-stage{padding:22px 26px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.p-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.p-logo{font-weight:800;font-size:18px;letter-spacing:-.03em}
+.p-sub{font-size:13.5px;color:var(--mu)}
+.p-canvas{background:var(--pan);border:1px solid var(--ln);border-radius:14px;padding:18px;flex:1 1 auto;display:grid;place-items:center;min-height:430px}
+.p-canvas svg{width:100%;height:auto;max-height:520px}
+.p-pin{cursor:pointer}
+.p-pin circle.hit{fill:transparent}
+.p-pin .ring{fill:rgba(79,209,197,.16);stroke:var(--ac);stroke-width:1.5}
+.p-pin .core{fill:var(--ac)}
+.p-pin:hover .ring{fill:rgba(79,209,197,.3)}
+.p-pin[data-sel="1"] .ring{fill:rgba(255,122,69,.22);stroke:var(--hot)}
+.p-pin[data-sel="1"] .core{fill:var(--hot)}
+.p-pin:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.p-side{border-left:1px solid var(--ln);background:var(--pan);padding:22px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.p-side h2{margin:0;font-size:15px;font-weight:700;letter-spacing:-.015em}
+.p-side .p-where{font-size:13px;color:var(--ac)}
+.p-items{list-style:none;margin:0;padding:0;display:grid;gap:9px;flex:1 1 auto;overflow:auto}
+.p-items li{border:1px solid var(--ln);border-radius:10px;padding:12px;display:grid;gap:7px;cursor:pointer;transition:border-color .14s,background .14s}
+.p-items li:hover{border-color:#31394a;background:#1a1f2a}
+.p-items li[data-sel="1"]{border-color:var(--hot);background:rgba(255,122,69,.07)}
+.p-it{font-size:14.5px;font-weight:600;letter-spacing:-.008em;line-height:1.35}
+.p-im{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--mu)}
+.p-rm{margin-left:auto;border:0;background:transparent;color:var(--dim);cursor:pointer;font-size:12.5px;padding:3px 6px;border-radius:6px}
+.p-rm:hover{color:#ff6b6b;background:rgba(255,107,107,.1)}
+.p-rm:focus-visible{outline:2px solid #ff6b6b;outline-offset:1px}
+.p-items li[data-new]{animation:pIn .34s ease-out}
+@keyframes pIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.p-none{color:var(--dim);font-size:13.5px;padding:10px 0}
+.p-new{display:flex;gap:8px}
+.p-new input{flex:1 1 auto;min-width:0;height:40px;border:1px solid var(--ln);border-radius:9px;background:var(--bg);color:var(--fg);padding:0 12px;font-size:14px}
+.p-new input::placeholder{color:var(--dim)}
+.p-new input:focus{outline:none;border-color:var(--ac)}
+.p-new input:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.p-new button{flex:none;height:40px;padding:0 16px;border:0;border-radius:9px;background:var(--ac);color:#08211f;font-size:14px;font-weight:700;cursor:pointer;transition:filter .14s,transform .09s}
+.p-new button:hover{filter:brightness(1.08)}
+.p-new button:active{transform:scale(.98)}
+.p-new button:disabled{background:#232936;color:var(--dim);cursor:not-allowed;transform:none;filter:none}
+.p-new button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:900px){#plan{grid-template-columns:minmax(0,1fr)}.p-side{border-left:0;border-top:1px solid var(--ln)}}
+
+/* ============================================================
+   D · ЛЕНТА — смена как разговор бригады
+   ============================================================ */
+#lenta{--bg:#fbfbfc;--ink:#191b1f;--mu:#767c86;--ln:#e6e8ec;--me:#1f6feb;
+  background:var(--bg);color:var(--ink);font-family:Gabarito,system-ui,sans-serif;min-height:800px;display:flex;flex-direction:column}
+.l-top{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--ln);background:rgba(251,251,252,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:sticky;top:0;z-index:5}
+.l-obj{width:38px;height:38px;border-radius:11px;background:#1f2937;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.l-h{min-width:0}
+.l-h b{display:block;font-size:15.5px;font-weight:700;letter-spacing:-.018em}
+.l-h span{display:block;font-size:13px;color:var(--mu)}
+.l-cnt{margin-left:auto;font-size:13px;color:var(--mu)}
+.l-feed{flex:1 1 auto;overflow:auto;padding:22px 24px 10px;max-width:820px;width:100%;margin:0 auto;display:grid;gap:4px;align-content:start}
+.l-day{display:flex;align-items:center;gap:12px;margin:6px 0 14px;color:var(--mu);font-size:12.5px}
+.l-day::before,.l-day::after{content:"";flex:1 1 auto;height:1px;background:var(--ln)}
+.l-msg{display:grid;grid-template-columns:34px minmax(0,1fr);gap:11px;padding:4px 0}
+.l-msg.same{padding-top:0}
+.l-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff}
+.l-msg.same .l-av{visibility:hidden;height:0}
+.l-mb{min-width:0}
+.l-nm{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.l-nm b{font-size:14.5px;font-weight:700;letter-spacing:-.012em}
+.l-nm span{font-size:12px;color:var(--mu)}
+.l-bub{display:inline-flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--ln);border-radius:14px;border-top-left-radius:5px;padding:11px 14px;max-width:60ch}
+.l-msg.same .l-bub{border-top-left-radius:14px}
+.l-tx{font-size:15.5px;line-height:1.45;letter-spacing:-.008em}
+.l-tag{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;color:#fff}
+.l-rm{flex:none;border:0;background:transparent;color:#b6bac1;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;border-radius:6px;opacity:0;transition:opacity .14s,color .14s,background .14s}
+.l-msg:hover .l-rm,.l-rm:focus-visible{opacity:1}
+.l-rm:hover{color:#d93a34;background:#fdf0ef}
+.l-rm:focus-visible{outline:2px solid #d93a34;outline-offset:1px}
+.l-msg[data-new] .l-bub{animation:lIn .36s cubic-bezier(.2,.8,.3,1.02)}
+@keyframes lIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.l-none{color:var(--mu);font-size:15px;padding:40px 0;text-align:center}
+.l-compose{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(251,251,252,0),var(--bg) 26%);padding:14px 24px 18px}
+.l-cin{max-width:820px;margin:0 auto;display:flex;gap:9px;background:#fff;border:1px solid var(--ln);border-radius:16px;padding:8px;box-shadow:0 2px 10px rgba(20,22,28,.05)}
+.l-cin input{flex:1 1 auto;min-width:0;height:42px;border:0;background:transparent;padding:0 12px;font-size:15.5px;color:var(--ink)}
+.l-cin input:focus{outline:none}
+.l-cin input:focus-visible{outline:2px solid var(--me);outline-offset:-2px;border-radius:11px}
+.l-cin button{flex:none;height:42px;padding:0 20px;border:0;border-radius:12px;background:var(--me);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:filter .14s,transform .09s}
+.l-cin button:hover{filter:brightness(1.08)}
+.l-cin button:active{transform:scale(.97)}
+.l-cin button:disabled{background:#dfe2e7;color:#9aa0a9;cursor:not-allowed;transform:none;filter:none}
+.l-cin button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="demo-in">
+    <span class="t">Композиция</span>
+    <button class="sw" data-go="smena" aria-pressed="true">A · Смена</button>
+    <button class="sw" data-go="doska" aria-pressed="false">B · Доска</button>
+    <button class="sw" data-go="plan" aria-pressed="false">C · План</button>
+    <button class="sw" data-go="lenta" aria-pressed="false">D · Лента</button>
+  </div>
+</div>
+<p class="hint">Одни и те же данные, четыре устройства экрана: время, стадия, место и разговор. Данные общие — снимите запись в одном, она исчезнет во всех.</p>
+
+<!-- ============ A · СМЕНА ============ -->
+<div class="v" id="smena">
+  <div class="s-wrap">
+    <div class="s-top"><span class="s-logo">hackalem</span><span>Объект 4, корпус Б</span></div>
+    <div class="s-head">
+      <div>
+        <h1>Вторая смена</h1>
+        <p>07:00 — 19:00, бригада из трёх человек</p>
+      </div>
+      <div class="s-prog"><b id="s-done">2 из 5</b><span>закрыто к 14:20</span></div>
+    </div>
+    <div id="s-line"></div>
+    <form class="s-new" id="s-form">
+      <input id="s-input" maxlength="200" placeholder="Что делаем сейчас" autocomplete="off" aria-label="Новая запись">
+      <button type="submit" disabled>Записать на 14:00</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ B · ДОСКА ============ -->
+<div class="v" hidden id="doska">
+  <div class="d-top">
+    <span class="d-logo">hackalem</span>
+    <span class="d-sub">Объект 4, корпус Б · вторая смена</span>
+  </div>
+  <div class="d-cols">
+    <div class="d-col"><div class="d-ch"><span class="d-cd" style="background:#9aa0a9"></span><h2>Ждёт</h2><b id="d-c0">0</b></div><div id="d-l0"></div></div>
+    <div class="d-col"><div class="d-ch"><span class="d-cd" style="background:#e2a93b"></span><h2>В работе</h2><b id="d-c1">0</b></div><div id="d-l1"></div></div>
+    <div class="d-col"><div class="d-ch"><span class="d-cd" style="background:#2f9e60"></span><h2>Сделано</h2><b id="d-c2">0</b></div><div id="d-l2"></div></div>
+  </div>
+  <form class="d-new" id="d-form">
+    <input id="d-input" maxlength="200" placeholder="Новая работа — попадёт в «Ждёт»" autocomplete="off" aria-label="Новая запись">
+    <button type="submit" disabled>Добавить</button>
+  </form>
+</div>
+
+<!-- ============ C · ПЛАН ============ -->
+<div class="v" hidden id="plan">
+  <div class="p-stage">
+    <div class="p-top"><span class="p-logo">hackalem</span><span class="p-sub">Корпус Б, этаж 2 · вторая смена</span></div>
+    <div class="p-canvas">
+      <svg viewBox="0 0 620 420" role="img" aria-label="Схема этажа с отметками работ">
+        <g stroke="#2a3242" stroke-width="1">
+          <path d="M60 40 V380 M180 40 V380 M300 40 V380 M420 40 V380 M540 40 V380"/>
+          <path d="M60 40 H540 M60 140 H540 M60 240 H540 M60 380 H540"/>
+        </g>
+        <g fill="#4a5468" font-family="Manrope,sans-serif" font-size="11" font-weight="600">
+          <text x="56" y="28">1</text><text x="176" y="28">2</text><text x="296" y="28">3</text><text x="416" y="28">4</text><text x="536" y="28">5</text>
+          <text x="34" y="44">А</text><text x="34" y="144">Б</text><text x="34" y="244">В</text><text x="34" y="384">Г</text>
+        </g>
+        <g stroke="#3c4659" stroke-width="3" fill="none">
+          <path d="M60 40 H540 V380 H60 Z"/>
+          <path d="M180 140 H420"/>
+          <path d="M300 240 V380"/>
+        </g>
+        <g fill="#1d2430" stroke="#3c4659" stroke-width="1.5">
+          <rect x="172" y="132" width="16" height="16"/><rect x="292" y="132" width="16" height="16"/>
+          <rect x="412" y="132" width="16" height="16"/><rect x="292" y="232" width="16" height="16"/>
+        </g>
+        <g id="p-pins"></g>
+      </svg>
+    </div>
+  </div>
+  <aside class="p-side">
+    <div>
+      <h2 id="p-title">Все отметки</h2>
+      <div class="p-where" id="p-where">этаж целиком</div>
+    </div>
+    <ul class="p-items" id="p-items"></ul>
+    <div class="p-none" id="p-none" hidden>Отметок нет.</div>
+    <form class="p-new" id="p-form">
+      <input id="p-input" maxlength="200" placeholder="Отметка на плане" autocomplete="off" aria-label="Новая отметка">
+      <button type="submit" disabled>Поставить</button>
+    </form>
+  </aside>
+</div>
+
+<!-- ============ D · ЛЕНТА ============ -->
+<div class="v" hidden id="lenta">
+  <div class="l-top">
+    <span class="l-obj">Б4</span>
+    <span class="l-h"><b>Объект 4, корпус Б</b><span>Вторая смена · Антон, Павел, Марат</span></span>
+    <span class="l-cnt" id="l-cnt">5 записей</span>
+  </div>
+  <div class="l-feed" id="l-feed"></div>
+  <form class="l-compose" id="l-form">
+    <div class="l-cin">
+      <input id="l-input" maxlength="200" placeholder="Написать в смену" autocomplete="off" aria-label="Новая запись">
+      <button type="submit" disabled>Отправить</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  var seq = 6;
+  var C = { 'Бетон': '#2f6bff', 'Арматура': '#e2571f', 'Геодезия': '#0e9f57', 'Прочее': '#8a5cf6' };
+  var WHO = { 'АК': 'Антон', 'ПС': 'Павел', 'МТ': 'Марат' };
+  var notes = [
+    { id:1, t:'Залить плиту на осях 3–5',                k:'Бетон',    who:'АК', h:7,  st:2, x:350, y:300, ax:'оси 3–5, ряд В–Г' },
+    { id:2, t:'Принять арматуру, партия А-412',          k:'Арматура', who:'ПС', h:9,  st:2, x:480, y:90,  ax:'ось 4–5, ряд А–Б' },
+    { id:3, t:'Снять опалубку с колонн второго этажа',   k:'Бетон',    who:'МТ', h:11, st:1, x:180, y:140, ax:'ось 2, ряд Б' },
+    { id:4, t:'Вызвать геодезиста на разбивку осей',     k:'Геодезия', who:'АК', h:13, st:0, x:120, y:300, ax:'ось 1–2, ряд В–Г' },
+    { id:5, t:'Закрыть проёмы на минус первом',          k:'Прочее',   who:'ПС', h:15, st:0, x:470, y:310, ax:'ось 4–5, ряд В–Г' }
+  ];
+  var sel = null;
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+  function kill(n){return function(ev){if(ev)ev.stopPropagation();notes=notes.filter(function(q){return q.id!==n.id;});if(sel===n.id)sel=null;render();};}
+  function hh(h){return (h<10?'0':'')+h+':00';}
+
+  function render(newId){
+    /* ---- A · смена ---- */
+    var line = document.getElementById('s-line'); line.innerHTML='';
+    document.getElementById('s-done').textContent = notes.filter(function(n){return n.st===2;}).length+' из '+notes.length;
+    var wrapUl = el('ul','s-line'); wrapUl.id='';
+    for (var h=7; h<=18; h++){
+      var here = notes.filter(function(n){return n.h===h;});
+      var row = el('li','s-h'+(here.length?' has':''));
+      row.appendChild(el('span','s-clock',hh(h)));
+      here.forEach(function(n){
+        var card = el('div','s-card'); if(n.id===newId) card.setAttribute('data-new','');
+        var k = el('span','s-k'); k.style.background=C[n.k];
+        var b = el('div','s-b'); b.appendChild(el('div','s-t',n.t));
+        b.appendChild(el('div','s-m',n.k+' · '+WHO[n.who]+(n.st===2?' · закрыто':'')));
+        var x = el('button','s-x','×'); x.type='button'; x.setAttribute('aria-label','Убрать: '+n.t); x.onclick=kill(n);
+        card.appendChild(k); card.appendChild(b); card.appendChild(x);
+        row.appendChild(card);
+      });
+      wrapUl.appendChild(row);
+      if (h===14){ var nowRow=el('li','s-nowrow'); nowRow.appendChild(el('span',null,'14:20')); wrapUl.appendChild(nowRow); }
+    }
+    line.appendChild(wrapUl);
+
+    /* ---- B · доска ---- */
+    [0,1,2].forEach(function(st){
+      var box=document.getElementById('d-l'+st); box.innerHTML='';
+      var items=notes.filter(function(n){return n.st===st;});
+      document.getElementById('d-c'+st).textContent=items.length;
+      if(!items.length){ box.appendChild(el('div','d-none','Пусто')); return; }
+      items.forEach(function(n){
+        var c=el('div','d-card'); if(n.id===newId) c.setAttribute('data-new','');
+        c.appendChild(el('div','d-ct',n.t));
+        var m=el('div','d-cm');
+        var av=el('span','d-av',n.who); av.style.background=C[n.k];
+        m.appendChild(av); m.appendChild(document.createTextNode(n.k));
+        var acts=el('div','d-acts');
+        if(st<2){ var g=el('button','d-go',st===0?'В работу':'Закрыть'); g.type='button';
+          g.onclick=function(){ n.st=st+1; render(); }; acts.appendChild(g); }
+        var r=el('button','d-rm','Убрать'); r.type='button'; r.setAttribute('aria-label','Убрать: '+n.t); r.onclick=kill(n); acts.appendChild(r);
+        m.appendChild(acts); c.appendChild(m); box.appendChild(c);
+      });
+    });
+
+    /* ---- C · план ---- */
+    var pins=document.getElementById('p-pins'); pins.innerHTML='';
+    notes.forEach(function(n){
+      var g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','p-pin'); g.setAttribute('tabindex','0'); g.setAttribute('role','button');
+      g.setAttribute('aria-label',n.t+', '+n.ax);
+      if(sel===n.id) g.setAttribute('data-sel','1');
+      var r=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      r.setAttribute('class','ring'); r.setAttribute('cx',n.x); r.setAttribute('cy',n.y); r.setAttribute('r','13');
+      var c2=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c2.setAttribute('class','core'); c2.setAttribute('cx',n.x); c2.setAttribute('cy',n.y); c2.setAttribute('r','4');
+      g.appendChild(r); g.appendChild(c2);
+      g.onclick=function(){ sel = (sel===n.id?null:n.id); render(); };
+      g.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); sel=(sel===n.id?null:n.id); render(); } };
+      pins.appendChild(g);
+    });
+    var shown = sel ? notes.filter(function(n){return n.id===sel;}) : notes;
+    var selN = sel ? notes.filter(function(n){return n.id===sel;})[0] : null;
+    document.getElementById('p-title').textContent = selN ? 'Отметка' : 'Все отметки';
+    document.getElementById('p-where').textContent = selN ? selN.ax : 'этаж целиком, '+notes.length+' шт.';
+    var pl=document.getElementById('p-items'); pl.innerHTML='';
+    document.getElementById('p-none').hidden = notes.length>0;
+    shown.forEach(function(n){
+      var li=el('li'); if(n.id===newId) li.setAttribute('data-new','');
+      if(sel===n.id) li.setAttribute('data-sel','1');
+      li.appendChild(el('div','p-it',n.t));
+      var m=el('div','p-im'); m.appendChild(document.createTextNode(n.ax+' · '+WHO[n.who]));
+      var r=el('button','p-rm','убрать'); r.type='button'; r.setAttribute('aria-label','Убрать: '+n.t); r.onclick=kill(n);
+      m.appendChild(r); li.appendChild(m);
+      li.onclick=function(){ sel=(sel===n.id?null:n.id); render(); };
+      pl.appendChild(li);
+    });
+
+    /* ---- D · лента ---- */
+    var feed=document.getElementById('l-feed'); feed.innerHTML='';
+    document.getElementById('l-cnt').textContent = notes.length + (notes.length===1?' запись':(notes.length>1&&notes.length<5?' записи':' записей'));
+    if(!notes.length){ feed.appendChild(el('div','l-none','В смене пока тихо. Напишите первое сообщение.')); }
+    else {
+      feed.appendChild(el('div','l-day','Сегодня, вторая смена'));
+      var prev=null;
+      notes.forEach(function(n){
+        var same = prev===n.who;
+        var m=el('div','l-msg'+(same?' same':'')); if(n.id===newId) m.setAttribute('data-new','');
+        var av=el('span','l-av',n.who); av.style.background=C[n.k];
+        var b=el('div','l-mb');
+        if(!same){ var nm=el('div','l-nm'); nm.appendChild(el('b',null,WHO[n.who])); nm.appendChild(el('span',null,hh(n.h))); b.appendChild(nm); }
+        var bub=el('div','l-bub');
+        var tw=el('div'); tw.appendChild(el('div','l-tx',n.t));
+        var tg=el('span','l-tag',n.k); tg.style.background=C[n.k]; tw.appendChild(tg);
+        var rm=el('button','l-rm','×'); rm.type='button'; rm.setAttribute('aria-label','Убрать: '+n.t); rm.onclick=kill(n);
+        bub.appendChild(tw); bub.appendChild(rm);
+        b.appendChild(bub); m.appendChild(av); m.appendChild(b); feed.appendChild(m);
+        prev=n.who;
+      });
+    }
+  }
+
+  ['s','d','p','l'].forEach(function(p){
+    var f=document.getElementById(p+'-form'), i=document.getElementById(p+'-input');
+    var b=f.querySelector('button[type=submit]');
+    i.addEventListener('input',function(){ b.disabled=!i.value.trim(); });
+    f.addEventListener('submit',function(ev){
+      ev.preventDefault();
+      var v=i.value.trim(); if(!v) return;
+      var id=seq++;
+      notes=notes.concat([{id:id,t:v,k:'Прочее',who:'АК',h:14,st:0,x:240,y:200,ax:'ось 2–3, ряд Б–В'}]);
+      ['s','d','p','l'].forEach(function(q){
+        document.getElementById(q+'-input').value='';
+        document.getElementById(q+'-form').querySelector('button[type=submit]').disabled=true;
+      });
+      render(id); i.focus();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.sw'),function(b){
+    b.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.sw'),function(o){o.setAttribute('aria-pressed','false');});
+      Array.prototype.forEach.call(document.querySelectorAll('.v'),function(o){o.hidden=true;});
+      b.setAttribute('aria-pressed','true');
+      document.getElementById(b.getAttribute('data-go')).hidden=false;
+      window.scrollTo({top:0,behavior:'instant'});
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

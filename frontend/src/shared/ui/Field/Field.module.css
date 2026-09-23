@@ -1,0 +1,104 @@
+/* Поле: утопленный фон без рамки, фокус — белый фон и кольцо 2 px. */
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.counter {
+  font-size: var(--fs-micro);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--t-hover);
+}
+
+/* приближение к лимиту и превышение: чернильные варианты статусных цветов,
+   обычные --wr и --er не проходят 4,5:1 на белом */
+.counterNear {
+  color: var(--wr-ink);
+}
+
+.counterOver {
+  color: var(--er-ink);
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  height: var(--ctl);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-s);
+  background: var(--sunken);
+  color: var(--ink);
+  font-size: 13.5px;
+  transition:
+    background var(--t-hover),
+    outline-color var(--t-hover);
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.input:focus-visible,
+.input:focus {
+  outline: 2px solid var(--ac);
+  outline-offset: -1px;
+  background: var(--panel);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .input:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sunken) 70%, var(--bg));
+    transition-duration: 0s;
+  }
+}
+
+.input:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}
+
+.hasError .input,
+.hasError .input:focus {
+  outline: 2px solid var(--er);
+  outline-offset: -1px;
+  background: var(--panel);
+}
+
+.hint {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+}
+
+.error {
+  font-size: var(--fs-cap);
+  color: var(--er-ink);
+}
+
+@media (pointer: coarse) {
+  .input {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .input {
+    outline: 1px solid var(--ink);
+    outline-offset: -1px;
+  }
+}

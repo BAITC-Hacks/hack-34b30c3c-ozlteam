@@ -1,0 +1,228 @@
+.providerContent {
+  display: contents;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) - 1);
+  background: color-mix(in srgb, var(--ink) 38%, transparent);
+  backdrop-filter: blur(var(--sp-2));
+  animation: backdrop-in 180ms ease both;
+}
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal) + var(--modal-depth, 0));
+  display: grid;
+  padding: var(--sp-6);
+  place-items: center;
+  isolation: isolate;
+
+  &[data-state="parked"] {
+    display: none;
+  }
+}
+
+.panel {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, auto) auto;
+  width: min(var(--modal-md), 100%);
+  max-height: calc(100dvh - var(--sp-6) * 2);
+  overflow: auto;
+  color: var(--ink);
+  background: var(--panel);
+  border-radius: var(--r);
+  box-shadow: var(--sh-panel);
+  animation: modal-in 220ms cubic-bezier(.2, .75, .25, 1) both;
+
+  &[data-state="closing"] {
+    pointer-events: none;
+    animation: modal-out 180ms ease both;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.sm {
+  width: min(var(--modal-sm), 100%);
+}
+
+.lg {
+  width: min(var(--modal-lg), 100%);
+}
+
+.header,
+.footer {
+  position: sticky;
+  z-index: 1;
+  display: flex;
+  width: auto;
+  height: auto;
+  margin: 0;
+  min-height: calc(var(--ctl) + var(--sp-5));
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(var(--sp-3));
+}
+
+.header {
+  top: 0;
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  border-bottom: 1px solid var(--hair);
+
+  & h2 {
+    margin: 0;
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+    letter-spacing: var(--ls-h2);
+    font-weight: 600;
+  }
+}
+
+.body {
+  min-width: 0;
+  padding: var(--sp-6);
+}
+
+.footer {
+  bottom: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--hair);
+}
+
+.bodyScroll {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+
+  & .header,
+  & .footer {
+    position: relative;
+  }
+
+  & .body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+.closeButton {
+  display: grid;
+  width: var(--ctl);
+  height: var(--ctl);
+  flex: none;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-s);
+  color: var(--mut);
+  background: transparent;
+  transition: color var(--t-hover), background var(--t-hover), transform var(--t-press);
+
+  &:active {
+    transform: scale(.98);
+    transition-duration: 0s;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .closeButton:hover {
+    color: var(--ink);
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+}
+
+@media (max-width: 560px) {
+  .layer {
+    padding: 0;
+    align-items: end;
+  }
+
+  .panel,
+  .sm,
+  .lg {
+    width: 100%;
+    max-height: min(92dvh, var(--modal-sheet-max));
+    border-radius: var(--r) var(--r) 0 0;
+    animation-name: sheet-in;
+
+    &[data-state="closing"] {
+      animation-name: sheet-out;
+    }
+  }
+
+  .closeButton {
+    min-width: var(--touch);
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop {
+    backdrop-filter: none;
+  }
+
+  .header,
+  .footer {
+    background: var(--panel);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .panel {
+    outline: 1px solid var(--ink);
+    outline-offset: -1px;
+  }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-3)) scale(.98);
+  }
+}
+
+@keyframes modal-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--sp-2)) scale(.985);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-6));
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--sp-6));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .panel,
+  .panel[data-state="closing"] {
+    animation-duration: 1ms;
+    transform: none;
+  }
+}

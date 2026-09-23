@@ -1,0 +1,90 @@
+/* Разбивка целого: одна полоса сегментами и легенда с человеческими пояснениями. */
+
+.breakdown {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--sunken);
+}
+
+.segment {
+  display: block;
+  height: 100%;
+}
+
+.legend {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+
+.item {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-cap);
+  color: var(--mut);
+  min-width: 0;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.figure {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  color: var(--mut);
+}
+
+.accent {
+  background: var(--ac);
+}
+
+.good {
+  background: var(--ok);
+}
+
+.warn {
+  background: var(--wr);
+}
+
+.bad {
+  background: var(--er);
+}
+
+.muted {
+  background: var(--deco);
+}
+
+@media (prefers-contrast: more) {
+  .bar {
+    box-shadow: inset 0 0 0 1px var(--ink);
+  }
+}

@@ -1,0 +1,197 @@
+.root {
+  display: grid;
+  min-width: 0;
+  gap: var(--sp-2);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.label {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.value,
+.hint {
+  color: var(--mut);
+  font-size: var(--fs-cap);
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+}
+
+.control {
+  position: relative;
+  height: 22px;
+}
+
+.track {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+  translate: 0 -50%;
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--slider-start);
+  width: calc(var(--slider-end) - var(--slider-start));
+  border-radius: inherit;
+  background: var(--slider-color, var(--ac));
+  transition:
+    left var(--t-hover),
+    width var(--t-hover);
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: 0;
+}
+
+.control:has(.input:active) .fill {
+  transition-duration: 0s;
+}
+
+.rangeInput {
+  pointer-events: none;
+}
+
+.input::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.input::-moz-range-track {
+  height: 6px;
+  background: transparent;
+}
+
+.input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 3px solid var(--slider-color, var(--ac));
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  appearance: none;
+  pointer-events: auto;
+  transition:
+    border-color var(--t-hover),
+    box-shadow var(--t-hover),
+    transform var(--t-hover);
+}
+
+.input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--slider-color, var(--ac));
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  pointer-events: auto;
+  transition:
+    border-color var(--t-hover),
+    box-shadow var(--t-hover),
+    transform var(--t-hover);
+}
+
+.input:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--sh-1), 0 0 0 3px var(--ac-soft);
+}
+
+.input:focus-visible::-moz-range-thumb {
+  box-shadow: var(--sh-1), 0 0 0 3px var(--ac-soft);
+}
+
+.success {
+  --slider-color: var(--ok);
+}
+
+.warning {
+  --slider-color: var(--wr);
+}
+
+.danger {
+  --slider-color: var(--er);
+}
+
+.disabled {
+  opacity: .48;
+}
+
+.disabled .input {
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .input:hover:not(:disabled)::-webkit-slider-thumb {
+    transform: scale(1.08);
+    transition-duration: 0s;
+  }
+
+  .input:hover:not(:disabled)::-moz-range-thumb {
+    transform: scale(1.08);
+    transition-duration: 0s;
+  }
+}
+
+@media (pointer: coarse) {
+  .control,
+  .input {
+    height: var(--touch);
+  }
+
+  .input::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -9px;
+  }
+
+  .input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .input::-webkit-slider-thumb,
+  .input::-moz-range-thumb {
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .track {
+    outline: 1px solid var(--ink);
+  }
+}

@@ -1,0 +1,259 @@
+.choice {
+  position: relative;
+  display: grid;
+  min-height: var(--ctl);
+  width: fit-content;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+}
+
+.native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox,
+.radio {
+  display: grid;
+  width: var(--sp-5);
+  height: var(--sp-5);
+  place-items: center;
+  border-radius: var(--sp-1);
+  color: transparent;
+  background: var(--sunken);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    box-shadow var(--t-hover),
+    transform var(--t-press);
+}
+
+.native:checked + .checkbox {
+  color: var(--panel);
+  background: var(--ac);
+  box-shadow: none;
+}
+
+.native:active + .checkbox,
+.native:active + .radio,
+.native:active + .switchTrack {
+  transform: scale(.96);
+  transition-duration: 0s;
+}
+
+.native:focus-visible + .checkbox,
+.native:focus-visible + .radio,
+.native:focus-visible + .switchTrack {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.label {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.description {
+  color: var(--mut);
+  font-size: var(--fs-cap);
+}
+
+.switchTrack {
+  display: flex;
+  width: var(--touch);
+  height: var(--sp-6);
+  padding: var(--sp-1);
+  align-items: center;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  transition:
+    background-color var(--t-hover),
+    transform var(--t-press);
+}
+
+.switchThumb {
+  width: calc(var(--sp-6) - var(--sp-2));
+  height: calc(var(--sp-6) - var(--sp-2));
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  translate: 0 0;
+  transition: translate var(--t-hover) cubic-bezier(.2, .75, .25, 1);
+}
+
+.native:checked + .switchTrack {
+  background: var(--ac);
+}
+
+.native:checked + .switchTrack .switchThumb {
+  translate: calc(var(--touch) - var(--sp-6)) 0;
+}
+
+.radio {
+  border-radius: var(--r-pill);
+}
+
+.native:checked + .radio {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 5px var(--ac);
+}
+
+.disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+.radioGroup {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  & legend {
+    margin-bottom: var(--sp-2);
+    color: var(--ink);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+}
+
+.radioList {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.segmented {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--ctl);
+  padding: var(--sp-1);
+  gap: var(--sp-1);
+  overflow-x: auto;
+  border-radius: var(--r-s);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.segment {
+  min-height: calc(var(--ctl) - var(--sp-2));
+  padding: 0 var(--sp-3);
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--r-xs);
+  color: var(--mut);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    box-shadow var(--t-hover),
+    transform var(--t-press);
+
+  &:active:not(:disabled) {
+    transform: scale(.98);
+    transition-duration: 0s;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: .48;
+    cursor: not-allowed;
+  }
+}
+
+.segmentActive {
+  color: var(--ink);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  font-weight: 600;
+}
+
+/* Размер набора рядом с подписью: пилюля не должна спорить с самой подписью. */
+.segmentCount {
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: var(--mut);
+  background: var(--sunken);
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .choice:not(.disabled):hover .checkbox,
+  .choice:not(.disabled):hover .radio {
+    background: color-mix(in srgb, var(--sunken) 70%, var(--bg));
+    transition-duration: 0s;
+  }
+
+  .choice:not(.disabled):hover .native:checked + .checkbox,
+  .choice:not(.disabled):hover .native:checked + .switchTrack {
+    background: var(--ac-hover);
+    transition-duration: 0s;
+  }
+
+  .choice:not(.disabled):hover .native:checked + .radio {
+    background: var(--panel);
+  }
+
+  .segment:hover:not(:disabled):not(.segmentActive) {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--panel) 60%, transparent);
+    transition-duration: 0s;
+  }
+}
+
+@media (pointer: coarse) {
+  .choice,
+  .segment {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkbox,
+  .radio,
+  .switchTrack,
+  .switchThumb,
+  .segment {
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .checkbox,
+  .radio,
+  .switchTrack,
+  .segmentActive {
+    outline: 1px solid var(--ink);
+    outline-offset: -1px;
+  }
+}

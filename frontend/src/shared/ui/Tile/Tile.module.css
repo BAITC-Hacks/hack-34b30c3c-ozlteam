@@ -1,0 +1,86 @@
+/* Плитка: подпись → крупная цифра → пояснение → полоса. */
+
+.tile {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--pad-card);
+  background: var(--panel);
+  border-radius: var(--r);
+  box-shadow: var(--sh-1);
+  transition:
+    transform var(--t-lift),
+    box-shadow var(--t-lift);
+}
+
+.label {
+  font-size: var(--fs-xs);
+  color: var(--mut);
+}
+
+.value {
+  font-size: var(--fs-num);
+  line-height: var(--lh-num);
+  letter-spacing: var(--ls-num);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+}
+
+/* тон относится к смыслу числа: рост — тревожный, warn — жёлтый, good — зелёный */
+.up .hint {
+  color: var(--er-ink);
+}
+
+.warn .hint {
+  color: var(--wr-ink);
+}
+
+.good .hint {
+  color: var(--ok-ink);
+}
+
+.meter {
+  height: 5px;
+  margin-top: 6px;
+  border-radius: 3px;
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.meterFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ac);
+  transition: width var(--t-lift);
+}
+
+.up .meterFill {
+  background: var(--er);
+}
+
+.warn .meterFill {
+  background: var(--wr);
+}
+
+.good .meterFill {
+  background: var(--ok);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sh-2);
+    transition-duration: 0s;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .tile {
+    box-shadow: inset 0 0 0 1px var(--ink);
+  }
+}

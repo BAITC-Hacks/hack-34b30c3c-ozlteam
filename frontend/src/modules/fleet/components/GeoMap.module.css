@@ -1,0 +1,188 @@
+/* Карта рейсов: тёмное полотно, поверх — сеть коридоров и светящийся трек. */
+
+.wrap {
+  position: relative;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--map-bg);
+  /* Полотно карты не должно выглядеть плоской заливкой блока, поэтому единственная
+     граница на всём экране — здесь: она отделяет материал карты от материала окна. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+/* На телефоне кадр карты в пропорциях региона выходит полосой в 180 px, и машину
+   на ней не разглядеть. Фиксируем высоту и подрезаем по бокам — `slice` кадрирует,
+   а не сплющивает, поэтому география не врёт. */
+@media (max-width: 700px) {
+  .canvas {
+    height: 320px;
+  }
+}
+
+.water {
+  fill: var(--map-water);
+  stroke: var(--map-edge);
+  stroke-linejoin: round;
+}
+
+.land {
+  fill: var(--map-land);
+  stroke: var(--map-edge);
+  stroke-linejoin: round;
+}
+
+.lit {
+  fill: var(--map-land-lit);
+}
+
+.road {
+  fill: none;
+  stroke: var(--map-road);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Путь впереди — пунктир: он ещё не пройден, и это видно без легенды. */
+.ahead {
+  fill: none;
+  stroke: var(--track-dim);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.passed {
+  fill: none;
+  stroke: var(--track);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.glow {
+  fill: none;
+  stroke: var(--track-glow);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: url(#trackGlow);
+}
+
+.other {
+  stroke: rgba(255, 255, 255, .17);
+}
+
+.country {
+  fill: var(--map-mut);
+  font-weight: 500;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pin {
+  fill: var(--map-pin);
+}
+
+.hub {
+  fill: var(--map-ink);
+}
+
+.border {
+  fill: none;
+  stroke: var(--map-warn);
+}
+
+.label {
+  fill: var(--map-ink);
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--map-bg);
+  stroke-linejoin: round;
+}
+
+.note {
+  fill: var(--map-mut);
+  font-weight: 400;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mark {
+  cursor: pointer;
+}
+
+.markDot {
+  stroke: var(--map-bg);
+}
+
+.warnDot {
+  fill: var(--map-warn);
+}
+
+.alertDot {
+  fill: var(--map-alert);
+}
+
+.infoDot {
+  fill: var(--map-pin);
+}
+
+.markActive {
+  stroke: #fff;
+}
+
+.truck {
+  cursor: pointer;
+}
+
+.truckBody {
+  fill: var(--track);
+  stroke: var(--map-bg);
+}
+
+.truckIdle {
+  fill: var(--map-warn);
+}
+
+.truckArrow {
+  fill: var(--track-ink);
+}
+
+.halo {
+  fill: var(--track-glow);
+  opacity: .35;
+  animation: pulse 2.2s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.plate {
+  fill: var(--map-ink);
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--map-bg);
+  stroke-linejoin: round;
+}
+
+@keyframes pulse {
+  0% { transform: scale(.7); opacity: .5; }
+  70% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo {
+    animation: none;
+    opacity: .28;
+  }
+}

@@ -1,0 +1,216 @@
+.shell {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: calc(var(--ctl) + var(--sp-2));
+  align-items: center;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-mask-image: var(--tabs-edge-mask, none);
+  mask-image: var(--tabs-edge-mask, none);
+  translate: 0 0;
+  transition: translate var(--t-hover) ease;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.item {
+  display: inline-flex;
+  height: var(--ctl-sm);
+  padding: 0 10px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--r-xs);
+  color: var(--mut);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    transform var(--t-press);
+
+  &:active {
+    transform: scale(.98);
+    transition-duration: 0s;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: -2px;
+  }
+}
+
+.active {
+  color: var(--ink);
+  background: var(--sunken);
+}
+
+.label {
+  display: grid;
+
+  & > span,
+  &::after {
+    grid-area: 1 / 1;
+  }
+
+  &::after {
+    visibility: hidden;
+    content: attr(data-label);
+    font-weight: 600;
+  }
+}
+
+.active .label > span {
+  font-weight: 600;
+}
+
+.count {
+  color: var(--faint);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.scrollButton {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--mut);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    opacity var(--t-hover),
+    transform var(--t-press);
+
+  &:active {
+    transform: scale(.98);
+    transition-duration: 0s;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+  }
+}
+
+.back {
+  left: var(--sp-2);
+}
+
+.forward {
+  right: var(--sp-2);
+}
+
+.scrollButton:focus-visible.available {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.canScrollForward .tabs {
+  --tabs-edge-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--touch)),
+    transparent 100%
+  );
+}
+
+.canScrollBack:not(.canScrollForward) .tabs {
+  --tabs-edge-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--touch),
+    #000 100%
+  );
+}
+
+.canScrollBack.canScrollForward .tabs {
+  --tabs-edge-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--touch),
+    #000 calc(100% - var(--touch)),
+    transparent 100%
+  );
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .item:hover {
+    color: var(--ink);
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .shell:hover .scrollButton.available {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .scrollButton.available:hover {
+    color: var(--ink);
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .shell:has(.back.available:hover) .tabs {
+    translate: var(--sp-1) 0;
+  }
+
+  .shell:has(.forward.available:hover) .tabs {
+    translate: calc(var(--sp-1) * -1) 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .tabs {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs,
+  .item,
+  .scrollButton {
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .active,
+  .scrollButton {
+    outline: 1px solid var(--ink);
+    outline-offset: -1px;
+  }
+}

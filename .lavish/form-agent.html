@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Агент заполняет форму — паттерн</title>
+<style>
+:root{
+  --bg:#f3f3f5;--panel:#fff;--sunken:#f6f6f8;--hair:rgba(20,21,26,.06);
+  --ink:#14151a;--mut:#6b6f76;--faint:#7c818a;--deco:#9a9ea6;
+  --ac:#1b84ff;--ac-soft:rgba(27,132,255,.10);--ac-ink:#0b5fc4;
+  --ok:#17c653;--ok-soft:rgba(23,198,83,.13);--ok-ink:#0f8f3c;
+  --wr:#f6b100;--wr-soft:rgba(246,177,0,.15);--wr-ink:#8a6100;
+  --er:#f8285a;--er-soft:rgba(248,40,90,.10);--er-ink:#c21344;
+  --r:16px;--r-s:10px;--r-xs:8px;--r-pill:20px;
+  --sh-1:0 1px 2px rgba(20,21,26,.04),0 8px 24px rgba(20,21,26,.06);
+  --sh-2:0 2px 4px rgba(20,21,26,.04),0 16px 40px rgba(20,21,26,.10);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink)}
+button,input{font:inherit}
+.num{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}
+
+.wrap{max-width:1240px;margin:0 auto;padding:26px 24px 70px}
+.head h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.6px}
+.head p{margin:6px 0 0;color:var(--mut);max-width:76ch}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px}
+.lg{display:inline-flex;align-items:center;gap:7px;background:var(--panel);box-shadow:var(--sh-1);border-radius:var(--r-pill);padding:6px 12px;font-size:12.5px;color:var(--mut)}
+.lg i{width:11px;height:11px;border-radius:4px;flex:none}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.82fr);gap:18px;align-items:start}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+.card{background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);overflow:hidden}
+.card>header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--hair)}
+.card>header h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.3px}
+.card>header .sub{font-size:12.5px;color:var(--mut)}
+.card>header .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* полоса агента */
+.astrip{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px 18px;background:var(--ac-soft);border-bottom:1px solid var(--hair)}
+.astrip .ic{width:30px;height:30px;border-radius:var(--r-xs);background:var(--panel);color:var(--ac);display:grid;place-items:center;flex:none}
+.astrip .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.astrip .s{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.5}
+.astrip .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+
+.form{padding:6px 18px 18px}
+.f{padding:12px 0;border-bottom:1px solid var(--hair);display:grid;gap:6px}
+.f:last-child{border-bottom:0}
+.f .lab{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut)}
+.f .lab b{font-weight:500;color:var(--mut)}
+.f .val{display:flex;align-items:center;gap:10px}
+.inp{flex:1 1 auto;min-width:0;height:40px;border:1px solid transparent;border-radius:var(--r-s);background:var(--sunken);padding:0 12px;color:var(--ink);font-size:14.5px;transition:background .14s,border-color .14s}
+.inp:focus{outline:none;border-color:var(--ac);background:var(--panel)}
+.inp:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.inp::placeholder{color:var(--deco)}
+
+/* состояния поля */
+.f[data-s="ai"] .inp{background:var(--ac-soft)}
+.f[data-s="low"] .inp{background:var(--wr-soft)}
+.f[data-s="mismatch"] .inp{background:var(--er-soft)}
+.f[data-s="blank"] .inp{background:var(--panel);border-color:var(--hair);border-style:dashed}
+.f[data-s="ok"] .inp,.f[data-s="edited"] .inp{background:var(--sunken)}
+
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;line-height:16px}
+.tag.b{background:var(--ac-soft);color:var(--ac-ink)}
+.tag.w{background:var(--wr-soft);color:var(--wr-ink)}
+.tag.e{background:var(--er-soft);color:var(--er-ink)}
+.tag.g{background:var(--ok-soft);color:var(--ok-ink)}
+.tag.n{background:var(--sunken);color:var(--mut)}
+.f .note{font-size:12px;color:var(--mut);line-height:1.5}
+.f[data-s="mismatch"] .note{color:var(--er-ink)}
+.f .src{background:none;border:0;padding:0;color:var(--ac-ink);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.f .src:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.ok-btn{flex:none;height:32px;padding:0 12px;border:0;border-radius:var(--r-xs);background:var(--panel);box-shadow:var(--sh-1);color:var(--ink);font-size:12.5px;font-weight:500;cursor:pointer}
+.ok-btn:hover{background:var(--sunken)}
+.ok-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.f[data-s="ok"] .ok-btn,.f[data-s="edited"] .ok-btn{display:none}
+
+.btn{height:34px;padding:0 14px;border:0;border-radius:var(--r-xs);background:var(--ac);color:#fff;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:transform 100ms,filter 140ms}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:scale(.98)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.sec{background:var(--panel);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.sm{height:30px;font-size:12.5px;padding:0 11px}
+.btn:disabled{background:rgba(20,21,26,.08);color:var(--faint);cursor:not-allowed;transform:none;filter:none}
+
+.foot{display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--hair);background:var(--sunken);flex-wrap:wrap}
+.foot .left{font-size:12.5px;color:var(--mut)}
+
+/* документ */
+.doc{position:sticky;top:18px}
+.doc .sheet{background:#2c2f36;padding:16px;display:grid;place-items:center}
+.doc svg{width:100%;height:auto;max-height:430px;border-radius:6px}
+.hl{fill:rgba(27,132,255,.3);stroke:#1b84ff;stroke-width:1.5;opacity:0;transition:opacity .2s}
+.hl.on{opacity:1}
+.doc .cap{padding:11px 16px;font-size:12.5px;color:var(--mut);border-top:1px solid var(--hair);display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>Агент заполняет форму</h1>
+    <p>Приёмка материала по накладной. Прораб снял документ — агент разобрал его, заполнил поля, сверил с заказом и показал, где не сошлось. Подтверждает человек, поле за полем или всё разом.</p>
+  </div>
+
+  <div class="legend">
+    <span class="lg"><i style="background:var(--ac-soft);box-shadow:inset 0 0 0 1px var(--ac)"></i>заполнил агент</span>
+    <span class="lg"><i style="background:var(--wr-soft);box-shadow:inset 0 0 0 1px var(--wr)"></i>не уверен</span>
+    <span class="lg"><i style="background:var(--er-soft);box-shadow:inset 0 0 0 1px var(--er)"></i>расхождение с заказом</span>
+    <span class="lg"><i style="background:var(--panel);box-shadow:inset 0 0 0 1px var(--deco)"></i>не нашёл, заполнить руками</span>
+    <span class="lg"><i style="background:var(--sunken);box-shadow:inset 0 0 0 1px var(--hair)"></i>подтверждено человеком</span>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <header><h2>Приёмка материала</h2><span class="sub">ЖК «Северный», корпус Б · 12.09, 14:20</span></header>
+
+      <div class="astrip">
+        <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+        <div>
+          <div class="t" id="a-title">Разобрал накладную, заполнил 11 полей из 12</div>
+          <div class="s" id="a-sub">Два поля требуют вашего внимания: объём не сошёлся с заказом, марку бетона прочитал неуверенно. Номер ТТН в кадр не попал — впишите руками.</div>
+          <div class="acts">
+            <button class="btn sm" type="button" id="accept-all">Принять бесспорные <span class="num" id="cnt">(9)</span></button>
+            <button class="btn sm sec" type="button" id="reshoot">Переснять документ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form" id="form"></div>
+
+      <div class="foot">
+        <span class="left" id="foot-left"></span>
+        <span style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn sec" type="button">Отклонить поставку</button>
+          <button class="btn" type="button" id="submit" disabled>Принять материал</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="card doc">
+      <header><h2>Накладная</h2><span class="sub">фото, 12.09 14:18</span></header>
+      <div class="sheet">
+        <svg viewBox="0 0 320 430" role="img" aria-label="Снимок товарной накладной с подсвеченными фрагментами">
+          <rect width="320" height="430" rx="4" fill="#f4f2ec"/>
+          <g fill="#8d8a82">
+            <rect x="20" y="22" width="120" height="7" rx="3"/><rect x="20" y="36" width="80" height="5" rx="2.5"/>
+            <rect x="200" y="22" width="100" height="5" rx="2.5"/><rect x="200" y="33" width="70" height="5" rx="2.5"/>
+          </g>
+          <rect x="20" y="56" width="280" height="1.5" fill="#c9c5bb"/>
+          <g fill="#55524c">
+            <rect x="20" y="70" width="60" height="6" rx="3"/><rect x="20" y="96" width="60" height="6" rx="3"/>
+            <rect x="20" y="122" width="60" height="6" rx="3"/><rect x="20" y="148" width="60" height="6" rx="3"/>
+          </g>
+          <g fill="#2f2d29">
+            <rect x="100" y="70" width="130" height="6" rx="3"/><rect x="100" y="96" width="90" height="6" rx="3"/>
+            <rect x="100" y="122" width="110" height="6" rx="3"/><rect x="100" y="148" width="70" height="6" rx="3"/>
+          </g>
+          <rect x="20" y="176" width="280" height="1.5" fill="#c9c5bb"/>
+          <g fill="#8d8a82">
+            <rect x="20" y="190" width="40" height="5" rx="2.5"/><rect x="150" y="190" width="40" height="5" rx="2.5"/><rect x="240" y="190" width="40" height="5" rx="2.5"/>
+          </g>
+          <g fill="#2f2d29">
+            <rect x="20" y="212" width="110" height="6" rx="3"/><rect x="150" y="212" width="50" height="6" rx="3"/><rect x="240" y="212" width="45" height="6" rx="3"/>
+            <rect x="20" y="238" width="95" height="6" rx="3"/><rect x="150" y="238" width="50" height="6" rx="3"/><rect x="240" y="238" width="45" height="6" rx="3"/>
+          </g>
+          <rect x="20" y="270" width="280" height="1.5" fill="#c9c5bb"/>
+          <g fill="#b5b1a8">
+            <rect x="20" y="286" width="150" height="5" rx="2.5"/><rect x="20" y="300" width="120" height="5" rx="2.5"/>
+            <rect x="20" y="330" width="90" height="5" rx="2.5"/>
+          </g>
+          <path d="M200 320q18-18 34 0t34-4" stroke="#3a4a8a" stroke-width="2" fill="none" opacity=".7"/>
+          <rect x="16" y="356" width="288" height="54" rx="4" fill="#e6e2d8"/>
+          <g fill="#b5b1a8"><rect x="28" y="370" width="100" height="5" rx="2.5"/><rect x="28" y="384" width="140" height="5" rx="2.5"/></g>
+          <rect class="hl" id="h-supplier" x="96" y="64" width="140" height="18" rx="3"/>
+          <rect class="hl" id="h-date" x="96" y="90" width="100" height="18" rx="3"/>
+          <rect class="hl" id="h-grade" x="16" y="206" width="122" height="20" rx="3"/>
+          <rect class="hl" id="h-volume" x="146" y="206" width="60" height="20" rx="3"/>
+          <rect class="hl" id="h-price" x="236" y="206" width="55" height="20" rx="3"/>
+          <rect class="hl" id="h-driver" x="96" y="142" width="82" height="18" rx="3"/>
+        </svg>
+      </div>
+      <div class="cap" id="doc-cap">Нажмите «где это в документе» у любого поля — подсвечу фрагмент.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var F=[
+    {k:'supplier',lab:'Поставщик',v:'БетонТрансСтрой',s:'ai',hl:'h-supplier',src:'строка «Грузоотправитель»'},
+    {k:'ttn',lab:'Номер ТТН',v:'',s:'blank',note:'Верхний правый угол не попал в кадр. Впишите руками или переснимите документ.'},
+    {k:'date',lab:'Дата отгрузки',v:'12.09.2026',s:'ai',hl:'h-date',src:'строка «Дата»'},
+    {k:'grade',lab:'Марка бетона',v:'B25 W6 F150',s:'low',conf:61,hl:'h-grade',src:'первая позиция таблицы',note:'Печать смазана: «F150» может быть «F100». Сверьте с паспортом партии.'},
+    {k:'volume',lab:'Объём',v:'280 м³',s:'mismatch',hl:'h-volume',src:'колонка «Количество»',note:'В заказе ЗК-115 было 300 м³. Недовоз 20 м³ — это 0,4 захватки, заливку 4-го этажа закрыть не хватит.'},
+    {k:'price',lab:'Цена за м³',v:'6 240 ₽',s:'ai',hl:'h-price',src:'колонка «Цена»'},
+    {k:'sum',lab:'Сумма',v:'1 747 200 ₽',s:'ai',note:'Посчитал сам: 280 × 6 240. В накладной итог не читается.'},
+    {k:'driver',lab:'Водитель',v:'Сафин Р. Н.',s:'ai',hl:'h-driver',src:'строка «Отпуск произвёл»'},
+    {k:'vehicle',lab:'Номер машины',v:'Х 412 ТК 799',s:'ai',hl:'h-driver',src:'строка «Транспорт»'},
+    {k:'object',lab:'Объект',v:'ЖК «Северный», корпус Б',s:'ai',note:'Из контекста: вы открыли приёмку с этого объекта.'},
+    {k:'receiver',lab:'Принял',v:'Сергей Ермолаев',s:'ai',note:'Из контекста: ваша учётная запись.'},
+    {k:'time',lab:'Время приёмки',v:'14:20',s:'ai',note:'Из контекста: текущее время.'}
+  ];
+  var LBL={ai:['заполнил агент','b'],low:['не уверен','w'],mismatch:['расхождение','e'],blank:['не нашёл','n'],ok:['подтверждено','g'],edited:['исправлено вами','g']};
+  var form=document.getElementById('form');
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+
+  function light(id){
+    document.querySelectorAll('.hl').forEach(function(h){h.classList.remove('on');});
+    var cap=document.getElementById('doc-cap');
+    if(!id){cap.textContent='Нажмите «где это в документе» у любого поля — подсвечу фрагмент.';return;}
+    var h=document.getElementById(id);if(h)h.classList.add('on');
+  }
+
+  function render(){
+    form.innerHTML='';
+    F.forEach(function(f){
+      var row=el('div','f');row.setAttribute('data-s',f.s);
+      var lab=el('div','lab');lab.appendChild(el('b',null,f.lab));
+      var L=LBL[f.s];var tg=el('span','tag '+L[1],L[0]);lab.appendChild(tg);
+      if(f.s==='low'&&f.conf){lab.appendChild(el('span','tag n',f.conf+'%'));}
+      row.appendChild(lab);
+
+      var val=el('div','val');
+      var inp=document.createElement('input');inp.className='inp';inp.value=f.v;
+      inp.placeholder=f.s==='blank'?'Впишите номер с документа':'';
+      inp.setAttribute('aria-label',f.lab);
+      inp.addEventListener('input',function(){
+        f.v=inp.value;
+        if(f.s!=='ok'){f.s=inp.value.trim()?'edited':'blank';render();
+          form.querySelectorAll('.inp')[F.indexOf(f)].focus();}
+      });
+      val.appendChild(inp);
+      if(f.s!=='ok'&&f.s!=='edited'&&f.s!=='blank'){
+        var ok=el('button','ok-btn','Верно');ok.type='button';
+        ok.setAttribute('aria-label','Подтвердить поле «'+f.lab+'»');
+        ok.onclick=function(){f.s='ok';render();};
+        val.appendChild(ok);
+      }
+      row.appendChild(val);
+
+      if(f.note)row.appendChild(el('div','note',f.note));
+      if(f.hl){
+        var s=el('button','src','где это в документе');s.type='button';
+        s.onclick=function(){light(f.hl);document.getElementById('doc-cap').textContent='Поле «'+f.lab+'» — '+f.src+'.';};
+        row.appendChild(s);
+      }
+      form.appendChild(row);
+    });
+    status();
+  }
+
+  function status(){
+    var open=F.filter(function(f){return f.s!=='ok'&&f.s!=='edited';});
+    var plain=F.filter(function(f){return f.s==='ai';});
+    document.getElementById('cnt').textContent='('+plain.length+')';
+    document.getElementById('accept-all').disabled=plain.length===0;
+    var done=F.length-open.length;
+    document.getElementById('foot-left').textContent='Проверено '+done+' из '+F.length+' полей';
+    document.getElementById('submit').disabled=open.length>0;
+    if(!open.length){
+      document.getElementById('a-title').textContent='Все поля проверены';
+      document.getElementById('a-sub').textContent='Форму можно принимать. Недовоз 20 м³ попадёт в материалы и уменьшит закрытие по заказу ЗК-115.';
+    }
+  }
+
+  document.getElementById('accept-all').onclick=function(){
+    F.forEach(function(f){if(f.s==='ai')f.s='ok';});
+    render();
+    document.getElementById('a-title').textContent='Принял бесспорные поля';
+    document.getElementById('a-sub').textContent='Остались те, где я не уверен или нашёл расхождение, — их пачкой принимать нельзя, посмотрите каждое.';
+  };
+  document.getElementById('reshoot').onclick=function(){
+    document.getElementById('doc-cap').textContent='В демо пересъёмка не реализована — в продукте откроется камера.';
+  };
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI Kit — Поток ИИ</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+/* ───────── каркас страницы кита ───────── */
+.kit{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;max-width:1360px;margin:0 auto;padding:24px}
+.toc{position:sticky;top:24px;align-self:start;background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-side);padding:14px 10px;display:grid;gap:2px;font-size:13px}
+.toc b{padding:6px 10px 10px;font-size:14.5px;letter-spacing:-.2px}
+.toc a{padding:6px 10px;border-radius:var(--r-s);color:var(--mut);text-decoration:none;transition:background var(--t-hover),color var(--t-hover)}
+.kit-sec{display:grid;gap:14px;margin-bottom:40px}
+.kit-sec>h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.4px}
+.kit-sec>p{margin:-6px 0 0;color:var(--mut);font-size:13.5px;max-width:70ch}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.demo{background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);padding:18px;display:grid;gap:14px}
+.demo.canvas{background:var(--bg);box-shadow:none;border:1px dashed rgba(20,21,26,.12)}
+.lbl{font-size:11.5px;color:var(--faint);letter-spacing:.02em}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
+code{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--sunken);padding:1px 6px;border-radius:5px;color:var(--mut)}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs-body)/var(--lh-body) var(--font);user-select:none}
+button,input,textarea,select{font:inherit;color:inherit}
+:where(input,textarea,pre,code,[contenteditable="true"],.is-selectable,.is-selectable *){user-select:text}
+@media(max-width:900px){.kit{grid-template-columns:1fr}.toc{position:static}}
+
+/* ───────── токены наглядно ───────── */
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.sw div{display:grid;gap:5px;font-size:11.5px;color:var(--mut)}
+.sw i{display:block;height:44px;border-radius:var(--r-s);box-shadow:inset 0 0 0 1px rgba(20,21,26,.06)}
+.sw b{color:var(--ink);font-weight:600;font-size:12px}
+.rad{display:flex;gap:14px;flex-wrap:wrap}
+.rad div{width:72px;height:72px;background:var(--sunken);display:grid;place-items:end;padding:6px;font-size:11px;color:var(--mut)}
+.shd{display:flex;gap:24px;flex-wrap:wrap;padding:8px}
+.shd div{width:140px;height:80px;background:var(--panel);border-radius:var(--r);display:grid;place-items:end;padding:8px;font-size:11px;color:var(--mut)}
+.type div{display:flex;align-items:baseline;gap:16px;padding:8px 0;border-top:1px solid var(--hair)}
+.type div:first-child{border-top:0}
+.type span{flex:none;width:170px;font-size:11.5px;color:var(--faint)}
+.spc{display:flex;gap:10px;align-items:flex-end}
+.spc i{display:block;background:var(--ac-soft);border-radius:3px}
+
+/* ───────── компоненты (то, что станет *.module.css) ───────── */
+.btn{height:var(--ctl);padding:0 15px;border:0;border-radius:var(--r-s);background:var(--ac);color:#fff;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:7px;position:relative;transition:transform var(--t-press),background var(--t-hover)}
+.btn:active:not([disabled]){transform:scale(.98)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.sec{background:var(--panel);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.ghost{background:transparent;color:var(--ac-ink);box-shadow:none;padding:0 8px}
+.btn.danger{background:transparent;color:var(--er-ink);box-shadow:var(--sh-1)}
+.btn.sm{height:var(--ctl-sm);font-size:12.5px;padding:0 11px;border-radius:var(--r-xs)}
+.btn.xs{height:var(--ctl-xs);font-size:12px;padding:0 10px;border-radius:var(--r-xs)}
+.btn[disabled]{background:rgba(20,21,26,.1);color:var(--faint);cursor:not-allowed;box-shadow:none;filter:none;transform:none}
+.btn[data-pending]{color:transparent}.btn[data-pending]::after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+.btn.sec[data-pending]::after{border-color:rgba(20,21,26,.15);border-top-color:var(--ink)}
+@keyframes spin{to{transform:rotate(1turn)}}
+.iconbtn{width:var(--ctl);height:var(--ctl);border:0;border-radius:var(--r-s);background:var(--panel);box-shadow:var(--sh-1);color:var(--mut);display:grid;place-items:center;cursor:pointer;position:relative;transition:transform var(--t-press),background var(--t-hover)}
+.iconbtn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--er);border:2px solid var(--panel)}
+.seg{display:inline-flex;gap:2px;background:rgba(20,21,26,.05);border-radius:var(--r-s);padding:3px}
+.seg button{border:0;background:transparent;border-radius:var(--r-xs);padding:7px 14px;font-size:13px;color:var(--mut);cursor:pointer;transition:transform var(--t-press),background var(--t-hover),color var(--t-hover),box-shadow var(--t-hover)}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(20,21,26,.1)}
+.seg button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.chip{border:0;background:var(--panel);box-shadow:var(--sh-1);border-radius:var(--r-pill);padding:6px 12px;font-size:12.5px;color:var(--mut);cursor:pointer;transition:transform var(--t-press),background var(--t-hover),color var(--t-hover),filter var(--t-hover)}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.iconbtn:active,.seg button:active,.chip:active{transform:scale(.98)}
+.bdg{display:inline-flex;align-items:center;font-size:var(--fs-micro);font-weight:500;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;line-height:16px}
+.bdg.ok{background:var(--ok-soft);color:var(--ok-ink)}.bdg.wr{background:var(--wr-soft);color:var(--wr-ink)}.bdg.er{background:var(--er-soft);color:var(--er-ink)}.bdg.ac{background:var(--ac-soft);color:var(--ac-ink)}.bdg.n{background:var(--sunken);color:var(--mut)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--ac);color:#fff;display:inline-grid;place-items:center;font-size:12.5px;font-weight:600;flex:none}
+.av.sm{width:24px;height:24px;font-size:10px}
+.card{background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);transition:transform var(--t-lift),box-shadow var(--t-lift)}
+.tile{padding:var(--pad-card);display:grid;gap:4px}
+.tile span{font-size:12.5px;color:var(--mut)}
+.tile b{font-size:var(--fs-num);font-weight:600;letter-spacing:var(--ls-num);line-height:var(--lh-num)}
+.tile .d{font-size:12px;color:var(--mut)}.tile .d.up{color:var(--er-ink)}.tile .d.wr{color:var(--wr-ink)}.tile .d.ok{color:var(--ok-ink)}
+.meter{height:5px;border-radius:3px;background:var(--sunken);overflow:hidden;margin-top:6px}.meter i{display:block;height:100%;border-radius:3px;background:var(--ac)}
+.sh{display:flex;align-items:center;gap:10px}.sh h3{margin:0;font-size:var(--fs-h2);font-weight:600;letter-spacing:var(--ls-h2)}.sh .cnt{font-size:12.5px;color:var(--faint)}.sh .right{margin-left:auto}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:500;color:var(--mut);font-size:12px;padding:10px 18px;border-bottom:1px solid rgba(20,21,26,.07);white-space:nowrap}
+table.t td{padding:0 18px;height:46px;border-bottom:1px solid var(--hair);vertical-align:middle}
+table.t tbody tr{transition:background var(--t-hover)}table.t tbody tr:last-child td{border-bottom:0}
+table.t td.r,table.t th.r{text-align:right;white-space:nowrap}
+.lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;cursor:pointer;transition:background var(--t-hover)}
+.lrow+.lrow{border-top:1px solid var(--hair)}
+.lrow .thumb{width:40px;height:40px;border-radius:var(--r-s);background:linear-gradient(150deg,#5a5f6a,#2c3038)}
+.lrow .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px}.lrow .m{font-size:12px;color:var(--mut);margin-top:2px}
+.lrow .end{display:grid;justify-items:end;gap:4px;font-size:12px;color:var(--mut)}.lrow .end b{color:var(--ink)}
+.feed .it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 18px;cursor:pointer;transition:background var(--t-hover)}
+.feed .it+.it{border-top:1px solid var(--hair)}
+.feed .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center}
+.feed .k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.feed .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px}.feed .m{font-size:12.5px;color:var(--mut);margin-top:2px}
+.ai{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:var(--pad-card)}
+.ai .ic{width:34px;height:34px;border-radius:var(--r-s);background:var(--ac-soft);color:var(--ac);display:grid;place-items:center}
+.ai h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:1.3}
+.ai p{margin:4px 0 0;font-size:13.5px;color:var(--mut);line-height:1.5}
+.ai .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.conf{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut)}
+.conf i{display:inline-block;width:56px;height:5px;border-radius:3px;background:var(--sunken);overflow:hidden}.conf i::after{content:"";display:block;height:100%;width:var(--p);background:var(--ac);border-radius:3px}
+.ai .why{grid-column:1/-1;padding:12px 14px;background:var(--sunken);border-radius:var(--r-s);font-size:12.5px;line-height:1.55;color:var(--mut)}
+.ai .why ul{margin:6px 0 0;padding-left:18px}
+.preview{border-left:3px solid var(--wr);background:var(--wr-soft);border-radius:var(--r-s);padding:10px 12px;font-size:12.5px;line-height:1.5;display:grid;gap:6px}
+.preview b{font-weight:600}.preview ul{margin:0;padding-left:16px}.preview .acts{display:flex;gap:6px}
+.done{display:flex;align-items:center;gap:9px;background:var(--ok-soft);color:var(--ok-ink);border-radius:var(--r-s);padding:9px 12px;font-size:12.5px;font-weight:500}
+.think{display:grid;gap:5px;padding:10px 13px;border-radius:14px;border-bottom-left-radius:5px;background:var(--sunken);font-size:12.5px;color:var(--mut);max-width:360px}
+.think div{display:flex;align-items:center;gap:8px}
+.think i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(20,21,26,.12);border-top-color:var(--ac);animation:spin .8s linear infinite;flex:none}
+.think div[data-done] i{animation:none;border:0;background:var(--ok);display:grid;place-items:center}
+.think div[data-done] i::after{content:"";box-sizing:content-box;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.msg{display:grid;gap:6px;max-width:360px}.msg.me{justify-self:end}
+.msg .b{padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;background:var(--sunken)}
+.msg.me .b{background:var(--ac);color:#fff;border-bottom-right-radius:5px}.msg:not(.me) .b{border-bottom-left-radius:5px}
+.msg .t{font-size:11px;color:var(--faint);padding:0 4px}.msg.me .t{text-align:right}
+.agent{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;padding:11px 10px;border-radius:12px;cursor:pointer;border:0;background:transparent;text-align:left;width:100%;transition:background var(--t-hover)}
+.agent[aria-selected="true"]{background:var(--ac-soft)}
+.agent .ava{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.agent>span:nth-child(2){min-width:0}
+.agent .n{display:block;font-size:13.5px;font-weight:600;letter-spacing:-.1px}.agent .n small{font-weight:500;font-size:11px;color:var(--faint);margin-left:6px}
+.agent .l{display:block;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.agent .u{min-width:18px;height:18px;border-radius:9px;background:var(--ac);color:#fff;font-size:11px;font-weight:600;display:grid;place-items:center;padding:0 5px}
+.fields-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:13px;font-weight:600}
+.field .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-height:18px}
+.field .cnt{font-size:11px;color:var(--faint)}.field .cnt.near{color:var(--wr-ink)}
+.field input{height:var(--ctl);border:0;border-radius:var(--r-s);background:var(--sunken);padding:0 14px;font-size:13.5px;color:var(--ink);width:100%;min-width:0}
+.field input:focus,.field input.is-focus{outline:2px solid var(--ac);outline-offset:-1px;background:var(--panel)}
+.field input[disabled]{color:var(--faint);cursor:not-allowed}
+.field.error input{outline:2px solid var(--er);outline-offset:-1px;background:var(--panel)}
+.field .hint{font-size:12px;color:var(--mut)}.field.error .hint{color:var(--er-ink)}
+.search{display:flex;align-items:center;gap:8px;height:var(--ctl);padding:0 12px;border-radius:var(--r-s);background:var(--panel);box-shadow:var(--sh-1);color:var(--faint);font-size:13px;min-width:260px;cursor:text;transition:background var(--t-hover),color var(--t-hover)}
+.search .kbd{margin-left:auto;font-size:11px;color:var(--faint);background:var(--sunken);padding:1px 6px;border-radius:5px}
+.gantt{display:grid;gap:6px}
+.gantt .row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:14px;align-items:center;padding:5px 0}
+.gantt .lb{font-size:13px;font-weight:500}
+.gantt .track{position:relative;height:24px;background:repeating-linear-gradient(90deg,rgba(20,21,26,.06) 0 1px,transparent 1px calc(100%/6))}
+.gantt .track i{position:absolute;height:8px;border-radius:4px}.gantt .plan{top:3px;background:rgba(20,21,26,.1)}.gantt .fact{top:13px}
+.gantt .today{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.55}
+.rail{width:var(--rail-w);background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-side);display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0}
+.rail .tab{position:relative;width:42px;height:42px;border:0;border-radius:12px;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer;transition:background var(--t-hover),color var(--t-hover)}
+.rail .tab[aria-pressed="true"]{background:var(--ac-soft);color:var(--ac-ink)}
+.rail .tab .n{position:absolute;top:2px;right:2px;min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--er);color:#fff;font-size:10.5px;font-weight:600;display:grid;place-items:center;border:2px solid var(--panel)}
+.mascot{width:30px;height:30px}.mascot .pupil{transform-origin:center;animation:blink 4.6s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.state{padding:40px 24px;text-align:center;display:grid;gap:8px;justify-items:center}
+.state .ic{width:44px;height:44px;border-radius:12px;background:var(--sunken);display:grid;place-items:center;color:var(--mut)}
+.state h4{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px}.state p{margin:0;font-size:13px;color:var(--mut);max-width:34ch}
+.skel{display:grid;gap:10px;padding:var(--pad-card)}
+.skel i{display:block;height:12px;border-radius:6px;background:var(--sunken);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+.shellDemo{background:var(--bg);padding:18px;border-radius:var(--r)}
+.shellBox{display:flex;background:var(--shell);border-radius:var(--r);overflow:hidden;min-height:210px;box-shadow:inset 0 0 0 1px var(--line)}
+.shellSide{width:170px;flex:none;padding:16px 10px;border-right:1px solid var(--hair);font-size:13px}
+.shellSide .b{display:flex;align-items:center;gap:8px;font-weight:600;padding:0 6px 16px}
+.shellSide .b i{width:26px;height:26px;border-radius:var(--r-xs);background:var(--stamp);display:block}
+.shellSide .g{padding:0 8px;margin:10px 0 4px;font-size:12px;color:var(--deco)}
+.shellSide a{display:block;padding:8px;border-radius:var(--r-s);color:var(--mut);text-decoration:none}
+.shellSide a[aria-current]{background:var(--ac-soft);color:var(--ac-ink);font-weight:500}
+.shellMain{flex:1 1 auto;min-width:0;padding:16px 18px;display:grid;gap:12px;align-content:start}
+.shellHead{display:flex;align-items:center;gap:12px}
+.shellHead h4{margin:0;font-size:20px;font-weight:600;letter-spacing:-.3px;flex:1 1 auto}
+.shellHead .s{width:150px;height:30px;border-radius:var(--r-s);background:var(--panel);box-shadow:inset 0 0 0 1px var(--hair)}
+.shellMain .blk{background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);height:52px}
+.stamp{width:var(--stamp-size);height:var(--stamp-size);border-radius:var(--r-s);background:var(--stamp);display:grid;place-items:center;color:#fff}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:var(--r-s);background:var(--sunken)}
+.seg button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;border-radius:8px;background:none;font:inherit;font-size:var(--fs-sm);color:var(--mut);cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);font-weight:500;box-shadow:var(--sh-1)}
+.seg button b{font-size:var(--fs-micro);font-weight:500;color:var(--mut);background:var(--sunken);padding:1px 6px;border-radius:var(--r-pill)}
+.btn.dark{background:var(--stamp);color:#fff}
+.statrow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);padding:16px 0}
+.statrow .c{display:flex;align-items:center;gap:12px;padding:0 18px;min-width:0}
+.statrow .c+.c{border-left:1px solid var(--hair)}
+.statrow .i{width:30px;height:30px;flex:none;border-radius:var(--r-xs);background:var(--sunken)}
+.statrow .b{min-width:0;display:grid;gap:2px;flex:1 1 auto}
+.statrow .l{font-size:var(--fs-cap);color:var(--mut)}
+.statrow .v{font-size:19px;font-weight:600;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.statrow .d{margin-left:auto;font-size:var(--fs-micro);font-weight:600;padding:2px 7px;border-radius:var(--r-pill)}
+.insight{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:var(--r-s);font-size:var(--fs-sm)}
+.insight .i{width:22px;height:22px;flex:none;border-radius:6px;background:currentColor;opacity:.25}
+.insight b{font-weight:600}
+.insight p{margin:2px 0 0;line-height:var(--lh-body)}
+.insight.info{background:var(--ac-soft);color:var(--ac-ink)}
+.insight.warn{background:var(--wr-soft);color:var(--wr-ink)}
+.bkbar{display:flex;gap:2px;height:8px;border-radius:var(--r-pill);overflow:hidden;background:var(--sunken)}
+.bkbar span{display:block;height:100%}
+.bklegend{margin:12px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.bklegend .n{display:flex;align-items:center;gap:7px;font-size:var(--fs-cap);color:var(--mut)}
+.bklegend .n i{width:7px;height:7px;border-radius:50%}
+.bklegend .f{font-size:var(--fs-body);font-weight:600;font-variant-numeric:tabular-nums}
+.bklegend .f small{display:block;margin-top:1px;font-size:var(--fs-micro);font-weight:400;color:var(--mut)}
+.phone{width:300px;border-radius:26px;background:var(--panel);box-shadow:var(--sh-side);overflow:hidden;position:relative;height:270px}
+.phone .body{padding:16px;font-size:13px;color:var(--mut)}
+.mbar{position:absolute;inset:auto 0 0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line)}
+.mbar a,.mbar button{min-height:var(--mobile-bar-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;font:inherit;font-size:var(--fs-micro);font-weight:500;color:var(--mut);text-decoration:none;cursor:pointer}
+.mbar a[aria-current],.mbar button[aria-expanded="true"]{color:var(--ac-ink)}
+.mbar .ico{width:20px;height:20px;border-radius:5px;background:currentColor;opacity:.5}
+.msheet{position:absolute;inset:auto 0 var(--mobile-bar-h);background:var(--panel);border-radius:var(--r) var(--r) 0 0;box-shadow:var(--sh-panel);padding:8px 12px 14px;display:grid;gap:2px}
+.msheet .grab{width:36px;height:4px;margin:0 auto 8px;border-radius:var(--r-pill);background:var(--line)}
+.msheet a{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px;border-radius:var(--r-s);color:var(--ink);text-decoration:none;font-size:var(--fs-body);font-weight:500}
+.side{width:var(--side-w);background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-side);padding:14px 12px;display:grid;gap:4px;font-size:13.5px}
+.side h5{margin:10px 0 4px;padding:0 10px;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.side a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-s);color:var(--mut);font-weight:500;text-decoration:none;transition:background var(--t-hover),color var(--t-hover)}
+.side a[aria-current]{background:var(--ac-soft);color:var(--ac-ink)}
+.side a b{margin-left:auto;font-size:11px;font-weight:600;color:var(--faint);background:var(--sunken);padding:1px 7px;border-radius:var(--r-pill)}
+.side .ico{width:16px;height:16px;border-radius:4px;background:currentColor;opacity:.45}
+@media (hover:hover) and (pointer:fine){
+  .toc a:hover,.btn:hover:not([disabled]),.iconbtn:hover,.seg button:hover,.chip:hover,.card.lift:hover,table.t tbody tr:hover,.lrow:hover,.feed .it:hover,.agent:hover,.search:hover,.rail .tab:hover,.side a:hover{transition-duration:0s}
+  .toc a:hover{background:var(--sunken);color:var(--ink)}
+  .btn:hover:not([disabled]){background:var(--ac-hover)}
+  .btn.sec:hover:not([disabled]){filter:none;background:var(--sunken)}
+  .btn.ghost:hover:not([disabled]){filter:none;background:var(--ac-soft)}
+  .btn.danger:hover:not([disabled]){filter:none;background:var(--er-soft)}
+  .iconbtn:hover{background:var(--sunken)}
+  .seg button[aria-pressed="false"]:hover{background:rgba(255,255,255,.68);color:var(--ink)}
+  .chip:not([aria-pressed="true"]):hover{background:var(--sunken);color:var(--ink)}
+  .chip[aria-pressed="true"]:hover{filter:brightness(1.18)}
+  .card.lift:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
+  table.t tbody tr:hover,.lrow:hover,.feed .it:hover,.agent:hover{background:var(--sunken)}
+  .search:hover{background:var(--sunken);color:var(--mut)}
+  .rail .tab:hover,.side a:hover{background:var(--sunken);color:var(--ink)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+}
+@media(max-width:640px){.fields-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="kit">
+<nav class="toc">
+  <b>UI Kit · Поток ИИ</b>
+  <a href="#tokens">Токены</a><a href="#type">Типографика</a><a href="#buttons">Кнопки</a><a href="#controls">Контролы</a>
+  <a href="#badges">Бейджи и аватары</a><a href="#tiles">Плитки и карточки</a><a href="#numbers">Числа и выводы</a><a href="#table">Таблица и списки</a>
+  <a href="#ai">Блоки ИИ</a><a href="#chat">Чат и агенты</a><a href="#fields">Поля</a><a href="#gantt">Гант</a>
+  <a href="#frame">Каркас</a><a href="#segmented">Сегменты и действие</a><a href="#mobile">Мобильная навигация</a><a href="#states">Состояния</a>
+</nav>
+<main>
+
+<section class="kit-sec" id="tokens">
+  <h2>Токены</h2>
+  <p>Все значения — из <code>tokens.css</code>. Здесь они показаны, чтобы глазом сверять реализацию с правилами.</p>
+  <div class="demo">
+    <div class="lbl">Поверхности и текст</div>
+    <div class="sw">
+      <div><i style="background:var(--bg)"></i><b>--bg</b>подложка #E9E7E4</div>
+      <div><i style="background:var(--panel)"></i><b>--panel</b>блок #FFF</div>
+      <div><i style="background:var(--sunken)"></i><b>--sunken</b>утопленное #F6F6F8</div>
+      <div><i style="background:var(--ink)"></i><b>--ink</b>текст #14151A</div>
+      <div><i style="background:var(--mut)"></i><b>--mut</b>вторичный 4,6:1</div>
+      <div><i style="background:var(--faint)"></i><b>--faint</b>третичный 4,5:1</div>
+      <div><i style="background:var(--deco)"></i><b>--deco</b>только декор</div>
+    </div>
+    <div class="lbl">Акцент и статусы — цвет, подложка, чернильный</div>
+    <div class="sw">
+      <div><i style="background:var(--ac)"></i><b>--ac</b>#1B84FF</div><div><i style="background:var(--ac-hover)"></i><b>--ac-hover</b>hover-фон</div><div><i style="background:var(--ac-soft)"></i><b>--ac-soft</b>10 %</div><div><i style="background:var(--ac-ink)"></i><b>--ac-ink</b>текст</div>
+      <div><i style="background:var(--ok)"></i><b>--ok</b></div><div><i style="background:var(--ok-soft)"></i><b>--ok-soft</b></div><div><i style="background:var(--ok-ink)"></i><b>--ok-ink</b></div>
+      <div><i style="background:var(--wr)"></i><b>--wr</b></div><div><i style="background:var(--wr-soft)"></i><b>--wr-soft</b></div><div><i style="background:var(--wr-ink)"></i><b>--wr-ink</b></div>
+      <div><i style="background:var(--er)"></i><b>--er</b></div><div><i style="background:var(--er-soft)"></i><b>--er-soft</b></div><div><i style="background:var(--er-ink)"></i><b>--er-ink</b></div>
+    </div>
+    <div class="lbl">Цвета сфер — аватары агентов, точки, иконки разделов</div>
+    <div class="sw">
+      <div><i style="background:var(--k-build)"></i><b>Диспетчер</b></div><div><i style="background:var(--k-law)"></i><b>Юрист / Претензии</b></div><div><i style="background:var(--k-fin)"></i><b>Тарифы</b></div>
+      <div><i style="background:var(--k-sale)"></i><b>Продажи</b></div><div><i style="background:var(--k-hr)"></i><b>Кадры</b></div><div><i style="background:var(--k-ast)"></i><b>Ассистент</b></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="demo"><div class="lbl">Радиусы</div><div class="rad"><div style="border-radius:var(--r)">16 блок</div><div style="border-radius:var(--r-s)">10 контрол</div><div style="border-radius:var(--r-xs)">8 малый</div><div style="border-radius:var(--r-pill)">20 пилюля</div></div></div>
+    <div class="demo canvas"><div class="lbl">Тени — покой, подъём, боковая панель</div><div class="shd"><div style="box-shadow:var(--sh-1)">--sh-1</div><div style="box-shadow:var(--sh-2)">--sh-2</div><div style="box-shadow:var(--sh-panel)">--sh-panel</div></div></div>
+  </div>
+  <div class="demo"><div class="lbl">Отступы</div><div class="spc"><i style="width:4px;height:24px"></i><i style="width:8px;height:24px"></i><i style="width:12px;height:24px"></i><i style="width:14px;height:24px"></i><i style="width:16px;height:24px"></i><i style="width:18px;height:24px"></i><i style="width:24px;height:24px"></i><span class="lbl" style="margin-left:8px">4 · 8 · 12 · 14 (между карточками) · 16 · 18 (между секциями) · 24</span></div></div>
+</section>
+
+<section class="kit-sec" id="type">
+  <h2>Типографика</h2>
+  <p>Системный стек. Трекинг сжимается с размером, корпус на нуле, все числа табличные.</p>
+  <div class="demo type">
+    <div><span>h1 · 26/1.15/−.6 · 600</span><strong style="font-size:26px;letter-spacing:-.6px;font-weight:600">ЖК «Северный», корпус Б</strong></div>
+    <div><span>цифра плитки · 26/1.1/−.7</span><strong class="num" style="font-size:26px;letter-spacing:-.7px;font-weight:600">86,4 млн ₽</strong></div>
+    <div><span>h2 секции · 16/−.3 · 600</span><strong style="font-size:16px;letter-spacing:-.3px;font-weight:600">Требует решения сегодня</strong></div>
+    <div><span>h3 карточки · 14/−.15 · 600</span><strong style="font-size:14px;letter-spacing:-.15px;font-weight:600">Сборный груз Алматы — Астана, 12,4 т</strong></div>
+    <div><span>корпус · 14/1.45</span><span style="width:auto;color:var(--ink);font-size:14px">Отгрузка стоит на 6 октября, ближайшая машина — 9-го.</span></div>
+    <div><span>вторичный · 13 и 12,5 · --mut</span><span style="width:auto;font-size:12.5px;color:var(--mut)">Склад Алматы · Марат</span></div>
+    <div><span>подпись · 12 · --faint</span><span style="width:auto;font-size:12px;color:var(--faint)">обновлено 14:20</span></div>
+    <div><span>бейдж · 11 · 500</span><span class="bdg wr">Ждёт согласования</span></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="buttons">
+  <h2>Кнопки</h2>
+  <p>Одна основная на экран. Отклик на нажатии: <code>scale(.98)</code> за 100 мс.</p>
+  <div class="demo">
+    <div class="lbl">Варианты</div>
+    <div class="row"><button class="btn">Согласовать</button><button class="btn sec">Отчёт за смену</button><button class="btn ghost">Почему</button><button class="btn danger">Удалить</button></div>
+    <div class="lbl">Размеры</div>
+    <div class="row"><button class="btn">36 · основной</button><button class="btn sm">30 · в блоках</button><button class="btn xs">27 · в строках</button></div>
+    <div class="lbl">Состояния</div>
+    <div class="row"><button class="btn" disabled>Недоступно</button><button class="btn" data-pending>Согласовать</button><button class="btn sec" data-pending>Отчёт</button><button class="btn" style="outline:2px solid var(--ink);outline-offset:2px">Фокус</button></div>
+    <div class="lbl">Иконочные</div>
+    <div class="row"><button class="iconbtn" aria-label="Уведомления"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button><button class="iconbtn" aria-label="Ещё"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button><span class="av">СЕ</span></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="controls">
+  <h2>Контролы</h2>
+  <div class="demo">
+    <div class="lbl">Сегментированный</div>
+    <div class="seg"><button type="button" aria-pressed="true">Сегодня</button><button type="button" aria-pressed="false">Неделя</button><button type="button" aria-pressed="false">Месяц</button><button type="button" aria-pressed="false">Весь срок</button></div>
+    <div class="lbl">Чипы-фильтры</div>
+    <div class="row"><button class="chip" aria-pressed="true">Все 19</button><button class="chip" aria-pressed="false">Требуют решения 2</button><button class="chip" aria-pressed="false">На проверке 2</button><button class="chip" aria-pressed="false">Закрытые 15</button></div>
+    <div class="lbl">Поиск</div>
+    <span class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск по объекту<span class="kbd">⌘K</span></span>
+  </div>
+</section>
+
+<section class="kit-sec" id="badges">
+  <h2>Бейджи и аватары</h2>
+  <div class="demo">
+    <div class="lbl">Статусы — подложка + чернильный текст, никогда сплошной цвет</div>
+    <div class="row"><span class="bdg ok">Согласовано</span><span class="bdg wr">Ждёт согласования</span><span class="bdg er">Решить</span><span class="bdg ac">Запрос отправлен</span><span class="bdg n">Не назначен</span></div>
+    <div class="lbl">Аватары — инициалы, цвет сферы</div>
+    <div class="row"><span class="av">СЕ</span><span class="av" style="background:var(--k-fin)">АК</span><span class="av" style="background:var(--k-sale)">ПС</span><span class="av sm">МТ</span></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="tiles">
+  <h2>Плитки и карточки</h2>
+  <p>Белый блок, радиус 16, <code>--sh-1</code>; кликабельные приподнимаются на 2 px. Заголовок секции — снаружи блока.</p>
+  <div class="demo canvas">
+    <div class="grid2">
+      <div class="card lift tile"><span>Бюджет освоен</span><b class="num">86,4 млн ₽</b><div class="d">из 184,2 млн · 47%</div><div class="meter"><i style="width:47%"></i></div></div>
+      <div class="card lift tile"><span>Отклонение по ставке</span><b class="num">+2,1%</b><div class="d up">+3,9 млн к плану</div><div class="meter"><i style="width:62%;background:var(--er)"></i></div></div>
+      <div class="card lift tile"><span>Прогноз срока</span><b class="num">+6 дней</b><div class="d wr">критический путь — монолит</div><div class="meter"><i style="width:38%;background:var(--wr)"></i></div></div>
+    </div>
+    <div class="sh"><h3>Закупки</h3><span class="cnt">3 открытых · 5,08 млн ₽</span><span class="right"><button class="btn sm ghost">Все закупки</button></span></div>
+    <div class="card lift" style="padding:var(--pad-card);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px">
+      <h3 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px">Сборный груз Алматы — Астана, 12,4 т</h3>
+      <div class="num" style="font-size:22px;font-weight:600;letter-spacing:-.6px;text-align:right">1 872 000 ₽<small style="display:block;font-size:12px;font-weight:400;color:var(--mut);letter-spacing:0">нужен к 06.10</small></div>
+      <div class="row" style="gap:10px"><span class="bdg wr">Ждёт согласования</span><span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)"><span class="av sm">СЕ</span>Сергей Е.</span></div>
+      <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;background:var(--sunken);border-radius:var(--r-s);padding:9px 11px;font-size:12.5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="var(--ac)"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span style="flex:1 1 auto">Рекомендую «КазТрансЛогистик» — 11 из 11 в срок</span><span class="num" style="color:var(--mut)">79%</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="kit-sec" id="numbers">
+  <h2>Числа и выводы</h2>
+  <p>Ряд ключевых чисел одной карточкой читается как одна строка состояния — плотнее, чем те же цифры отдельными плитками. Под блоком с цифрами ставится строка-вывод: она называет смысл и следующий шаг, иначе читатель остаётся один на один с числами. Разбивка целого — одна полоса и легенда, где у каждой доли есть человеческое пояснение, а не только процент.</p>
+
+  <div class="demo">
+    <div class="statrow">
+      <div class="c"><span class="i"></span><span class="b"><span class="l">Всего заметок</span><span class="v">5</span></span></div>
+      <div class="c"><span class="i"></span><span class="b"><span class="l">Добавлено сегодня</span><span class="v">0</span></span><span class="d" style="color:var(--mut);background:var(--sunken)">тихо</span></div>
+      <div class="c"><span class="i"></span><span class="b"><span class="l">За эту неделю</span><span class="v">5</span></span></div>
+      <div class="c"><span class="i"></span><span class="b"><span class="l">Висит дольше недели</span><span class="v">2</span></span><span class="d" style="color:var(--wr-ink);background:var(--wr-soft)">разобрать</span></div>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="bkbar">
+      <span style="width:20%;background:var(--ok)"></span>
+      <span style="width:50%;background:var(--ac)"></span>
+      <span style="width:30%;background:var(--wr)"></span>
+    </div>
+    <dl class="bklegend">
+      <div><dt class="n"><i style="background:var(--ok)"></i>Сегодня</dt><dd class="f">1<small>ещё в работе</small></dd></div>
+      <div><dt class="n"><i style="background:var(--ac)"></i>Эта неделя</dt><dd class="f">2<small>нормальный срок</small></dd></div>
+      <div><dt class="n"><i style="background:var(--wr)"></i>Старше недели</dt><dd class="f">2<small>пора разобрать</small></dd></div>
+    </dl>
+  </div>
+
+  <div class="demo">
+    <div class="insight info"><span class="i"></span><div><b>Домены под тему ещё не заводим</b><p>Пока трек не объявлен, каркас держит вход, файлы и задачи.</p></div></div>
+    <div class="insight warn"><span class="i"></span><div><b>2 записи висят дольше недели</b><p>Самая старая — «Закрыть акты скрытых работ». Либо у неё нет владельца, либо она уже неактуальна.</p></div></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="table">
+  <h2>Таблица и списки</h2>
+  <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th>Отправка</th><th class="r">Объём</th><th class="r">По договору</th><th class="r">Рынок</th><th class="r">Разница</th><th class="r"></th></tr></thead><tbody>
+    <tr><td><b>Сборный груз Алматы — Астана</b></td><td class="r num">12,4 т</td><td class="r num">6 950 ₸/кг</td><td class="r num" style="color:var(--mut)">5 900 — 6 300</td><td class="r"><span class="bdg er">+12%</span></td><td class="r"><button class="btn xs ghost">Подобрать</button></td></tr>
+    <tr><td><b>Опалубка стеновая</b></td><td class="r num">92 сут</td><td class="r num">310 ₽/м²</td><td class="r num" style="color:var(--mut)">280 — 330</td><td class="r"><span class="bdg ok">в рынке</span></td><td class="r" style="color:var(--faint)">—</td></tr>
+    <tr><td><b>Гидроизоляция</b></td><td class="r num">4 200 м²</td><td class="r num">340 ₽/м²</td><td class="r num" style="color:var(--mut)">нет данных</td><td class="r"><span class="bdg ac">нет выборки</span></td><td class="r"><button class="btn xs ghost">Проверить</button></td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="card" style="padding:6px 0"><div class="lrow"><span class="thumb"></span><div><div class="t">Недостача 2 паллеты из 20</div><div class="m">Склад Алматы · Марат</div></div><div class="end"><span class="bdg er">Решить</span><b class="num">92%</b></div></div><div class="lrow"><span class="thumb"></span><div><div class="t">Повреждение упаковки, 1 место</div><div class="m">Склад Астана · Антон</div></div><div class="end"><span class="bdg wr">Проверка</span><b class="num">71%</b></div></div></div>
+    <div class="card feed"><div class="it"><span class="ic" style="background:var(--wr-soft);color:var(--wr-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/></svg></span><div><div class="k">Машины</div><div class="t">Не хватает машины на 6 октября</div><div class="m">Нужно две, подтверждена одна.</div></div><div style="display:grid;justify-items:end;gap:5px"><span class="bdg er">Решить</span><span class="num" style="font-size:12px;color:var(--mut)">96%</span></div></div><div class="it"><span class="ic" style="background:var(--ok-soft);color:var(--ok-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/></svg></span><div><div class="k">Перевозчики</div><div class="t">На рейс не назначен перевозчик</div><div class="m">Старт 15.11 · два кандидата</div></div><div style="display:grid;justify-items:end;gap:5px"><span class="bdg wr">Выбрать</span><span style="font-size:12px;color:var(--mut)">—</span></div></div></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="ai">
+  <h2>Блоки ИИ</h2>
+  <p>Рекомендация → «Почему» → предпросмотр → подтверждение → результат. Ни один шаг не пропускается.</p>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h3>Машина под отправку придёт на три дня позже, чем нужно по графику</h3><p>Отгрузка стоит на 6 октября, подтверждённая машина — 9-го. Часть груза можно отправить раньше и вернуть четыре дня из шести.</p>
+      <div class="acts"><button class="btn sm">Подобрать поставщика</button><button class="btn sm sec">Сдвинуть отгрузку</button><button class="btn sm ghost">Скрыть</button><span class="conf">уверенность 88% <i style="--p:88%"></i></span></div></div>
+    <div class="why">Вывод собран из четырёх источников:<ul><li>План отгрузок — окно 06.10, критический путь.</li><li>Договор П-114 — окно подачи машины 09.10.</li><li>Нужно 12 т, свободных машин 0.</li><li>История перевозчика — среднее отставание 4,8 дня при сдвиге подачи.</li></ul></div>
+  </div>
+  <div class="grid2">
+    <div class="preview"><b>Что произойдёт, если подтвердить</b><ul><li>Создам закупку ЗК-115 на 1 872 000 ₽ и отправлю на согласование.</li><li>Забронирую окно поставки 06.10 на 48 часов.</li></ul><span style="color:var(--mut)">Ничего не оплачивается — только заявка.</span><div class="acts"><button class="btn sm">Подтвердить</button><button class="btn sm sec">Отмена</button></div></div>
+    <div style="display:grid;gap:12px"><div class="done"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Закупка ЗК-115 создана. Окно забронировано до 14.09, 14:20.</div>
+    <div class="think"><div data-done><i></i><span>Читаю потребность: 420 м³, законтрактовано 120</span></div><div data-done><i></i><span>Смотрю договор П-114 и окно 09.10</span></div><div><i></i><span>Опрашиваю 8 поставщиков по истории и срокам</span></div></div></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="chat">
+  <h2>Чат и агенты</h2>
+  <div class="grid2">
+    <div class="demo" style="gap:6px;padding:10px"><div class="lbl" style="padding:4px 10px">Список агентов</div>
+      <button class="agent" aria-selected="true"><span class="ava" style="background:var(--k-build)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 20V9l6-5 6 5v11"/></svg></span><span><span class="n">Диспетчер<small>отправки</small></span><span class="l">Рекомендую «КазТрансЛогистик» — не самый дешёвый…</span></span><span class="u">2</span></button>
+      <button class="agent" aria-selected="false"><span class="ava" style="background:var(--k-law)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 7h14"/></svg></span><span><span class="n">Юрист<small>договоры</small></span><span class="l">Претензия по П-114 готова</span></span><span class="u">1</span></button>
+      <button class="agent" aria-selected="false"><span class="ava" style="background:var(--k-fin)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span><span class="n">Финансист<small>бюджет</small></span><span class="l">Освоение 47% при графике 44%</span></span></button>
+    </div>
+    <div class="demo"><div class="lbl">Сообщения</div>
+      <div class="msg me"><div class="b">Подбери машину на 6 октября, 12 тонн</div><div class="t">12:19</div></div>
+      <div class="msg"><div class="b">Пять перевозчиков ответили. Рекомендую «КазТрансЛогистик»: 6 240 ₸/кг, 06.10 к 07:00, 11 из 11 в срок.</div><div class="t">12:19</div></div>
+      <div class="row"><button class="chip" style="color:var(--ac-ink)">Оформить заказ</button><button class="chip" style="color:var(--ac-ink)">Показать всех</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="kit-sec" id="fields">
+  <h2>Поля</h2>
+  <p>Без рамки в покое: утопленный фон. Фокус — белый фон и кольцо 2 px. Ошибка — красное кольцо и подпись, сразу при вводе.</p>
+  <div class="demo grid2 fields-grid">
+    <div class="field"><div class="top"><label>Что нужно сделать</label><span class="cnt">0 / 200</span></div><input placeholder="Например, залить плиту на осях 3–5"></div>
+    <div class="field"><div class="top"><label>Фокус</label><span class="cnt near">184 / 200</span></div><input class="is-focus" value="Принять паллеты, отправка KZ-1176"></div>
+    <div class="field error"><div class="top"><label>Ошибка</label></div><input value=" "><div class="hint">Запись не может быть пустой.</div></div>
+    <div class="field"><div class="top"><label>Недоступно</label></div><input disabled value="Сохраняем…"></div>
+  </div>
+</section>
+
+<section class="kit-sec" id="gantt">
+  <h2>Гант</h2>
+  <div class="card" style="padding:var(--pad-card)"><div class="gantt">
+    <div class="row"><span class="lb">Алматы — Астана</span><div class="track"><i class="plan" style="left:0;width:15%"></i><i class="fact" style="left:0;width:14%;background:var(--ok)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lb">Астана — Караганда</span><div class="track"><i class="plan" style="left:15%;width:23%"></i><i class="fact" style="left:15%;width:26%;background:var(--er)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lb">Сборные отправки</span><div class="track"><i class="plan" style="left:32%;width:39%"></i><i class="fact" style="left:32%;width:39%;background:var(--ac)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="lbl">план серым сверху · факт цветом снизу · критический путь красным · вертикаль — сегодня</div>
+  </div></div>
+</section>
+
+<section class="kit-sec" id="frame">
+  <h2>Каркас</h2>
+  <p>Рабочая область занимает окно браузера целиком, фон <code>--shell</code>. Второй карточки вокруг приложения быть не должно — это блок в блоке. Сайдбар <b>без своего фона и тени</b>, отделён волосяной линией: две панели с тенями друг напротив друга утяжеляют экран. Заголовок раздела стоит на одной линии с действиями и поиском — разносить их на два этажа нельзя. Рамка ниже нарисована только для того, чтобы показать границы области.</p>
+  <div class="demo shellDemo">
+    <div class="shellBox">
+      <nav class="shellSide">
+        <div class="b"><i></i>Поток ИИ</div>
+        <div class="g">Работа</div>
+        <a href="#0" aria-current="page">Сводка</a>
+        <a href="#0">Отправления</a>
+        <a href="#0">Документы</a>
+        <div class="g">Справочники</div>
+        <a href="#0">Перевозчики</a>
+      </nav>
+      <div class="shellMain">
+        <div class="shellHead">
+          <h4>Среда, 16 сентября</h4>
+          <button class="btn sm sec">Обновить</button>
+          <button class="btn sm dark">+ Заметка</button>
+          <span class="s"></span>
+        </div>
+        <div class="blk"></div>
+        <div class="blk"></div>
+      </div>
+    </div>
+  </div>
+
+  <p>Правый рельс 58 px с панелью 404 px левее него — часть спроектированного каркаса, в коде его пока нет.</p>
+  <div class="demo canvas" style="display:flex;gap:24px;align-items:flex-start;justify-content:flex-end">
+    <nav class="rail"><button class="tab" aria-pressed="true"><svg class="mascot" viewBox="0 0 64 64"><circle cx="32" cy="40" r="17" fill="#fff" stroke="rgba(20,21,26,.12)"/><circle class="pupil" cx="26" cy="41" r="2.2" fill="#14151a"/><circle class="pupil" cx="38" cy="41" r="2.2" fill="#14151a"/><path d="M27 48q5 3 10 0" stroke="#14151a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M13 32C13 19 21 11 32 11s19 8 19 21z" fill="#f6b100"/><rect x="28.5" y="7" width="7" height="9" rx="3" fill="#f6b100"/><rect x="8" y="30" width="48" height="7" rx="3.5" fill="#d99a00"/></svg><span class="n">3</span></button><button class="tab"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="n">4</span></button><button class="tab"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></button></nav>
+  </div>
+</section>
+
+<section class="kit-sec" id="segmented">
+  <h2>Сегменты и главное действие</h2>
+  <p>Сегменты переключают наборы одного списка и показывают размер каждого набора. Между разделами ходят маршруты, а не сегменты. В grid-раскладке требуют <code>justify-self: start</code>, иначе растягиваются на всю ширину трека. Тёмная кнопка — одно главное действие раздела, больше одной на экран не ставится.</p>
+  <div class="demo">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="seg" role="tablist" aria-label="Пример">
+        <button role="tab" aria-selected="true">Все <b>5</b></button>
+        <button role="tab" aria-selected="false">Сегодня <b>0</b></button>
+        <button role="tab" aria-selected="false">Эта неделя <b>5</b></button>
+        <button role="tab" aria-selected="false">Старше недели <b>0</b></button>
+      </div>
+      <button class="btn dark">+ Заметка</button>
+    </div>
+  </div>
+  <p>Тёмный штамп <code>--stamp</code> под иконкой блока — опора взгляда в разреженной сетке.</p>
+  <div class="demo">
+    <div style="display:flex;gap:12px;align-items:center">
+      <span class="stamp"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></span>
+      <span class="stamp"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span class="stamp"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/></svg></span>
+    </div>
+  </div>
+</section>
+
+<section class="kit-sec" id="mobile">
+  <h2>Мобильная навигация</h2>
+  <p>До 900 px сайдбар прячется, его заменяет нижняя панель: четыре раздела и ячейка «Ещё». Высота ячейки — <code>--mobile-bar-h</code>, ниже добавляется <code>env(safe-area-inset-bottom)</code> под домашний индикатор. Остальные разделы, профиль и выход живут в листе «Ещё»; панель остаётся поверх листа, потому что закрывает его та же ячейка. Если активен раздел из листа, подсвечивается «Ещё».</p>
+  <div class="demo canvas" style="display:flex;gap:24px;flex-wrap:wrap">
+    <div class="phone">
+      <div class="body">Экран раздела. Контент снизу получает отступ на высоту панели, иначе она накрывает последний блок.</div>
+      <nav class="mbar">
+        <a href="#0" aria-current="page"><span class="ico"></span>Сводка</a>
+        <a href="#0"><span class="ico"></span>Отправления</a>
+        <a href="#0"><span class="ico"></span>Документы</a>
+        <a href="#0"><span class="ico"></span>Материалы</a>
+        <button type="button" aria-expanded="false"><span class="ico"></span>Ещё</button>
+      </nav>
+    </div>
+    <div class="phone">
+      <div class="body">Лист «Ещё» открыт.</div>
+      <div class="msheet">
+        <span class="grab"></span>
+        <a href="#0"><span class="ico" style="width:18px;height:18px"></span>Закупки</a>
+        <a href="#0"><span class="ico" style="width:18px;height:18px"></span>График</a>
+        <a href="#0"><span class="ico" style="width:18px;height:18px"></span>Перевозчики</a>
+      </div>
+      <nav class="mbar">
+        <a href="#0"><span class="ico"></span>Сводка</a>
+        <a href="#0"><span class="ico"></span>Отправления</a>
+        <a href="#0"><span class="ico"></span>Документы</a>
+        <a href="#0"><span class="ico"></span>Материалы</a>
+        <button type="button" aria-expanded="true"><span class="ico"></span>Ещё</button>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<section class="kit-sec" id="states">
+  <h2>Состояния</h2>
+  <p>Скелетон в форме контента, пустое с одним действием, ошибка с выходом.</p>
+  <div class="grid2">
+    <div class="card skel"><i style="width:40%"></i><i style="width:70%;height:22px"></i><i style="width:55%"></i><i style="width:100%;height:5px"></i></div>
+    <div class="card state"><span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span><h4>Приёмок пока нет</h4><p>Отсканируйте накладную при разгрузке — модель сверит её с заказом.</p><button class="btn sm">Начать приёмку</button></div>
+    <div class="card state"><span class="ic" style="color:var(--er-ink);background:var(--er-soft)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span><h4>Не удалось загрузить отправку</h4><p>Сервер не ответил за 10 секунд. Данные не потеряны.</p><button class="btn sm sec">Повторить</button></div>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

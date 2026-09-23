@@ -1,0 +1,87 @@
+/* Шапка раздела без фона: элементы плавают на поверхности окна. */
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.titles {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: var(--ls-h1);
+  font-weight: 600;
+}
+
+.sub {
+  margin: 3px 0 0;
+  color: var(--mut);
+  font-size: var(--fs-sm);
+}
+
+.tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 230px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--r-s);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  color: var(--deco);
+  font-size: var(--fs-sm);
+}
+
+.kbd {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  color: var(--deco);
+}
+
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-s);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  color: var(--mut);
+  cursor: pointer;
+  transition: color var(--t-hover);
+}
+
+.iconBtn:hover {
+  color: var(--ink);
+}
+
+.iconBtn:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+/* На телефоне поиск и колокольчик уступают место заголовку. */
+@media (max-width: 900px) {
+  .search,
+  .iconBtn {
+    display: none;
+  }
+}

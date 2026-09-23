@@ -1,0 +1,377 @@
+/* Раньше это была плавающая плашка у правого края: лишний блок поверх страницы.
+   Теперь кнопки живут в шапке раздела и выстроены в ряд с поиском. */
+.rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tab,
+.closeButton {
+  border: 0;
+  color: var(--mut);
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    transform var(--t-hover);
+}
+
+/* Та же форма, что у кнопок в шапке: рядом с поиском и колокольчиком. */
+.tab {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-s);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--hair);
+}
+
+.tab[aria-expanded="true"] {
+  color: var(--ac-ink);
+  background: var(--ac-soft);
+}
+
+.tab:active,
+.closeButton:active {
+  transform: scale(.98);
+  transition-duration: 0s;
+}
+
+.tab:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+
+.badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid var(--panel);
+  border-radius: var(--r-pill);
+  color: #fff;
+  background: var(--er);
+  font-size: 10.5px;
+  line-height: 13px;
+  font-weight: 600;
+}
+
+.tooltip {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  z-index: 2;
+  padding: 5px 9px;
+  border-radius: var(--r-xs);
+  color: #fff;
+  background: var(--ink);
+  font-size: var(--fs-cap);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(6px, -50%);
+  transition:
+    opacity var(--t-hover),
+    transform var(--t-hover),
+    visibility 0s linear var(--t-hover);
+}
+
+.tab:focus-visible .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+  transition-duration: 0s;
+}
+
+/* Панель висит под своими кнопками, а не у края экрана: при fixed её выбрасывало
+   за пределы окна приложения, потому что окно у́же вьюпорта. */
+.panel {
+  position: absolute;
+  z-index: 64;
+  top: calc(100% + var(--sp-2));
+  right: 0;
+  width: min(var(--asst-w), 92vw);
+  max-height: 70vh;
+  overflow: hidden auto;
+  color: var(--ink);
+  background: var(--panel);
+  border-radius: var(--r);
+  box-shadow: var(--sh-panel);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px) scale(.98);
+  transform-origin: right top;
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-panel),
+    visibility 0s linear 320ms;
+}
+
+.panelOpen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition:
+    transform var(--t-panel),
+    opacity var(--t-panel),
+    visibility 0s;
+}
+
+.panelHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  height: auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 14px 14px 12px var(--sp-4);
+  background: var(--panel);
+  border-bottom: 1px solid var(--hair);
+}
+
+.panelHeader > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -.2px;
+}
+
+.panelHeader p {
+  margin: 2px 0 0;
+  color: var(--mut);
+  font-size: var(--fs-cap);
+  line-height: 1.3;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--r-xs);
+  background: var(--sunken);
+}
+
+.list {
+  display: grid;
+  align-content: start;
+  padding: 6px 0;
+}
+
+.agentRow,
+.noticeRow,
+.fileRow,
+.taskRow {
+  min-width: 0;
+  display: grid;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 12px var(--sp-4);
+}
+
+.agentRow + .agentRow,
+.noticeRow + .noticeRow,
+.fileRow + .fileRow,
+.taskRow + .taskRow {
+  border-top: 1px solid var(--hair);
+}
+
+.agentRow,
+.fileRow {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.noticeRow,
+.taskRow {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.agentIcon,
+.fileIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-s);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.agentIcon {
+  color: #fff;
+}
+
+.builder { background: var(--k-build); }
+.lawyer { background: var(--k-law); }
+.financier { background: var(--k-fin); }
+
+.fileIcon {
+  color: var(--ac-ink);
+  background: var(--ac-soft);
+}
+
+.rowText {
+  min-width: 0;
+  display: block;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.rowText b,
+.rowText span,
+.rowText small {
+  display: block;
+}
+
+.rowText b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -.1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowText span {
+  margin-top: 2px;
+  color: var(--mut);
+}
+
+.rowText small {
+  margin-top: var(--sp-1);
+  color: var(--faint);
+  font-size: 11.5px;
+}
+
+.status,
+.ready,
+.quiet {
+  padding: 3px 7px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.status {
+  color: var(--ac-ink);
+  background: var(--ac-soft);
+}
+
+.ready {
+  color: var(--ok-ink);
+  background: var(--ok-soft);
+}
+
+.quiet {
+  color: var(--mut);
+  background: var(--sunken);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+}
+
+.danger { background: var(--er); }
+.warning { background: var(--wr); }
+.info { background: var(--ac); }
+
+.taskCheck {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(20, 21, 26, .16);
+  border-radius: 6px;
+}
+
+.taskDone {
+  border: 0;
+  color: var(--ok-ink);
+  background: var(--ok-soft);
+  display: grid;
+  place-items: center;
+}
+
+.completed b {
+  color: var(--mut);
+  text-decoration: line-through;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover,
+  .closeButton:hover {
+    color: var(--ink);
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .tab[aria-expanded="true"]:hover {
+    color: var(--ac-ink);
+    background: var(--ac-soft);
+    filter: brightness(.96);
+  }
+
+  .tab:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
+    transition-duration: 0s;
+  }
+}
+
+@media (max-width: 900px) {
+  .rail,
+  .panel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .closeButton,
+  .tooltip,
+  .panel,
+  .panelOpen {
+    transition-duration: 1ms;
+  }
+
+  .panel,
+  .panelOpen {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .rail,
+  .panel {
+    outline: 1px solid var(--ink);
+  }
+}

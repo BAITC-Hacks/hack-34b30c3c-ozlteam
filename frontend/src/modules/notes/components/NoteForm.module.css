@@ -1,0 +1,17 @@
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

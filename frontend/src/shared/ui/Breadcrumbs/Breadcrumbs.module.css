@@ -1,0 +1,135 @@
+.breadcrumbs {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.list {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-1) 2px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  list-style: none;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.item {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+}
+
+.item:last-child {
+  flex-shrink: 1;
+}
+
+.crumb {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 260px;
+  height: var(--ctl-sm);
+  padding: 0 var(--sp-2);
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-xs);
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.link {
+  cursor: pointer;
+  transition:
+    color var(--t-hover) ease,
+    background-color var(--t-hover) ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: -2px;
+  }
+}
+
+.current {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+
+  & > svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.8;
+  }
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.separator {
+  flex: 0 0 auto;
+  color: var(--deco);
+}
+
+.ellipsis {
+  display: grid;
+  width: var(--ctl-sm);
+  height: var(--ctl-sm);
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--faint);
+  font-size: var(--fs-sm);
+  line-height: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    color: var(--ink);
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+}
+
+@media (max-width: 560px) {
+  .crumb {
+    max-width: 148px;
+  }
+
+  .item:first-child .crumb {
+    max-width: 112px;
+  }
+}
+
+@media (pointer: coarse) {
+  .crumb {
+    min-height: var(--touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .link:focus-visible {
+    outline-color: var(--ink);
+  }
+}

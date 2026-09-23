@@ -1,0 +1,85 @@
+/* Таблица живёт внутри плавающего блока: шапка липкая, строка 46 px,
+   единственная линия — волосяной разделитель --hair. */
+
+.wrap {
+  width: 100%;
+  overflow: auto;
+  border-radius: var(--r);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-size: var(--fs-cap);
+  font-weight: 500;
+  color: var(--mut);
+  padding: 4px 18px 10px;
+  background: var(--panel);
+  white-space: nowrap;
+}
+
+.notSticky .th {
+  position: static;
+}
+
+.td {
+  height: 48px;
+  padding: 0 18px;
+  vertical-align: middle;
+}
+
+.numeric {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tr:last-child .td {
+  border-bottom: 0;
+}
+
+.interactive {
+  cursor: pointer;
+  transition: background var(--t-hover);
+}
+
+.interactive:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive:hover {
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+}
+
+@media (pointer: coarse) {
+  .td {
+    height: var(--touch);
+  }
+}
+
+/* На узком экране таблица прокручивается внутри блока, а не ломает текст
+   в столбик из одного слова. Страница при этом горизонтально не едет. */
+@media (max-width: 700px) {
+  .table {
+    min-width: 520px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .th,
+  .td {
+    border-bottom-color: var(--ink);
+  }
+}

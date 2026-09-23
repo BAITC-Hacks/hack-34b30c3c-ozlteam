@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+!.env.*.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.idea/
+
+# Проектная документация версионируется: перебиваем возможное правило "docs"
+# в глобальном ~/.gitignore_global у разработчиков.
+!docs/

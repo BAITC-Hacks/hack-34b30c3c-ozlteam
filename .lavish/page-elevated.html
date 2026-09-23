@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сводка по объекту — Стройка ИИ</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li){overflow-wrap:anywhere}
+:root{
+  --bg:#f3f3f5;--panel:#fff;--sunken:#f6f6f8;
+  --ink:#14151a;--mut:#6b6f76;--faint:#9a9ea6;
+  --ac:#1b84ff;--ac-soft:rgba(27,132,255,.1);--ac-ink:#0b5fc4;
+  --ok:#17c653;--ok-soft:rgba(23,198,83,.13);--ok-ink:#0f8f3c;
+  --wr:#f6b100;--wr-soft:rgba(246,177,0,.15);--wr-ink:#8a6100;
+  --er:#f8285a;--er-soft:rgba(248,40,90,.1);--er-ink:#c21344;
+  --sh-1:0 1px 2px rgba(20,21,26,.04),0 8px 24px rgba(20,21,26,.06);
+  --sh-2:0 2px 4px rgba(20,21,26,.04),0 16px 40px rgba(20,21,26,.1);
+  --sh-side:0 1px 2px rgba(20,21,26,.04),0 12px 32px rgba(20,21,26,.07);
+  --r:16px;--r-s:10px;
+}
+html{font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink)}
+button,input{font:inherit}
+.num{font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+@media(prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important}}
+
+/* ─────────── каркас ─────────── */
+.app{display:flex;min-height:100vh;gap:0}
+.side{position:sticky;top:16px;align-self:flex-start;flex:none;width:236px;margin:16px 0 16px 16px;height:calc(100vh - 32px);
+  background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-side);padding:14px 12px;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;font-weight:600;font-size:15px;letter-spacing:-.25px}
+.brand i{width:26px;height:26px;border-radius:8px;background:var(--ac);display:grid;place-items:center;color:#fff;flex:none}
+.side h5{margin:12px 0 4px;padding:0 10px;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.side a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-s);color:var(--mut);font-size:13.5px;font-weight:500;transition:background .14s,color .14s}
+.side a:hover{background:var(--sunken);color:var(--ink)}
+.side a[aria-current]{background:var(--ac-soft);color:var(--ac-ink)}
+.side a b{margin-left:auto;font-size:11px;font-weight:600;color:var(--faint);background:var(--sunken);padding:1px 7px;border-radius:20px}
+.side a[aria-current] b{background:rgba(27,132,255,.14);color:var(--ac-ink)}
+.side svg{width:17px;height:17px;flex:none}
+.side .me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r-s);background:var(--sunken)}
+.side .me .av{width:30px;height:30px;font-size:11.5px}
+.side .me div{min-width:0;font-size:12.5px;line-height:1.3}
+.side .me div b{display:block;font-weight:600}
+.side .me div span{color:var(--mut)}
+
+.main{flex:1 1 auto;min-width:0;padding:16px 24px 48px 24px;display:grid;gap:18px;align-content:start;max-width:1400px}
+
+/* ─────────── шапка ─────────── */
+.topline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.crumbs{font-size:12.5px;color:var(--faint);display:flex;gap:6px;align-items:center}
+.crumbs b{color:var(--mut);font-weight:500}
+.topline .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.search{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:var(--r-s);background:var(--panel);box-shadow:var(--sh-1);color:var(--faint);font-size:13px;min-width:260px}
+.search .kbd{margin-left:auto;font-size:11px;color:var(--faint);background:var(--sunken);padding:1px 6px;border-radius:5px}
+.iconbtn{width:36px;height:36px;border:0;border-radius:var(--r-s);background:var(--panel);box-shadow:var(--sh-1);color:var(--mut);display:grid;place-items:center;cursor:pointer;position:relative}
+.iconbtn:hover{color:var(--ink)}
+.iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--er);border:2px solid var(--panel)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--ac);color:#fff;display:inline-grid;place-items:center;font-size:12.5px;font-weight:600;flex:none}
+
+.ph{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.ph h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.6px;line-height:1.15}
+.ph p{margin:5px 0 0;font-size:13.5px;color:var(--mut)}
+.ph .right{margin-left:auto;display:flex;gap:10px}
+.btn{height:36px;padding:0 15px;border:0;border-radius:var(--r-s);background:var(--ac);color:#fff;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;transition:transform .1s,filter .14s}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:scale(.98)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.sec{background:var(--panel);color:var(--ink);box-shadow:var(--sh-1)}
+.btn.sec:hover{filter:none;background:#fff}
+.btn.sm{height:30px;font-size:12.5px;padding:0 11px;border-radius:8px}
+.btn.ghost{background:transparent;color:var(--ac-ink);box-shadow:none;padding:0 8px}
+
+.seg{display:inline-flex;gap:2px;background:rgba(20,21,26,.05);border-radius:var(--r-s);padding:3px;justify-self:start}
+.seg button{border:0;background:transparent;border-radius:8px;padding:7px 14px;font-size:13px;color:var(--mut);cursor:pointer;transition:background .16s,color .16s,box-shadow .16s}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(20,21,26,.1)}
+.seg button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+/* ─────────── плавающие блоки ─────────── */
+.card{background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-1);transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s}
+.card.lift:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media(max-width:1100px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{padding:16px 18px;display:grid;gap:4px}
+.tile span{font-size:12.5px;color:var(--mut)}
+.tile b{font-size:26px;font-weight:600;letter-spacing:-.7px;line-height:1.1}
+.tile .d{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.tile .d.up{color:var(--er-ink)}.tile .d.ok{color:var(--ok-ink)}.tile .d.wr{color:var(--wr-ink)}
+.tile .bar{height:5px;border-radius:3px;background:var(--sunken);overflow:hidden;margin-top:6px}
+.tile .bar i{display:block;height:100%;border-radius:3px;background:var(--ac)}
+
+.ai{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:16px 18px}
+.ai .ic{width:34px;height:34px;border-radius:10px;background:var(--ac-soft);color:var(--ac);display:grid;place-items:center;flex:none}
+.ai h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:1.3}
+.ai p{margin:4px 0 0;font-size:13.5px;color:var(--mut);line-height:1.5;max-width:80ch}
+.ai .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.conf{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);margin-left:4px}
+.conf i{display:inline-block;width:56px;height:5px;border-radius:3px;background:var(--sunken);overflow:hidden}
+.conf i::after{content:"";display:block;height:100%;width:var(--p);background:var(--ac);border-radius:3px}
+.ai .why{grid-column:1/-1;margin-top:4px;padding:12px 14px;background:var(--sunken);border-radius:var(--r-s);font-size:12.5px;line-height:1.55;color:var(--mut)}
+.ai .why ul{margin:6px 0 0;padding-left:18px}
+.ai .why li{margin-bottom:3px}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:1100px){.cols{grid-template-columns:1fr}}
+.sec{display:grid;gap:12px}
+.sec .sh{display:flex;align-items:center;gap:10px;padding:0 2px}
+.sec .sh h2{margin:0;font-size:16px;font-weight:600;letter-spacing:-.3px}
+.sec .sh .cnt{font-size:12.5px;color:var(--faint)}
+.sec .sh .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+
+/* закупки */
+.pc{padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:start}
+.pc h3{margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;line-height:1.3}
+.pc .sum{font-size:22px;font-weight:600;letter-spacing:-.6px;line-height:1.1;text-align:right;white-space:nowrap}
+.pc .sum small{display:block;font-size:12px;font-weight:400;color:var(--mut);letter-spacing:0;margin-top:2px}
+.pc .meta{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mut);flex-wrap:wrap}
+.pc .aline{grid-column:1/-1;display:flex;align-items:center;gap:8px;background:var(--sunken);border-radius:var(--r-s);padding:9px 11px;font-size:12.5px}
+.pc .aline span{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .aline .p{color:var(--mut);flex:none}
+.pc .aline svg{color:var(--ac);flex:none}
+.bdg{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;line-height:16px}
+.bdg.w{background:var(--wr-soft);color:var(--wr-ink)}.bdg.g{background:var(--ok-soft);color:var(--ok-ink)}.bdg.b{background:var(--ac-soft);color:var(--ac-ink)}.bdg.e{background:var(--er-soft);color:var(--er-ink)}
+.who{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)}
+.who .av{width:22px;height:22px;font-size:9.5px}
+
+/* отклонения */
+.dv{padding:6px 0}
+.dv .row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;transition:background .14s;cursor:pointer}
+.dv .row:hover{background:var(--sunken)}
+.dv .row+.row{border-top:1px solid rgba(20,21,26,.06)}
+.dv .thumb{width:40px;height:40px;border-radius:10px;background:linear-gradient(150deg,#5a5f6a,#2c3038);flex:none;position:relative;overflow:hidden}
+.dv .thumb::after{content:"";position:absolute;inset:8px 10px;border:1.5px solid rgba(255,255,255,.55);border-radius:3px}
+.dv .thumb.hot::after{border-color:#ff6b6b}
+.dv .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px;line-height:1.3}
+.dv .m{font-size:12px;color:var(--mut);margin-top:2px}
+.dv .end{display:grid;justify-items:end;gap:4px}
+.dv .pct{font-size:12px;color:var(--mut)}
+.dv .pct b{color:var(--ink);font-weight:600}
+
+/* ход работ */
+.prog{padding:16px 18px;display:grid;gap:12px}
+.prog .st{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.prog .st .n{font-size:13px;font-weight:500}
+.prog .st .v{font-size:12px;color:var(--mut);text-align:right}
+.prog .st .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--sunken);overflow:hidden;position:relative}
+.prog .st .bar i{display:block;height:100%;border-radius:3px}
+.prog .st .bar .plan{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.5}
+.prog .foot{display:flex;gap:14px;font-size:11.5px;color:var(--mut);padding-top:4px;flex-wrap:wrap}
+.prog .foot span{display:inline-flex;align-items:center;gap:5px}
+.prog .foot i{width:10px;height:6px;border-radius:2px;display:inline-block}
+
+
+/* таблица внутри плавающей карточки */
+.tbl{overflow:auto}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:500;color:var(--mut);font-size:12px;padding:10px 18px;border-bottom:1px solid rgba(20,21,26,.07);white-space:nowrap}
+table.t td{padding:0 18px;height:46px;border-bottom:1px solid rgba(20,21,26,.05);vertical-align:middle}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:hover{background:var(--sunken)}
+table.t td.r,table.t th.r{text-align:right;white-space:nowrap}
+table.t td b{font-weight:600}
+.mtr{display:inline-block;width:60px;height:5px;border-radius:3px;background:var(--sunken);overflow:hidden;vertical-align:middle}
+.mtr i{display:block;height:100%;border-radius:3px;background:var(--ac)}
+
+/* лента решений на сводке */
+.feed .it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 18px;transition:background .14s;cursor:pointer}
+.feed .it+.it{border-top:1px solid rgba(20,21,26,.06)}
+.feed .it:hover{background:var(--sunken)}
+.feed .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+.feed .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px;line-height:1.3}
+.feed .m{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+.feed .k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.feed .end{display:grid;justify-items:end;gap:5px}
+
+/* Гант */
+.gantt{padding:16px 18px;display:grid;gap:6px}
+.gantt .hd,.gantt .row{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;align-items:center}
+.gantt .hd{font-size:11.5px;color:var(--mut);margin-bottom:4px}
+.gantt .months{display:grid;grid-template-columns:repeat(6,1fr)}
+.gantt .months span{padding-left:6px;border-left:1px solid rgba(20,21,26,.08)}
+.gantt .row{padding:5px 0}
+.gantt .lbl{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gantt .track{position:relative;height:24px;background:repeating-linear-gradient(90deg,rgba(20,21,26,.06) 0 1px,transparent 1px calc(100%/6))}
+.gantt .track i{position:absolute;height:8px;border-radius:4px}
+.gantt .track .plan{top:3px;background:rgba(20,21,26,.1)}
+.gantt .track .fact{top:13px}
+.gantt .track .today{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.55}
+.gantt .leg{display:flex;gap:16px;font-size:11.5px;color:var(--mut);margin-top:8px;flex-wrap:wrap}
+.gantt .leg span{display:inline-flex;align-items:center;gap:6px}
+.gantt .leg i{width:12px;height:6px;border-radius:3px;display:inline-block}
+
+/* подрядчики */
+.ctr{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.ctr .c{padding:16px 18px;display:grid;gap:12px}
+.ctr .top{display:flex;align-items:center;gap:12px}
+.ctr .logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.ctr h3{margin:0;font-size:14.5px;font-weight:600;letter-spacing:-.2px}
+.ctr .sub{font-size:12.5px;color:var(--mut);margin-top:1px}
+.ctr .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ctr .kv span{display:block;font-size:11.5px;color:var(--mut)}
+.ctr .kv b{display:block;font-size:15px;font-weight:600;letter-spacing:-.2px;margin-top:1px}
+.ctr .aline{display:flex;align-items:center;gap:8px;background:var(--sunken);border-radius:var(--r-s);padding:9px 11px;font-size:12.5px}
+.ctr .aline span{flex:1 1 auto;min-width:0}
+.ctr .aline svg{color:var(--ac);flex:none}
+
+.page[hidden]{display:none!important}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:0;background:var(--panel);box-shadow:var(--sh-1);border-radius:20px;padding:6px 12px;font-size:12.5px;color:var(--mut);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+/* ═══════════ Каска — помощник сбоку ═══════════ */
+.mascot{display:block}
+.mascot .pupil{transform-origin:center;animation:blink 4.6s infinite}
+.mascot .pupil.r{animation-delay:.05s}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.fab{position:fixed;right:22px;bottom:22px;z-index:60;width:58px;height:58px;border:0;border-radius:50%;background:var(--panel);box-shadow:var(--sh-2);cursor:pointer;display:grid;place-items:center;transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s,opacity .2s}
+.fab:hover{transform:translateY(-2px) rotate(-4deg)}
+.fab:active{transform:scale(.94)}
+.fab:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.fab .mascot{width:36px;height:36px}
+.fab .badge{position:absolute;top:-2px;right:-2px;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--er);color:#fff;font-size:11px;font-weight:600;display:grid;place-items:center;border:2px solid var(--panel)}
+.fab[data-open="1"]{opacity:0;pointer-events:none;transform:scale(.8)}
+.fab .tip{position:absolute;right:68px;top:50%;transform:translateY(-50%) translateX(6px);background:var(--ink);color:#fff;font-size:12.5px;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s,transform .18s cubic-bezier(.2,.7,.3,1)}
+.fab:hover .tip,.fab:focus-visible .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+
+.asst{position:fixed;top:16px;right:16px;bottom:16px;z-index:70;width:404px;max-width:calc(100vw - 32px);
+  background:var(--panel);border-radius:var(--r);box-shadow:0 2px 6px rgba(20,21,26,.06),0 24px 64px rgba(20,21,26,.16);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateX(calc(100% + 120px));visibility:hidden;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s linear .32s}
+.asst[data-open="1"]{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.asst .hd{display:flex;align-items:center;gap:11px;padding:14px 14px 12px 16px;border-bottom:1px solid rgba(20,21,26,.06)}
+.asst .hd .mascot{width:34px;height:34px;flex:none}
+.asst .hd b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.2px}
+.asst .hd .ctx{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);margin-top:1px}
+.asst .hd .ctx i{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block}
+.asst .hd .x{margin-left:auto}
+.asst .log{flex:1 1 auto;overflow:auto;padding:14px 16px;display:grid;gap:12px;align-content:start;scroll-behavior:smooth}
+.msg{display:grid;gap:6px;max-width:92%}
+.msg.me{justify-self:end;max-width:84%}
+.msg .b{padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;background:var(--sunken);color:var(--ink)}
+.msg .b p{margin:0}.msg .b p+p{margin-top:6px}
+.msg.me .b{background:var(--ac);color:#fff;border-bottom-right-radius:5px}
+.msg:not(.me) .b{border-bottom-left-radius:5px}
+.msg .t{font-size:11px;color:var(--faint);padding:0 4px}
+.msg.me .t{text-align:right}
+.chips2{display:flex;gap:6px;flex-wrap:wrap}
+.chips2 button{border:1px solid rgba(20,21,26,.1);background:var(--panel);border-radius:20px;padding:6px 12px;font-size:12.5px;color:var(--ac-ink);cursor:pointer;transition:background .14s,border-color .14s}
+.chips2 button:hover{background:var(--ac-soft);border-color:transparent}
+.chips2 button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.think{display:grid;gap:5px;padding:10px 13px;border-radius:14px;border-bottom-left-radius:5px;background:var(--sunken);font-size:12.5px;color:var(--mut)}
+.think div{display:flex;align-items:center;gap:8px}
+.think i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(20,21,26,.12);border-top-color:var(--ac);animation:spin .8s linear infinite;flex:none}
+.think div[data-done="1"] i{animation:none;border:0;background:var(--ok);position:relative}
+.think div[data-done="1"] i::after{content:"";position:absolute;left:4px;top:2px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+@keyframes spin{to{transform:rotate(1turn)}}
+.icard{border:1px solid rgba(20,21,26,.08);border-radius:12px;padding:12px 13px;display:grid;gap:8px;background:var(--panel)}
+.icard h4{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.icard .kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.icard .kv span{display:block;font-size:11px;color:var(--mut)}
+.icard .kv b{display:block;font-size:13.5px;font-weight:600;margin-top:1px}
+.icard .acts{display:flex;gap:6px;flex-wrap:wrap}
+.preview{border-left:3px solid var(--wr);background:var(--wr-soft);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;display:grid;gap:6px}
+.preview b{font-weight:600}
+.preview ul{margin:0;padding-left:16px}
+.preview .acts{display:flex;gap:6px;margin-top:2px}
+.done{display:flex;align-items:center;gap:9px;background:var(--ok-soft);color:var(--ok-ink);border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:500}
+.asst .in{border-top:1px solid rgba(20,21,26,.06);padding:10px 12px 12px;display:flex;gap:8px;align-items:center}
+.asst .in input{flex:1 1 auto;min-width:0;height:38px;border:0;border-radius:11px;background:var(--sunken);padding:0 12px;font-size:13.5px;color:var(--ink)}
+.asst .in input:focus{outline:2px solid var(--ac);outline-offset:-1px;background:var(--panel)}
+.asst .in .iconbtn{box-shadow:none;background:var(--sunken)}
+.asst .in .send{width:38px;height:38px;border-radius:50%;border:0;background:var(--ac);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;transition:transform .1s}
+.asst .in .send:active{transform:scale(.92)}
+.asst .in .send:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:900px){.asst{top:0;right:0;bottom:0;width:100vw;max-width:100vw;border-radius:0}}
+
+/* ═══════════ Чаты с агентами ═══════════ */
+.chat{display:grid;grid-template-columns:290px minmax(0,1fr);height:calc(100vh - 150px);min-height:560px;overflow:hidden}
+.chat .agents{border-right:1px solid rgba(20,21,26,.06);display:flex;flex-direction:column;min-width:0}
+.chat .agents .top{padding:14px 14px 10px;display:flex;align-items:center;gap:8px}
+.chat .agents .top h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px;flex:1 1 auto}
+.chat .agents .top .iconbtn{width:30px;height:30px;box-shadow:none;background:var(--sunken)}
+.chat .agents .list{flex:1 1 auto;overflow:auto;padding:4px 8px 10px;display:grid;gap:2px;align-content:start}
+.agent{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:11px;align-items:center;padding:10px 10px;border-radius:12px;cursor:pointer;text-align:left;border:0;background:transparent;transition:background .14s}
+.agent:hover{background:var(--sunken)}
+.agent[aria-selected="true"]{background:var(--ac-soft)}
+.agent .ava{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
+.agent .n{font-size:13.5px;font-weight:600;letter-spacing:-.1px;display:flex;align-items:center;gap:6px}
+.agent .n small{font-weight:500;font-size:11px;color:var(--faint)}
+.agent .l{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.agent .u{min-width:18px;height:18px;border-radius:9px;background:var(--ac);color:#fff;font-size:11px;font-weight:600;display:grid;place-items:center;padding:0 5px}
+.agent .u[hidden]{display:none}
+.chat .conv{display:flex;flex-direction:column;min-width:0}
+.chat .conv .hd{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(20,21,26,.06)}
+.chat .conv .hd .ava{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+.chat .conv .hd b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.2px}
+.chat .conv .hd .sees{font-size:12px;color:var(--mut);margin-top:1px}
+.chat .conv .hd .right{margin-left:auto;display:flex;gap:6px}
+.chat .conv .log{flex:1 1 auto;overflow:auto;padding:16px 18px;display:grid;gap:12px;align-content:start}
+.chat .conv .log .msg{max-width:78%}
+.chat .conv .log .msg.me{max-width:66%}
+.chat .conv .in{border-top:1px solid rgba(20,21,26,.06);padding:12px 14px 14px;display:flex;gap:8px;align-items:center}
+.chat .conv .in input{flex:1 1 auto;min-width:0;height:40px;border:0;border-radius:12px;background:var(--sunken);padding:0 14px;font-size:13.5px;color:var(--ink)}
+.chat .conv .in input:focus{outline:2px solid var(--ac);outline-offset:-1px;background:var(--panel)}
+.chat .conv .in .send{width:40px;height:40px;border-radius:50%;border:0;background:var(--ac);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.chat .conv .in .send:disabled{opacity:.35;cursor:not-allowed}
+.day{justify-self:center;font-size:11.5px;color:var(--faint);padding:2px 10px;background:var(--sunken);border-radius:20px}
+.doc{display:flex;align-items:center;gap:10px;border:1px solid rgba(20,21,26,.08);border-radius:10px;padding:9px 11px;background:var(--panel);font-size:12.5px}
+.doc .fi{width:32px;height:32px;border-radius:8px;background:var(--sunken);display:grid;place-items:center;color:var(--mut);flex:none}
+.doc b{display:block;font-weight:600;font-size:13px}
+.doc span{color:var(--mut)}
+@media(max-width:1100px){.chat{grid-template-columns:1fr}.chat .agents{display:none}}
+
+/* ═══════════ правое меню ═══════════ */
+.rail{position:fixed;top:16px;right:16px;bottom:16px;z-index:65;width:58px;background:var(--panel);border-radius:var(--r);box-shadow:var(--sh-side);display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0}
+.rail .tab{position:relative;width:42px;height:42px;border:0;border-radius:12px;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer;transition:background .14s,color .14s}
+.rail .tab:hover{background:var(--sunken);color:var(--ink)}
+.rail .tab[aria-pressed="true"]{background:var(--ac-soft);color:var(--ac-ink)}
+.rail .tab:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.rail .tab .mascot{width:30px;height:30px}
+.rail .tab .n{position:absolute;top:2px;right:2px;min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--er);color:#fff;font-size:10.5px;font-weight:600;display:grid;place-items:center;border:2px solid var(--panel)}
+.rail .tab .n[hidden]{display:none}
+.rail .tip{position:absolute;right:52px;top:50%;transform:translateY(-50%) translateX(6px);background:var(--ink);color:#fff;font-size:12px;padding:5px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s,transform .16s}
+.rail .tab:hover .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+.rail .sep{width:26px;height:1px;background:rgba(20,21,26,.08);margin:4px 0}
+.rail .me{margin-top:auto}
+.asst{right:88px}
+@media(min-width:1101px){.main{padding-right:100px}}
+.asst .hd .back{width:30px;height:30px;box-shadow:none;background:var(--sunken);margin-right:-2px}
+.asst .view{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.asst .view[hidden]{display:none!important}
+.asst .list{flex:1 1 auto;overflow:auto;padding:8px 10px;display:grid;gap:2px;align-content:start}
+.asst .list .agent{padding:11px 10px}
+.asst .hd .sees{font-size:12px;color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.nlist{flex:1 1 auto;overflow:auto;padding:6px 0;display:grid;align-content:start}
+.nlist .it{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:12px 16px;cursor:pointer;transition:background .14s}
+.nlist .it+.it{border-top:1px solid rgba(20,21,26,.06)}
+.nlist .it:hover{background:var(--sunken)}
+.nlist .dot{width:8px;height:8px;border-radius:50%;margin-top:6px}
+.nlist .t{font-size:13.5px;font-weight:600;letter-spacing:-.1px;line-height:1.3}
+.nlist .m{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+.nlist .w{font-size:11.5px;color:var(--faint);margin-top:4px}
+.mpick{display:flex;align-items:center;gap:4px;padding:8px 14px;border-bottom:1px solid rgba(20,21,26,.06);background:var(--sunken)}
+.mpick>span{font-size:11px;color:var(--faint);margin-right:6px}
+.mpick button{width:32px;height:32px;border:0;border-radius:9px;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.mpick button .mascot{width:22px;height:22px}
+.mpick button .pupil{animation:none}
+.mpick button:hover{background:rgba(20,21,26,.06)}
+.mpick button[aria-pressed="true"]{background:var(--panel);box-shadow:0 1px 2px rgba(20,21,26,.08)}
+
+@media(max-width:900px){.rail{display:none}}
+
+@media(max-width:900px){.side{display:none}.main{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="side">
+  <div class="brand"><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20V9l6-5 6 5v11"/></svg></i>Стройка ИИ</div>
+  <h5>Работа</h5>
+  <a href="#0" onclick="return false" aria-current="page" data-page="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Сводка</a>
+  <a href="#0" onclick="return false" data-page="dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 2.6 17.3A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.7L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Отклонения<b>5</b></a>
+  <a href="#0" onclick="return false" data-page="est"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Смета</a>
+  <a href="#0" onclick="return false" data-page="mat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>Материалы<b>3</b></a>
+  <a href="#0" onclick="return false" data-page="buy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Закупки<b>2</b></a>
+  <a href="#0" onclick="return false" data-page="sch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>График</a>
+  <h5>Справочники</h5>
+  <a href="#0" onclick="return false" data-page="obj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>Объекты</a>
+  <a href="#0" onclick="return false" data-page="con"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>Подрядчики</a>
+  <a href="#0" onclick="return false" data-page="sup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Поставщики</a>
+  <div class="me"><span class="av">СЕ</span><div><b>Сергей Ермолаев</b><span>Руководитель проекта</span></div></div>
+</aside>
+
+<main class="main">
+  <div class="topline">
+    <div class="crumbs">Объекты<span>/</span><b>ЖК «Северный», корпус Б</b></div>
+    <div class="right">
+      <span class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск по объекту<span class="kbd">⌘K</span></span>
+      <button class="iconbtn" type="button" aria-label="Уведомления"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <span class="av">СЕ</span>
+    </div>
+  </div>
+<section class="page" id="pg-dash">
+  <div class="ph"><div><h1>ЖК «Северный», корпус Б</h1><p>Монолит, 12 этажей · подрядчик МонолитПро · срок до 30.04.2027</p></div><div class="right"><button class="btn sec" type="button">Отчёт за смену</button><button class="btn" type="button">Пересчитать план</button></div></div>
+  <div class="seg" role="tablist"><button type="button" aria-pressed="true">Сегодня</button><button type="button" aria-pressed="false">Неделя</button><button type="button" aria-pressed="false">Месяц</button><button type="button" aria-pressed="false">Весь срок</button></div>
+  <div class="tiles">
+    <div class="card lift tile"><span>Бюджет освоен</span><b class="num">86,4 млн ₽</b><div class="d ">из 184,2 млн · 47%</div><div class="bar"><i style="width:47%;background:var(--ac)"></i></div></div>
+    <div class="card lift tile"><span>Отклонение по смете</span><b class="num">+2,1%</b><div class="d up">+3,9 млн к плану</div><div class="bar"><i style="width:62%;background:var(--er)"></i></div></div>
+    <div class="card lift tile"><span>Прогноз срока</span><b class="num">+6 дней</b><div class="d wr">критический путь — монолит</div><div class="bar"><i style="width:38%;background:var(--wr)"></i></div></div>
+    <div class="card lift tile"><span>Открытых отклонений</span><b class="num">5</b><div class="d ">2 требуют решения сегодня</div><div class="bar"><i style="width:40%;background:var(--er)"></i></div></div>
+  </div>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h2>Бетон на четвёртый этаж придёт на три дня позже, чем нужен по графику</h2><p>Заливка захватки стоит на 6 октября, ближайшая подтверждённая поставка — 9-го. Сдвиг тянет опалубку и кладку; прогноз по корпусу — плюс шесть дней. Кладку можно начать на неделю раньше и вернуть четыре дня из шести.</p>
+      <div class="acts"><button class="btn sm" type="button">Подобрать поставщика на 6 октября</button><button class="btn sm sec" type="button">Сдвинуть кладку</button><button class="btn sm ghost why" type="button" data-why="why-dash" aria-expanded="false">Почему</button><span class="conf">уверенность 88% <i style="--p:88%"></i></span></div></div>
+    <div class="why" id="why-dash" hidden>Вывод собран из четырёх источников:<ul><li>График работ — «Монолит, захватка 4 эт.», старт 06.10, критический путь.</li><li>Договор П-114 с «БетонТрансСтрой» — окно поставки 09.10, подтверждено 02.10.</li><li>Потребность по смете — 420 м³ B25; на складе 0, бетон не хранится.</li><li>История «МонолитПро» — при сдвиге старта более двух дней среднее отставание 4,8 дня.</li></ul></div></div>
+  <div class="cols">
+    <section class="sec">
+      <div class="sh"><h2>Требует решения сегодня</h2><span class="cnt">4 по всему конвейеру</span></div>
+      <div class="card feed">
+        <div class="it" data-go="est"><span class="ic" style="background:rgba(175,82,222,.12);color:#8e3fc2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></span><div><div class="k">Смета</div><div class="t">Бетон B25 в смете на 12% выше рынка</div><div class="m">2 840 м³ по 6 950 ₽ при вилке 5 900 — 6 300. Потенциал −2,1 млн.</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct num" style="font-size:12px;color:var(--mut)">81%</span></div></div>
+        <div class="it" data-go="mat"><span class="ic" style="background:var(--wr-soft);color:var(--wr-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></span><div><div class="k">Материалы</div><div class="t">Дефицит бетона 300 м³ к 6 октября</div><div class="m">Нужно 420, законтрактовано 120. Блокирует заливку 4-го этажа.</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct num" style="font-size:12px;color:var(--mut)">96%</span></div></div>
+        <div class="it" data-go="buy"><span class="ic" style="background:var(--ac-soft);color:var(--ac-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></span><div><div class="k">Закупка</div><div class="t">Бетон 300 м³ — ждёт согласования</div><div class="m">1 872 000 ₽ · «БетонТрансСтрой» рекомендован, не самый дешёвый.</div></div><div class="end"><span class="bdg w">Согласовать</span><span class="pct num" style="font-size:12px;color:var(--mut)">79%</span></div></div>
+        <div class="it" data-go="con"><span class="ic" style="background:var(--ok-soft);color:var(--ok-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><div><div class="k">Подрядчики</div><div class="t">На кладку не назначен подрядчик</div><div class="m">Старт 15.11, а если сдвинуть — 08.11. Два кандидата с историей на объекте.</div></div><div class="end"><span class="bdg w">Выбрать</span><span class="pct num" style="font-size:12px;color:var(--mut)">—</span></div></div>
+      </div>
+    </section>
+    <div class="sec">
+      <section class="sec">
+        <div class="sh"><h2>Отклонения</h2><span class="cnt">по фото обходов</span><span class="right"><button class="btn sm ghost" type="button" data-go="dev">Все</button></span></div>
+        <div class="card dv">
+          <div class="row"><span class="thumb hot"></span><div><div class="t">Шаг арматуры 250 мм вместо 200</div><div class="m">Этаж 3, захватка Б · Марат</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct"><b class="num">92%</b></span></div></div>
+          <div class="row"><span class="thumb hot"></span><div><div class="t">Защитный слой 18 мм при норме 25</div><div class="m">Этаж 3, оси 2–4 · Марат</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct"><b class="num">87%</b></span></div></div>
+          <div class="row"><span class="thumb"></span><div><div class="t">Отметка перекрытия ниже на 12 мм</div><div class="m">Этаж 2 · Антон</div></div><div class="end"><span class="bdg w">Проверка</span><span class="pct"><b class="num">71%</b></span></div></div>
+        </div>
+      </section>
+      <section class="sec" style="margin-top:6px">
+        <div class="sh"><h2>Ход работ</h2><span class="cnt">факт против плана</span><span class="right"><button class="btn sm ghost" type="button" data-go="sch">График</button></span></div>
+        <div class="card prog">
+          <div class="st"><span class="n">Монолит, этажи 1–3</span><span class="v">92% · до 02.10</span><div class="bar"><i style="width:92%;background:var(--ac)"></i><span class="plan" style="left:96%"></span></div></div>
+          <div class="st"><span class="n">Монолит, этажи 4–8</span><span class="v">0% · 06.10 — 24.12</span><div class="bar"><i style="width:0%;background:var(--wr)"></i><span class="plan" style="left:4%"></span></div></div>
+          <div class="st"><span class="n">Кладка и перегородки</span><span class="v">подрядчик не назначен</span><div class="bar"><i style="width:0%"></i></div></div>
+          <div class="st"><span class="n">Фундамент и земляные</span><span class="v">100% · закрыт</span><div class="bar"><i style="width:100%;background:var(--ok)"></i></div></div>
+          <div class="foot"><span><i style="background:var(--ac)"></i>по плану</span><span><i style="background:var(--wr)"></i>риск</span><span><i style="background:var(--ok)"></i>закрыт</span><span><i style="background:var(--ink);opacity:.5;width:2px"></i>план на сегодня</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="page" id="pg-dev" hidden>
+  <div class="ph"><div><h1>Отклонения</h1><p>Найдены моделью по фото и видео обходов · 19 за смену</p></div><div class="right"><button class="btn sec" type="button">Экспорт в акт</button><button class="btn" type="button">Новый обход</button></div></div>
+  <div class="chips"><button class="chip" type="button" aria-pressed="true">Все 19</button><button class="chip" type="button" aria-pressed="false">Требуют решения 2</button><button class="chip" type="button" aria-pressed="false">На проверке 2</button><button class="chip" type="button" aria-pressed="false">Закрытые 15</button><button class="chip" type="button" aria-pressed="false">Монолит</button><button class="chip" type="button" aria-pressed="false">Геодезия</button></div>
+  <div class="tiles">
+    <div class="card lift tile"><span>Требуют решения</span><b class="num">2</b><div class="d up">до заливки 06.10</div></div>
+    <div class="card lift tile"><span>Ложных срабатываний</span><b class="num">1 из 19</b><div class="d ok">5% — модель дообучится</div></div>
+    <div class="card lift tile"><span>Среднее время до решения</span><b class="num">3,2 ч</b><div class="d ok">вчера 5,1 ч</div></div>
+    <div class="card lift tile"><span>Обходов за смену</span><b class="num">3</b><div class="d ">14 + 6 фото, 1 видео</div></div>
+  </div>
+  <div class="card dv">
+    <div class="row"><span class="thumb hot"></span><div><div class="t">Шаг арматуры 250 мм вместо 200</div><div class="m">Этаж 3, захватка Б, оси 2–3 · Марат · лист КЖ-14</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct"><b class="num">92%</b></span></div></div>
+    <div class="row"><span class="thumb hot"></span><div><div class="t">Защитный слой 18 мм при норме 25</div><div class="m">Этаж 3, оси 2–4 · Марат · лист КЖ-14</div></div><div class="end"><span class="bdg e">Решить</span><span class="pct"><b class="num">87%</b></span></div></div>
+    <div class="row"><span class="thumb"></span><div><div class="t">Отметка перекрытия ниже проектной на 12 мм</div><div class="m">Этаж 2 · Антон · геодезическая съёмка</div></div><div class="end"><span class="bdg w">Проверка</span><span class="pct"><b class="num">71%</b></span></div></div>
+    <div class="row"><span class="thumb"></span><div><div class="t">Опалубка снята раньше набора прочности</div><div class="m">Колонны, этаж 2 · Павел · журнал бетонных работ</div></div><div class="end"><span class="bdg w">Проверка</span><span class="pct"><b class="num">64%</b></span></div></div>
+    <div class="row"><span class="thumb"></span><div><div class="t">Маркировка партии арматуры не читается</div><div class="m">Склад приёмки · Павел</div></div><div class="end"><span class="bdg g">Закрыто</span><span class="pct"><b class="num">95%</b></span></div></div>
+    <div class="row"><span class="thumb"></span><div><div class="t">Трещина в стяжке подвала до 0,3 мм</div><div class="m">Подвал, ось Г · Антон · в допуске</div></div><div class="end"><span class="bdg g">Закрыто</span><span class="pct"><b class="num">88%</b></span></div></div>
+  </div>
+</section>
+<section class="page" id="pg-est" hidden>
+  <div class="ph"><div><h1>Смета</h1><p>Редакция 4 · загружена 02.09 · 1 284 позиции</p></div><div class="right"><button class="btn sec" type="button">Импорт ГЭСН</button><button class="btn" type="button">Выгрузить</button></div></div>
+  <div class="tiles">
+    <div class="card lift tile"><span>Всего по смете</span><b class="num">184,2 млн ₽</b><div class="d ">с НДС</div></div>
+    <div class="card lift tile"><span>Выше рынка</span><b class="num">14 позиций</b><div class="d up">потенциал −4,1 млн</div></div>
+    <div class="card lift tile"><span>Нет аналогов</span><b class="num">7 позиций</b><div class="d ">нужна ручная проверка</div></div>
+    <div class="card lift tile"><span>Проверено моделью</span><b class="num">99,5%</b><div class="d ok">1 277 из 1 284</div><div class="bar"><i style="width:99.5%;background:var(--ok)"></i></div></div>
+  </div>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h2>Бетон занимает 10,7% сметы и даёт наибольший потенциал экономии</h2><p>При переходе на рыночную вилку по трём позициям смета снижается на 4,1 млн без изменения марок и объёмов. Два поставщика из выборки возят от 60 км — логистику нужно проверить отдельно.</p>
+      <div class="acts"><button class="btn sm" type="button">Собрать запрос поставщикам</button><button class="btn sm ghost why" type="button" data-why="why-est" aria-expanded="false">Почему</button><span class="conf">уверенность 81% <i style="--p:81%"></i></span></div></div>
+    <div class="why" id="why-est" hidden>Сравнение построено на 34 закупках бетона B25 W6 F150 в радиусе 120 км за 90 дней. Исключены объёмы менее 100 м³ и поставки с доставкой заказчика. Позиции без достаточной выборки помечены отдельно и в итог не входят.</div></div>
+  <div class="card tbl"><table class="t"><thead><tr><th>Позиция</th><th class="r">Объём</th><th class="r">В смете</th><th class="r">Рынок</th><th class="r">Разница</th><th class="r"></th></tr></thead><tbody>
+    <tr><td><b>Бетон B25 W6 F150</b></td><td class="r num">2 840 м³</td><td class="r num">6 950 ₽/м³</td><td class="r num" style="color:var(--mut)">5 900 — 6 300</td><td class="r"><span class="bdg e">+12%</span></td><td class="r"><button class="btn sm ghost" type="button">Подобрать</button></td></tr>
+    <tr><td><b>Арматура А500С, ⌀12</b></td><td class="r num">186 т</td><td class="r num">71 200 ₽/т</td><td class="r num" style="color:var(--mut)">66 000 — 69 500</td><td class="r"><span class="bdg w">+4%</span></td><td class="r"><button class="btn sm ghost" type="button">Подобрать</button></td></tr>
+    <tr><td><b>Опалубка стеновая, аренда</b></td><td class="r num">92 сут</td><td class="r num">310 ₽/м²</td><td class="r num" style="color:var(--mut)">280 — 330</td><td class="r"><span class="bdg g">в рынке</span></td><td class="r" style="color:var(--faint)">—</td></tr>
+    <tr><td><b>Кирпич керамический М150</b></td><td class="r num">248 тыс. шт</td><td class="r num">24,10 ₽/шт</td><td class="r num" style="color:var(--mut)">21,00 — 22,80</td><td class="r"><span class="bdg e">+9%</span></td><td class="r"><button class="btn sm ghost" type="button">Подобрать</button></td></tr>
+    <tr><td><b>Гидроизоляция рулонная</b></td><td class="r num">4 200 м²</td><td class="r num">340 ₽/м²</td><td class="r num" style="color:var(--mut)">нет данных</td><td class="r"><span class="bdg b">нет выборки</span></td><td class="r"><button class="btn sm ghost" type="button">Проверить</button></td></tr>
+  </tbody></table></div>
+</section>
+<section class="page" id="pg-mat" hidden>
+  <div class="ph"><div><h1>Материалы</h1><p>Потребность против законтрактованного · ближайшие 8 недель</p></div><div class="right"><button class="btn sec" type="button">Склад</button><button class="btn" type="button">Создать закупку</button></div></div>
+  <div class="tiles">
+    <div class="card lift tile"><span>Дефицит в 2 недели</span><b class="num">3 позиции</b><div class="d up">блокируют 2 этапа</div></div>
+    <div class="card lift tile"><span>Законтрактовано</span><b class="num">68%</b><div class="d ">от годовой потребности</div><div class="bar"><i style="width:68%;background:var(--ac)"></i></div></div>
+    <div class="card lift tile"><span>Излишек на складе</span><b class="num">1,2 млн ₽</b><div class="d wr">арматура ⌀8, 18 т</div></div>
+    <div class="card lift tile"><span>Ближайшая поставка</span><b class="num">09.10</b><div class="d ">бетон, 120 м³</div></div>
+  </div>
+  <div class="card tbl"><table class="t"><thead><tr><th>Материал</th><th class="r">Нужно</th><th class="r">На складе</th><th class="r">Законтрактовано</th><th class="r">Дефицит</th><th>Нужен к</th><th class="r"></th></tr></thead><tbody>
+    <tr><td><b>Бетон B25 W6 F150</b></td><td class="r num">420 м³</td><td class="r num">0</td><td class="r num">120 м³</td><td class="r num" style="color:var(--er-ink);font-weight:600">300 м³</td><td><span class="bdg e">06.10</span></td><td class="r"><button class="btn sm" type="button" data-go="buy">Закупить</button></td></tr>
+    <tr><td><b>Арматура А500С, ⌀12</b></td><td class="r num">24 т</td><td class="r num">6 т</td><td class="r num">24 т</td><td class="r num" style="color:var(--ok-ink)">нет</td><td><span class="bdg g">11.10</span></td><td class="r" style="color:var(--faint)">—</td></tr>
+    <tr><td><b>Опалубка стеновая</b></td><td class="r num">640 м²</td><td class="r num">640 м²</td><td class="r num">—</td><td class="r num" style="color:var(--ok-ink)">нет</td><td><span class="bdg g">06.10</span></td><td class="r" style="color:var(--faint)">—</td></tr>
+    <tr><td><b>Кирпич М150</b></td><td class="r num">62 тыс. шт</td><td class="r num">0</td><td class="r num">0</td><td class="r num" style="color:var(--er-ink);font-weight:600">62 тыс. шт</td><td><span class="bdg w">15.11</span></td><td class="r"><button class="btn sm sec" type="button">Запросить</button></td></tr>
+    <tr><td><b>Смесь кладочная</b></td><td class="r num">84 т</td><td class="r num">12 т</td><td class="r num">40 т</td><td class="r num" style="color:var(--er-ink);font-weight:600">32 т</td><td><span class="bdg w">18.11</span></td><td class="r"><button class="btn sm sec" type="button">Запросить</button></td></tr>
+  </tbody></table></div>
+</section>
+<section class="page" id="pg-buy" hidden>
+  <div class="ph"><div><h1>Закупки</h1><p>3 открытых · 5,08 млн ₽ · экономия по модели 214 тыс.</p></div><div class="right"><button class="btn sec" type="button">Экспорт</button><button class="btn" type="button">Новая закупка</button></div></div>
+  <div class="seg"><button type="button" aria-pressed="true">Все 3</button><button type="button" aria-pressed="false">Ждут решения 1</button><button type="button" aria-pressed="false">В работе 1</button><button type="button" aria-pressed="false">Закрытые 12</button></div>
+  <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="card lift pc"><h3>Бетон B25 W6 F150, 300 м³</h3><div class="sum num">1 872 000 ₽<small>нужен к 06.10</small></div>
+      <div class="meta"><span class="bdg w">Ждёт согласования</span><span class="who"><span class="av" style="background:var(--ac)">СЕ</span>Сергей Е.</span></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Рекомендую «БетонТрансСтрой» — 11 из 11 в срок</span><span class="p num">79%</span></div></div>
+    <div class="card lift pc"><h3>Арматура А500С ⌀12, 24 т</h3><div class="sum num">1 708 800 ₽<small>нужна к 11.10</small></div>
+      <div class="meta"><span class="bdg g">Согласовано</span><span class="who"><span class="av" style="background:#17c653">АК</span>Антон К.</span></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Цена в рыночной вилке, поставщик без срывов</span><span class="p num">91%</span></div></div>
+    <div class="card lift pc"><h3>Кирпич М150, 62 тыс. шт</h3><div class="sum num">1 494 200 ₽<small>нужен к 15.11</small></div>
+      <div class="meta"><span class="bdg b">Запрос отправлен</span><span class="who"><span class="av" style="background:#f6b100">ПС</span>Павел С.</span></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Ответили 3 из 8 — рано сравнивать</span><span class="p num">64%</span></div></div>
+  </div>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h2>Рекомендую «БетонТрансСтрой» на бетон, хотя он не самый дешёвый</h2><p>Дешевле на 214 тыс. предлагает «СтройБетон-Н», но у него два срыва срока из семи поставок и нет своего автобетононасоса. Заливка на критическом пути: день простоя дороже разницы в цене.</p>
+      <div class="acts"><button class="btn sm" type="button">Согласовать закупку</button><button class="btn sm sec" type="button">Сравнить всех</button><button class="btn sm ghost why" type="button" data-why="why-buy" aria-expanded="false">Почему</button><span class="conf">уверенность 79% <i style="--p:79%"></i></span></div></div>
+    <div class="why" id="why-buy" hidden>Оценка складывается из четырёх весов: срок 40%, история 30%, цена 20%, качество по протоколам 10%. Веса такие, потому что позиция на критическом пути; для некритичных закупок цена весит 45%. Срывы «СтройБетон-Н» 14.03 и 27.06 по одной причине — нехватка миксеров в пик сезона, а октябрь тоже пиковый.</div></div>
+</section>
+<section class="page" id="pg-sch" hidden>
+  <div class="ph"><div><h1>График</h1><p>Сентябрь 2026 — февраль 2027 · сегодня 12.09</p></div><div class="right"><button class="btn sec" type="button">Базовый план</button><button class="btn" type="button">Пересчитать</button></div></div>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h2>Прогноз сдачи корпуса — 6 мая 2027, на шесть дней позже договора</h2><p>Задержка целиком приходится на монолит этажей 4–8: фактический темп 4,1 дня на захватку против 3,5 по плану. Кладка не зависит от верхних этажей до отметки +21,6 м — её можно начать 8 ноября вместо 15-го и вернуть четыре дня.</p>
+      <div class="acts"><button class="btn sm" type="button">Применить сдвиг кладки</button><button class="btn sm ghost why" type="button" data-why="why-sch" aria-expanded="false">Почему</button><span class="conf">уверенность 74% <i style="--p:74%"></i></span></div></div>
+    <div class="why" id="why-sch" hidden>Темп измерен на трёх захватках за шесть недель — выборка небольшая, поэтому уверенность снижена. Кладка привязана к готовности перекрытия на два этажа ниже текущего, что и позволяет перенос без нарушения технологической последовательности.</div></div>
+  <div class="card gantt">
+    <div class="hd"><span></span><div class="months"><span>сен</span><span>окт</span><span>ноя</span><span>дек</span><span>янв</span><span>фев</span></div></div>
+    <div class="row"><span class="lbl">Монолит, этажи 1–3</span><div class="track"><i class="plan" style="left:0%;width:15%"></i><i class="fact" style="left:0%;width:14%;background:var(--ok)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lbl">Монолит, этажи 4–8</span><div class="track"><i class="plan" style="left:15%;width:23%"></i><i class="fact" style="left:15%;width:26%;background:var(--er)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lbl">Монолит, этажи 9–12</span><div class="track"><i class="plan" style="left:38%;width:16%"></i><i class="fact" style="left:41%;width:17%;background:var(--er)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lbl">Кладка и перегородки</span><div class="track"><i class="plan" style="left:32%;width:39%"></i><i class="fact" style="left:32%;width:39%;background:var(--ac)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lbl">Фасад</span><div class="track"><i class="plan" style="left:51%;width:31%"></i><i class="fact" style="left:51%;width:31%;background:var(--ac)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="row"><span class="lbl">Внутренняя отделка</span><div class="track"><i class="plan" style="left:61%;width:34%"></i><i class="fact" style="left:61%;width:34%;background:var(--ac)"></i><span class="today" style="left:8.2%"></span></div></div>
+    <div class="leg"><span><i style="background:rgba(20,21,26,.1)"></i>план</span><span><i style="background:var(--ok)"></i>закрыто</span><span><i style="background:var(--ac)"></i>по плану</span><span><i style="background:var(--er)"></i>критический путь, прогноз позже</span><span style="margin-left:auto">вертикаль — сегодня</span></div>
+  </div>
+</section>
+<section class="page" id="pg-con" hidden>
+  <div class="ph"><div><h1>Подрядчики</h1><p>4 на объекте · 1 этап без исполнителя</p></div><div class="right"><button class="btn sec" type="button">Пригласить</button><button class="btn" type="button">Назначить на кладку</button></div></div>
+  <div class="card ai">
+    <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+    <div><h2>На кладку стоит звать «СтройБазу», а не «МонолитПро»</h2><p>«МонолитПро» уже ведёт монолит 4–8 и отстаёт на 6 дней — вторая параллельная задача усилит риск. «СтройБаза» закрыла земляные работы в срок, кладку на корпусе А сдала с двумя замечаниями и свободна с 1 ноября.</p>
+      <div class="acts"><button class="btn sm" type="button">Запросить у «СтройБазы»</button><button class="btn sm ghost why" type="button" data-why="why-con" aria-expanded="false">Почему</button><span class="conf">уверенность 72% <i style="--p:72%"></i></span></div></div>
+    <div class="why" id="why-con" hidden>Оценка по загрузке: у «МонолитПро» два активных этапа и просадка темпа на 17%. У «СтройБазы» история на этом же объекте и свободное окно, но кладку они делали один раз — отсюда умеренная уверенность.</div></div>
+  <div class="ctr">
+    <div class="card lift c"><div class="top"><span class="logo" style="background:#1b84ff">МП</span><div style="flex:1 1 auto;min-width:0"><h3>МонолитПро</h3><div class="sub">монолит, генподряд · с мая 2026</div></div><span class="bdg w">Отставание</span></div>
+      <div class="kv"><div><span>Этапов на объекте</span><b class="num">3</b></div><div><span>В срок</span><b class="num">2 из 3</b></div><div><span>Замечаний</span><b class="num">7</b></div></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Темп 4,1 дня на захватку против 3,5 — отставание растёт</span></div></div>
+    <div class="card lift c"><div class="top"><span class="logo" style="background:#17c653">СБ</span><div style="flex:1 1 auto;min-width:0"><h3>СтройБаза</h3><div class="sub">земляные, кладка · с марта 2026</div></div><span class="bdg g">В срок</span></div>
+      <div class="kv"><div><span>Этапов на объекте</span><b class="num">1</b></div><div><span>В срок</span><b class="num">1 из 1</b></div><div><span>Замечаний</span><b class="num">2</b></div></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Свободны с 1 ноября, кладку на корпусе А сдали в срок</span></div></div>
+    <div class="card lift c"><div class="top"><span class="logo" style="background:#af52de">ГС</span><div style="flex:1 1 auto;min-width:0"><h3>ГеоСервис</h3><div class="sub">геодезия · по вызову</div></div><span class="bdg g">В срок</span></div>
+      <div class="kv"><div><span>Этапов на объекте</span><b class="num">—</b></div><div><span>В срок</span><b class="num">12 из 12</b></div><div><span>Замечаний</span><b class="num">0</b></div></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Разбивку осей делают за день с момента вызова</span></div></div>
+    <div class="card lift c"><div class="top"><span class="logo" style="background:#6b6f76">ФК</span><div style="flex:1 1 auto;min-width:0"><h3>ФасадКомплект</h3><div class="sub">фасад · договор не подписан</div></div><span class="bdg b">Переговоры</span></div>
+      <div class="kv"><div><span>Этапов на объекте</span><b class="num">0</b></div><div><span>В срок</span><b class="num">—</b></div><div><span>Замечаний</span><b class="num">—</b></div></div>
+      <div class="aline"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg><span>Предложение получено, старт 25 января возможен</span></div></div>
+  </div>
+</section>
+</main>
+</div>
+
+
+
+<nav class="rail" aria-label="Правое меню">
+  <button class="tab" type="button" data-tab="chats" aria-pressed="false" aria-label="Чаты"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="40" r="17" fill="#fff" stroke="rgba(20,21,26,.12)"/><circle class="pupil" cx="26" cy="41" r="2.2" fill="#14151a"/><circle class="pupil r" cx="38" cy="41" r="2.2" fill="#14151a"/><path d="M27 48q5 3 10 0" stroke="#14151a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M13 32C13 19 21 11 32 11s19 8 19 21z" fill="#f6b100"/><rect x="28.5" y="7" width="7" height="9" rx="3" fill="#f6b100"/><rect x="8" y="30" width="48" height="7" rx="3.5" fill="#d99a00"/></svg><span class="n" id="n-chats">3</span><span class="tip">Чаты с ассистентами</span></button>
+  <button class="tab" type="button" data-tab="notif" aria-pressed="false" aria-label="Уведомления"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="n" id="n-notif">4</span><span class="tip">Уведомления</span></button>
+  <button class="tab" type="button" data-tab="docs" aria-pressed="false" aria-label="Документы"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="n" hidden></span><span class="tip">Документы</span></button>
+  <span class="sep"></span>
+  <button class="tab" type="button" data-tab="tasks" aria-pressed="false" aria-label="Мои задачи"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="n" hidden></span><span class="tip">Мои задачи</span></button>
+  <span class="me"><span class="av" style="width:34px;height:34px;font-size:12px">СЕ</span></span>
+</nav>
+
+<aside class="asst" id="asst" data-open="0" aria-label="Правая панель" aria-hidden="true">
+  <!-- ЧАТЫ · список -->
+  <div class="view" id="v-list">
+    <div class="hd"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="40" r="17" fill="#fff" stroke="rgba(20,21,26,.12)"/><circle class="pupil" cx="26" cy="41" r="2.2" fill="#14151a"/><circle class="pupil r" cx="38" cy="41" r="2.2" fill="#14151a"/><path d="M27 48q5 3 10 0" stroke="#14151a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M13 32C13 19 21 11 32 11s19 8 19 21z" fill="#f6b100"/><rect x="28.5" y="7" width="7" height="9" rx="3" fill="#f6b100"/><rect x="8" y="30" width="48" height="7" rx="3.5" fill="#d99a00"/></svg><div><b>Чаты</b><div class="ctx"><i></i><span>Ассистенты по сферам · 6</span></div></div><button class="iconbtn x" type="button" data-close aria-label="Закрыть"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="mpick" role="group" aria-label="Вариант иконки">
+      <span>Иконка</span>
+      <button type="button" data-m="face" aria-pressed="true" title="Лицо под козырьком"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="40" r="17" fill="#fff" stroke="rgba(20,21,26,.12)"/><circle class="pupil" cx="26" cy="41" r="2.2" fill="#14151a"/><circle class="pupil r" cx="38" cy="41" r="2.2" fill="#14151a"/><path d="M27 48q5 3 10 0" stroke="#14151a" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M13 32C13 19 21 11 32 11s19 8 19 21z" fill="#f6b100"/><rect x="28.5" y="7" width="7" height="9" rx="3" fill="#f6b100"/><rect x="8" y="30" width="48" height="7" rx="3.5" fill="#d99a00"/></svg></button>
+      <button type="button" data-m="hat" aria-pressed="false" title="Каска без лица"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 40C12 24 21 14 32 14s20 10 20 26z" fill="#f6b100"/><path d="M20 34c0-8 5-13 12-13" stroke="rgba(255,255,255,.6)" stroke-width="2.6" stroke-linecap="round" fill="none"/><rect x="28" y="9" width="8" height="12" rx="3.5" fill="#f6b100"/><rect x="6" y="38" width="52" height="9" rx="4.5" fill="#d99a00"/><path d="M24 22v14M40 22v14" stroke="rgba(0,0,0,.12)" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <button type="button" data-m="bubble" aria-pressed="false" title="Каска в пузыре"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 12h44a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H26l-11 9v-9h-5a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z" fill="#1b84ff"/><path d="M22 36c0-8 4.5-12 10-12s10 4 10 12z" fill="#fff"/><rect x="30" y="20" width="4" height="6" rx="2" fill="#fff"/><rect x="19" y="35" width="26" height="4" rx="2" fill="rgba(255,255,255,.75)"/></svg></button>
+      <button type="button" data-m="bot" aria-pressed="false" title="Бот"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="20" width="40" height="32" rx="12" fill="#1b84ff"/><rect x="30" y="8" width="4" height="12" rx="2" fill="#1b84ff"/><circle cx="32" cy="8" r="3.5" fill="#1b84ff"/><rect x="18" y="28" width="28" height="16" rx="8" fill="#fff"/><circle class="pupil" cx="26" cy="36" r="3" fill="#14151a"/><circle class="pupil r" cx="38" cy="36" r="3" fill="#14151a"/></svg></button>
+      <button type="button" data-m="spark" aria-pressed="false" title="Искра в пузыре"><svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 12h44a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H26l-11 9v-9h-5a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z" fill="#1b84ff"/><path d="M32 18l3.2 8.3L44 30l-8.8 3.7L32 42l-3.2-8.3L20 30l8.8-3.7z" fill="#fff"/><path d="M45 17l1.3 3.4 3.4 1.3-3.4 1.3L45 26.4l-1.3-3.4-3.4-1.3 3.4-1.3z" fill="rgba(255,255,255,.8)"/></svg></button>
+    </div>
+    <div class="list" id="agent-list">
+      <button class="agent" type="button" data-agent="build" aria-selected="false"><span class="ava" style="background:var(--ac)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20V9l6-5 6 5v11"/></svg></span><span><span class="n">Строитель <small>объект</small></span><span class="l">Рекомендую «БетонТрансСтрой» — не самый дешёвый…</span></span><span class="u">2</span></button>
+      <button class="agent" type="button" data-agent="law" aria-selected="false"><span class="ava" style="background:#af52de"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/></svg></span><span><span class="n">Юрист <small>договоры</small></span><span class="l">Претензия по П-114 готова, проверьте сумму пени</span></span><span class="u">1</span></button>
+      <button class="agent" type="button" data-agent="fin" aria-selected="false"><span class="ava" style="background:#17c653"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span><span><span class="n">Финансист <small>бюджет</small></span><span class="l">Освоение 47% при графике 44% — идём с опережением</span></span><span class="u" hidden></span></button>
+      <button class="agent" type="button" data-agent="sale" aria-selected="false"><span class="ava" style="background:#ff9500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></span><span><span class="n">Продажи <small>клиенты</small></span><span class="l">По «Заводской» КП открыли дважды, ответа нет</span></span><span class="u" hidden></span></button>
+      <button class="agent" type="button" data-agent="hr" aria-selected="false"><span class="ava" style="background:#30b0c7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span><span><span class="n">Кадры <small>бригады</small></span><span class="l">На вторую смену не хватает двух бетонщиков</span></span><span class="u" hidden></span></button>
+      <button class="agent" type="button" data-agent="ast" aria-selected="false"><span class="ava" style="background:#6b6f76"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span><span><span class="n">Ассистент <small>общее</small></span><span class="l">Напомню про совещание с МонолитПро в 16:00</span></span><span class="u" hidden></span></button>
+    </div>
+  </div>
+  <!-- ЧАТЫ · диалог -->
+  <div class="view" id="v-conv" hidden style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0">
+    <div class="hd" id="conv-hd"></div>
+    <div class="log" id="conv-log"></div>
+    <form class="in" id="conv-form">
+      <button class="iconbtn" type="button" aria-label="Приложить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11.05-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
+      <input id="conv-input" placeholder="Написать…" autocomplete="off" aria-label="Сообщение">
+      <button class="send" type="submit" id="conv-send" disabled aria-label="Отправить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </form>
+  </div>
+  <!-- УВЕДОМЛЕНИЯ -->
+  <div class="view" id="v-notif" hidden>
+    <div class="hd"><div><b>Уведомления</b><div class="ctx"><span>4 новых</span></div></div><button class="btn sm ghost" type="button" style="margin-left:auto">Прочитать все</button><button class="iconbtn x" type="button" data-close aria-label="Закрыть"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="nlist">
+      <div class="it" data-go="dev"><span class="dot" style="background:var(--er)"></span><div><div class="t">Новое отклонение: шаг арматуры 250 мм</div><div class="m">Этаж 3, захватка Б · уверенность 92% · требует решения до заливки</div><div class="w">11:24 · Строитель</div></div></div>
+      <div class="it" data-go="buy"><span class="dot" style="background:var(--wr)"></span><div><div class="t">Закупка бетона ждёт согласования</div><div class="m">1 872 000 ₽ · «БетонТрансСтрой» · окно поставки истекает 14.09</div><div class="w">10:02 · Закупки</div></div></div>
+      <div class="it"><span class="dot" style="background:#af52de"></span><div><div class="t">Юрист подготовил уведомление по П-114</div><div class="m">Черновик на подпись · копия Антону</div><div class="w">09:40 · Юрист</div></div></div>
+      <div class="it" data-go="sch"><span class="dot" style="background:var(--ac)"></span><div><div class="t">Пересчитан прогноз срока: +6 дней</div><div class="m">Критический путь — монолит 4–8 · вариант с кладкой возвращает 4 дня</div><div class="w">08:15 · График</div></div></div>
+    </div>
+  </div>
+  <!-- ДОКУМЕНТЫ -->
+  <div class="view" id="v-docs" hidden>
+    <div class="hd"><div><b>Документы</b><div class="ctx"><span>По объекту · последние</span></div></div><button class="iconbtn x" type="button" data-close aria-label="Закрыть" style="margin-left:auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="nlist">
+      <div class="it"><span class="dot" style="background:#af52de"></span><div><div class="t">Уведомление о нарушении срока · П-114.docx</div><div class="m">Черновик · 1 стр. · на подпись</div><div class="w">сегодня · Юрист</div></div></div>
+      <div class="it"><span class="dot" style="background:#6b6f76"></span><div><div class="t">Повестка 16:00 · МонолитПро.pdf</div><div class="m">1 стр. · цифры по темпу монолита</div><div class="w">сегодня · Ассистент</div></div></div>
+      <div class="it"><span class="dot" style="background:var(--ac)"></span><div><div class="t">Акт скрытых работ · оси 2–3, этаж 2.pdf</div><div class="m">Подписан · 3 стр.</div><div class="w">вчера · Марат</div></div></div>
+      <div class="it"><span class="dot" style="background:var(--ac)"></span><div><div class="t">Смета, редакция 4.xlsx</div><div class="m">1 284 позиции · проверена моделью</div><div class="w">02.09 · Сергей Е.</div></div></div>
+    </div>
+  </div>
+  <!-- ЗАДАЧИ -->
+  <div class="view" id="v-tasks" hidden>
+    <div class="hd"><div><b>Мои задачи</b><div class="ctx"><span>3 на сегодня</span></div></div><button class="iconbtn x" type="button" data-close aria-label="Закрыть" style="margin-left:auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="nlist">
+      <div class="it" data-go="buy"><span class="dot" style="background:var(--wr)"></span><div><div class="t">Согласовать закупку бетона</div><div class="m">До 14.09, пока держится окно поставки</div></div></div>
+      <div class="it" data-go="con"><span class="dot" style="background:var(--wr)"></span><div><div class="t">Назначить подрядчика на кладку</div><div class="m">Старт 08.11, если применить сдвиг</div></div></div>
+      <div class="it"><span class="dot" style="background:#af52de"></span><div><div class="t">Подписать уведомление по П-114</div><div class="m">Черновик от Юриста</div></div></div>
+    </div>
+  </div>
+</aside>
+
+
+<script>
+(function(){
+  var MAP={obj:'dash',sup:'buy'};
+  function go(raw){
+    var key=MAP[raw]||raw;
+    document.querySelectorAll('.page').forEach(function(p){p.hidden=(p.id!=='pg-'+key);});
+    var links=document.querySelectorAll('.side a[data-page]');
+    var exact=null,first=null;
+    links.forEach(function(a){
+      a.removeAttribute('aria-current');
+      var r=a.getAttribute('data-page');
+      if(r===raw)exact=a;
+      if(!first&&(MAP[r]||r)===key)first=a;
+    });
+    (exact||first)&&(exact||first).setAttribute('aria-current','page');
+    window.scrollTo({top:0,behavior:'instant'});
+  }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('[data-page]');
+    if(a){e.preventDefault();go(a.getAttribute('data-page'));return;}
+    var g=e.target.closest&&e.target.closest('[data-go]');
+    if(g){go(g.getAttribute('data-go'));return;}
+    var w=e.target.closest&&e.target.closest('.why');
+    if(w){var t=document.getElementById(w.getAttribute('data-why'));var o=t.hidden;t.hidden=!o;w.textContent=o?'Скрыть':'Почему';w.setAttribute('aria-expanded',o?'true':'false');return;}
+    var sb=e.target.closest&&e.target.closest('.seg button, .chips .chip');
+    if(sb){sb.parentElement.querySelectorAll('button').forEach(function(y){y.setAttribute('aria-pressed','false');});sb.setAttribute('aria-pressed','true');}
+  });
+})();
+
+/* ───────── правое меню: чаты, уведомления, документы, задачи ───────── */
+(function(){
+  var asst=document.getElementById('asst'),rail=document.querySelector('.rail');
+  var views={chats:'v-list',notif:'v-notif',docs:'v-docs',tasks:'v-tasks'};
+  var TITLES={dash:'Сводка',dev:'Отклонения',est:'Смета',mat:'Материалы',buy:'Закупки',sch:'График',con:'Подрядчики'};
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+  function curPage(){var p=document.querySelector('.page:not([hidden])');return p?p.id.replace('pg-',''):'dash';}
+  var open=null;
+  function show(id){document.querySelectorAll('.asst .view').forEach(function(v){v.hidden=(v.id!==id);});}
+  function openTab(tab){
+    open=tab;asst.setAttribute('data-open','1');asst.setAttribute('aria-hidden','false');
+    rail.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-pressed',t.getAttribute('data-tab')===tab?'true':'false');});
+    show(views[tab]);
+  }
+  function close(){open=null;asst.setAttribute('data-open','0');asst.setAttribute('aria-hidden','true');rail.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-pressed','false');});}
+  rail.addEventListener('click',function(e){var t=e.target.closest('.tab[data-tab]');if(!t)return;var k=t.getAttribute('data-tab');if(open===k)close();else openTab(k);});
+  asst.addEventListener('click',function(e){
+    if(e.target.closest('[data-close]')){close();return;}
+    if(e.target.closest('[data-back]')){show('v-list');return;}
+    var g=e.target.closest('[data-go]');if(g){document.querySelector('.side a[data-page="'+g.getAttribute('data-go')+'"]').click();}
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)close();});
+
+  /* ---- агенты ---- */
+  var hd=document.getElementById('conv-hd'),log=document.getElementById('conv-log'),input=document.getElementById('conv-input'),send=document.getElementById('conv-send');
+  function now(){var d=new Date();return (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}
+  function scroll(){log.scrollTop=log.scrollHeight;}
+  function msg(html,me){var m=el('div','msg'+(me?' me':''));var b=el('div','b');b.innerHTML=html;m.appendChild(b);m.appendChild(el('div','t',now()));log.appendChild(m);scroll();return m;}
+  function raw(html){var m=msg(html);m.querySelector('.b').style.cssText='background:transparent;padding:0';return m;}
+  function chips(list){var c=el('div','chips2');list.forEach(function(t){var b=el('button',null,t);b.type='button';b.onclick=function(){ask(t);};c.appendChild(b);});log.appendChild(c);scroll();}
+  function think(steps,done){var box=el('div','think');var rows=steps.map(function(t){var d=el('div');d.appendChild(el('i'));d.appendChild(el('span',null,t));box.appendChild(d);return d;});log.appendChild(box);scroll();var i=0;(function tick(){if(i<rows.length){rows[i].setAttribute('data-done','1');i++;setTimeout(tick,420);}else{setTimeout(function(){box.remove();done();},260);}})();}
+  var DOC=function(n,meta){return '<div class="doc"><span class="fi"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></span><div><b>'+n+'</b><span>'+meta+'</span></div></div>';};
+  var CHIPS={dash:['Что требует меня сегодня','Почему прогноз +6 дней','Подобрать бетон на 6 октября'],dev:['Что из отклонений критично','Подтвердить шаг арматуры'],est:['Где смета выше рынка','Собрать запрос по бетону'],mat:['Что в дефиците до 15 октября','Закрыть дефицит бетона'],buy:['Почему не самый дешёвый','Подобрать бетон на 6 октября'],sch:['Как вернуть 4 дня','Применить сдвиг кладки'],con:['Кого звать на кладку','Насколько отстаёт МонолитПро']};
+  var SUP='<div class="icard"><h4>БетонТрансСтрой · B25 W6 F150, 300 м³</h4><div class="kv"><div><span>Цена</span><b class="num">6 240 ₽/м³</b></div><div><span>Поставка</span><b class="num">06.10, 07:00</b></div><div><span>История</span><b>11 из 11 в срок</b></div></div><div class="acts"><button class="btn sm" type="button" data-act="preview">Оформить заказ</button><button class="btn sm sec" type="button" data-act="alt">Показать альтернативы</button></div></div>';
+  var PREVIEW='<div class="preview"><b>Что произойдёт, если подтвердить</b><ul><li>Создам закупку ЗК-115 на 1 872 000 ₽ и отправлю на согласование Сергею Е.</li><li>Забронирую окно поставки 06.10 у «БетонТрансСтрой» на 48 часов.</li><li>Дефицит в «Материалах» закроется с 300 м³ до 0 после согласования.</li></ul><span style="color:var(--mut)">Ничего не оплачивается и не подписывается — только заявка.</span><div class="acts"><button class="btn sm" type="button" data-act="confirm">Подтвердить</button><button class="btn sm sec" type="button" data-act="cancel">Отмена</button></div></div>';
+  var A={
+    build:{n:'Строитель',sees:function(){return 'Видит: '+(TITLES[curPage()]||'объект')+', смету, график, материалы, закупки';},
+      start:function(){msg('<p>Сегодня четыре вопроса ждут вас: смета, дефицит бетона, закупка и подрядчик на кладку. Начать с бетона? Он на критическом пути.</p>');chips(CHIPS[curPage()]||CHIPS.dash);}},
+    law:{n:'Юрист',sees:function(){return 'Видит: договоры, акты, претензии, переписку';},
+      start:function(){msg('Подготовь претензию БетонТрансСтрою — 3 апреля привезли на 4 часа позже',true);msg('<p>Проверил П-114: допуск 2 часа, опоздание 4 — нарушение. Пеня по п. 7.3: 90 м³ × 7 010 ₽ × 0,1% × 2 ч = <b>1 262 ₽</b>.</p><p>Сумма символическая. Предлагаю не претензию, а письмо-уведомление: фиксирует факт для истории поставщика, отношения не портит.</p>');raw(DOC('Уведомление о нарушении срока · П-114.docx','черновик · 1 стр. · п. 4.2 и 7.3'));chips(['Отправить на подпись','Всё-таки претензию']);}},
+    fin:{n:'Финансист',sees:function(){return 'Видит: бюджет, освоение, платежи, кассовый план';},
+      start:function(){msg('<p>Освоено 86,4 млн из 184,2 — 47% при плановых 44%: идём с опережением на 5,5 млн, в основном за счёт ранней закупки арматуры.</p><p>Внимание на октябрь: три платежа по бетону и аренда опалубки сходятся в одну неделю, кассовый разрыв около 2,3 млн на 4 дня.</p>');chips(['Показать кассовый план','Что можно сдвинуть']);}},
+    sale:{n:'Продажи',sees:function(){return 'Видит: клиентов, сделки, КП, переписку с заказчиками';},
+      start:function(){msg('Что с «Заводской»?',true);msg('<p>КП на склад отправили 4 сентября, открывали дважды с телефона, ответа нет. Сумма 38,4 млн. Заказчики такого размера решают в среднем 12 дней — сейчас день 8. Рано дёргать, но можно дать повод: мы на «Северном» сдаём похожий узел с опережением.</p>');raw(DOC('Письмо в «Заводскую» · черновик','3 абзаца · без давления, одно фото узла'));chips(['Отправить письмо','Показать воронку']);}},
+    hr:{n:'Кадры',sees:function(){return 'Видит: бригады, табели, допуски, смены';},
+      start:function(){msg('<p>На вторую смену не хватает двух бетонщиков — у «МонолитПро» двое на больничном. При заливке 6 октября это минус 15% темпа.</p><p>Вариант: у «СтройБазы» бригада простаивает до 1 ноября, четверо с допуском на монолит.</p>');chips(['Запросить у СтройБазы','Показать табель смены']);}},
+    ast:{n:'Ассистент',sees:function(){return 'Видит: календарь, задачи, почту, уведомления';},
+      start:function(){msg('<p>На сегодня: совещание с «МонолитПро» в 16:00 по отставанию, две закупки ждут подписи, Юрист подготовил уведомление по П-114.</p>');msg('Собери к совещанию цифры по темпу',true);msg('<p>Попросил Строителя. Темп 4,1 дня на захватку против 3,5, прогноз +6 дней, кладка возвращает четыре. Положил одной страницей в повестку.</p>');raw(DOC('Повестка 16:00 · МонолитПро.pdf','1 стр. · обновлено 14:20'));chips(['Напомни за 15 минут']);}}
+  };
+  var cur='build';
+  function openAgent(k){
+    cur=k;var a=A[k];var src=document.querySelector('.agent[data-agent='+k+']');
+    hd.innerHTML='<button class="iconbtn back" type="button" data-back aria-label="К списку"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><span class="ava" style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none;background:'+src.querySelector('.ava').style.background+'">'+src.querySelector('.ava').innerHTML+'</span><div style="min-width:0"><b>'+a.n+'</b><div class="sees">'+a.sees()+'</div></div><button class="iconbtn x" type="button" data-close aria-label="Закрыть"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>';
+    log.innerHTML='';a.start();
+    var u=src.querySelector('.u');if(u&&!u.hidden){u.hidden=true;var n=document.getElementById('n-chats');var left=document.querySelectorAll('.agent .u:not([hidden])').length;n.textContent=left;n.hidden=!left;}
+    show('v-conv');setTimeout(function(){input.focus();},60);
+  }
+  document.getElementById('agent-list').addEventListener('click',function(e){var b=e.target.closest('.agent');if(b)openAgent(b.getAttribute('data-agent'));});
+
+  function ask(text){
+    msg(text,true);var t=text.toLowerCase();
+    if(cur!=='build'){think(['Смотрю '+A[cur].sees().replace('Видит: ','').split(',')[0]],function(){msg('<p>Принял. В демо агенты отвечают по заготовленным сценариям — здесь был бы живой ответ с указанием источников.</p>');});return;}
+    if(t.indexOf('бетон')>-1&&(t.indexOf('подобрать')>-1||t.indexOf('закрыть')>-1||t.indexOf('запрос')>-1)){
+      think(['Читаю потребность: 420 м³, законтрактовано 120','Смотрю договор П-114 и окно 09.10','Опрашиваю 8 поставщиков по истории и срокам'],function(){msg('<p>Пять ответили. Рекомендую «БетонТрансСтрой»: не самый дешёвый, но без срывов и со своим насосом — при заливке на критическом пути это дороже разницы в 214 тыс.</p>');raw(SUP);});
+    } else if(t.indexOf('почему')>-1||t.indexOf('+6')>-1||t.indexOf('вернуть')>-1){
+      think(['Сверяю график с фактическим темпом','Считаю зависимость кладки от перекрытий'],function(){msg('<p>Монолит идёт 4,1 дня на захватку против 3,5 — это и даёт +6 дней. Кладка не зависит от верхних этажей до отметки +21,6 м: старт 8 ноября вместо 15-го вернёт четыре дня. Уверенность 74%: темп замерен на трёх захватках.</p>');chips(['Применить сдвиг кладки','Кого звать на кладку']);});
+    } else if(t.indexOf('сдвиг')>-1&&t.indexOf('применить')>-1){
+      raw('<div class="preview"><b>Что изменится</b><ul><li>Кладка: старт 15.11 → 08.11.</li><li>Прогноз сдачи: 06.05.2027 → 02.05.2027.</li><li>Подрядчик на кладку не назначен — уведомлю, когда выберете.</li></ul><div class="acts"><button class="btn sm" type="button" data-act="confirm-shift">Применить</button><button class="btn sm sec" type="button" data-act="cancel">Отмена</button></div></div>');
+    } else if(t.indexOf('требует')>-1||t.indexOf('сегодня')>-1){
+      msg('<p>Четыре решения: бетон выше рынка на 12% в смете, дефицит 300 м³ к 6 октября, закупка бетона ждёт согласования, на кладку не назначен подрядчик. Два первых связаны — закрыв закупку, закроете и дефицит.</p>');chips(['Подобрать бетон на 6 октября','Кого звать на кладку']);
+    } else if(t.indexOf('кладк')>-1||t.indexOf('монолитпро')>-1){
+      msg('<p>На кладку я бы звал «СтройБазу»: земляные в срок, кладку на корпусе А сдали с двумя замечаниями, свободны с 1 ноября. «МонолитПро» уже отстаёт — вторая задача усилит риск.</p>');chips(['Запросить у СтройБазы']);
+    } else if(t.indexOf('арматур')>-1){
+      msg('<p>Шаг 250 мм вместо 200 на захватке Б, уверенность 92%, лист КЖ-14. Если подтвердите — назначу Марату со сроком до заливки 5 октября и внесу в акт скрытых работ.</p>');chips(['Подтвердить и назначить','Это не ошибка']);
+    } else {
+      think(['Ищу по объекту'],function(){msg('<p>Отвечаю по смете, материалам, закупкам, графику, подрядчикам и отклонениям на этом объекте. Спросите про любое — или выберите подсказку.</p>');chips(CHIPS[curPage()]||CHIPS.dash);});
+    }
+  }
+  log.addEventListener('click',function(e){
+    var b=e.target.closest('[data-act]');if(!b)return;var a=b.getAttribute('data-act');
+    if(a==='preview'){raw(PREVIEW);}
+    else if(a==='alt'){ask('Сравнить всех по срокам');}
+    else if(a==='confirm'){b.closest('.preview').remove();raw('<div class="done"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Закупка ЗК-115 создана и отправлена на согласование. Окно 06.10 забронировано до 14.09, 14:20.</div>');}
+    else if(a==='confirm-shift'){b.closest('.preview').remove();raw('<div class="done"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Кладка сдвинута на 08.11, прогноз сдачи — 02.05.2027. Базовый план сохранён, откат в один клик.</div>');}
+    else if(a==='cancel'){b.closest('.preview').remove();msg('<p>Хорошо, ничего не меняю.</p>');}
+  });
+  input.addEventListener('input',function(){send.disabled=!input.value.trim();});
+  document.getElementById('conv-form').addEventListener('submit',function(e){e.preventDefault();var v=input.value.trim();if(!v)return;input.value='';send.disabled=true;ask(v);});
+  document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-page],[data-go]')&&cur==='build'&&!document.getElementById('v-conv').hidden){var se=hd.querySelector('.sees');if(se)se.textContent=A.build.sees();}});
+  /* демо: смена иконки маскота */
+  var MASC={"face": "<svg class=\"mascot\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><circle cx=\"32\" cy=\"40\" r=\"17\" fill=\"#fff\" stroke=\"rgba(20,21,26,.12)\"/><circle class=\"pupil\" cx=\"26\" cy=\"41\" r=\"2.2\" fill=\"#14151a\"/><circle class=\"pupil r\" cx=\"38\" cy=\"41\" r=\"2.2\" fill=\"#14151a\"/><path d=\"M27 48q5 3 10 0\" stroke=\"#14151a\" stroke-width=\"1.8\" stroke-linecap=\"round\" fill=\"none\"/><path d=\"M13 32C13 19 21 11 32 11s19 8 19 21z\" fill=\"#f6b100\"/><rect x=\"28.5\" y=\"7\" width=\"7\" height=\"9\" rx=\"3\" fill=\"#f6b100\"/><rect x=\"8\" y=\"30\" width=\"48\" height=\"7\" rx=\"3.5\" fill=\"#d99a00\"/></svg>", "hat": "<svg class=\"mascot\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><path d=\"M12 40C12 24 21 14 32 14s20 10 20 26z\" fill=\"#f6b100\"/><path d=\"M20 34c0-8 5-13 12-13\" stroke=\"rgba(255,255,255,.6)\" stroke-width=\"2.6\" stroke-linecap=\"round\" fill=\"none\"/><rect x=\"28\" y=\"9\" width=\"8\" height=\"12\" rx=\"3.5\" fill=\"#f6b100\"/><rect x=\"6\" y=\"38\" width=\"52\" height=\"9\" rx=\"4.5\" fill=\"#d99a00\"/><path d=\"M24 22v14M40 22v14\" stroke=\"rgba(0,0,0,.12)\" stroke-width=\"2.4\" stroke-linecap=\"round\"/></svg>", "bubble": "<svg class=\"mascot\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><path d=\"M10 12h44a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H26l-11 9v-9h-5a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z\" fill=\"#1b84ff\"/><path d=\"M22 36c0-8 4.5-12 10-12s10 4 10 12z\" fill=\"#fff\"/><rect x=\"30\" y=\"20\" width=\"4\" height=\"6\" rx=\"2\" fill=\"#fff\"/><rect x=\"19\" y=\"35\" width=\"26\" height=\"4\" rx=\"2\" fill=\"rgba(255,255,255,.75)\"/></svg>", "bot": "<svg class=\"mascot\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><rect x=\"12\" y=\"20\" width=\"40\" height=\"32\" rx=\"12\" fill=\"#1b84ff\"/><rect x=\"30\" y=\"8\" width=\"4\" height=\"12\" rx=\"2\" fill=\"#1b84ff\"/><circle cx=\"32\" cy=\"8\" r=\"3.5\" fill=\"#1b84ff\"/><rect x=\"18\" y=\"28\" width=\"28\" height=\"16\" rx=\"8\" fill=\"#fff\"/><circle class=\"pupil\" cx=\"26\" cy=\"36\" r=\"3\" fill=\"#14151a\"/><circle class=\"pupil r\" cx=\"38\" cy=\"36\" r=\"3\" fill=\"#14151a\"/></svg>", "spark": "<svg class=\"mascot\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><path d=\"M10 12h44a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H26l-11 9v-9h-5a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z\" fill=\"#1b84ff\"/><path d=\"M32 18l3.2 8.3L44 30l-8.8 3.7L32 42l-3.2-8.3L20 30l8.8-3.7z\" fill=\"#fff\"/><path d=\"M45 17l1.3 3.4 3.4 1.3-3.4 1.3L45 26.4l-1.3-3.4-3.4-1.3 3.4-1.3z\" fill=\"rgba(255,255,255,.8)\"/></svg>"};
+  document.querySelector('.mpick').addEventListener('click',function(e){
+    var b=e.target.closest('[data-m]');if(!b)return;var k=b.getAttribute('data-m');
+    document.querySelectorAll('.mpick button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+    document.querySelectorAll('.rail .tab[data-tab=chats] .mascot, #v-list .hd .mascot').forEach(function(m){var t=document.createElement('template');t.innerHTML=MASC[k];m.replaceWith(t.content.firstChild);});
+  });
+})();
+</script>
+</body>
+</html>

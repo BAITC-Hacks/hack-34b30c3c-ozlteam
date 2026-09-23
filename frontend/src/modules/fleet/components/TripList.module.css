@@ -1,0 +1,90 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.row {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 11px var(--sp-3);
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--t-hover);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: -2px;
+}
+
+.active {
+  background: var(--ac-soft);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.id {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.route {
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+
+.meta {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meter {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.active .meter {
+  background: rgba(255, 255, 255, .65);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ac);
+  transition: width var(--t-hover) linear;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .row.active:hover {
+    background: var(--ac-soft);
+  }
+}

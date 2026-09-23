@@ -1,0 +1,44 @@
+/* Бейдж — пилюля 11/500, мягкая подложка + чернильный текст. */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.neutral {
+  background: var(--sunken);
+  color: var(--mut);
+}
+
+.info {
+  background: var(--ac-soft);
+  color: var(--ac-ink);
+}
+
+.success {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
+}
+
+.warning {
+  background: var(--wr-soft);
+  color: var(--wr-ink);
+}
+
+.danger {
+  background: var(--er-soft);
+  color: var(--er-ink);
+}
+
+@media (prefers-contrast: more) {
+  .badge {
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+}

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Раздел «Закупки» — четыре языка</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:#f4f4f6;color:#14151a;font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit}
+.head{max-width:1440px;margin:0 auto;padding:32px 28px 4px}
+.head h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.4px}
+.head p{margin:7px 0 0;color:#6b6f76;max-width:76ch;font-size:13.5px}
+.grid{max-width:1440px;margin:0 auto;padding:22px 28px 80px;display:grid;gap:40px 28px;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));align-items:start}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.item{display:grid;gap:12px;container-type:inline-size}
+.lbl{font-size:12.5px;color:#6b6f76;line-height:1.5;padding:0 2px}
+.lbl b{color:#14151a;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){*{transition-duration:1ms!important}}
+
+.av{width:24px;height:24px;border-radius:50%;background:#1b84ff;color:#fff;display:inline-grid;place-items:center;font-size:10px;font-weight:600;flex:none}
+.bdg{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;line-height:16px}
+.bdg.w{background:rgba(246,177,0,.15);color:#8a6100}
+.bdg.g{background:rgba(23,198,83,.13);color:#0f8f3c}
+.bdg.b{background:rgba(27,132,255,.11);color:#0b5fc4}
+.sp{width:13px;height:13px;flex:none;color:#1b84ff}
+.btn{height:30px;padding:0 12px;border:0;border-radius:6px;background:#1b84ff;color:#fff;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:active{filter:brightness(.93)}
+.btn:focus-visible{outline:2px solid #14151a;outline-offset:2px}
+.btn.sec{background:#fff;color:#14151a;border:1px solid #e5e6ea}
+.btn.sec:hover{background:#f4f4f6}
+.btn.sm{height:27px;font-size:12px;padding:0 10px}
+.kebab{width:26px;height:26px;border:0;background:transparent;border-radius:6px;color:#9a9ea6;cursor:pointer;display:grid;place-items:center;flex:none}
+.kebab:hover{background:rgba(20,21,26,.06);color:#14151a}
+.ai{display:flex;align-items:center;gap:7px;font-size:12.5px;min-width:0}
+.ai span{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai .pc{flex:none;color:#6b6f76;font-size:12px}
+.who{display:flex;align-items:center;gap:7px;font-size:12px;color:#6b6f76}
+.tabs{display:flex;gap:2px}
+.tabs button{border:0;background:transparent;padding:7px 10px;font-size:12.5px;color:#6b6f76;border-bottom:2px solid transparent;cursor:pointer}
+.tabs button[aria-pressed="true"]{color:#14151a;font-weight:600;border-bottom-color:#1b84ff}
+.search{display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid #e5e6ea;border-radius:6px;background:#fafafb;color:#9a9ea6;font-size:12.5px;min-width:150px}
+
+/* ═══════ 1 · Metronic — панель раздела с карточками внутри ═══════ */
+.b1{background:#fff;border:1px solid #e5e6ea;border-radius:10px;box-shadow:0 1px 2px rgba(20,21,26,.04);overflow:hidden}
+.b1 .ph{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #eef0f3}
+.b1 .ph h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px}
+.b1 .ph .cnt{font-size:12px;color:#6b6f76}
+.b1 .ph .right{margin-left:auto;display:flex;gap:8px}
+.b1 .stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #eef0f3}
+.b1 .stats div{padding:12px 16px;border-right:1px solid #eef0f3}
+.b1 .stats div:last-child{border-right:0}
+.b1 .stats span{display:block;font-size:11.5px;color:#6b6f76}
+.b1 .stats b{display:block;font-size:18px;font-weight:600;letter-spacing:-.3px;margin-top:2px}
+.b1 .bar{display:flex;align-items:center;gap:10px;padding:6px 16px 0;border-bottom:1px solid #eef0f3}
+.b1 .bar .search{margin-left:auto;margin-bottom:6px}
+.b1 .list{padding:14px 16px;display:grid;gap:10px;background:#fafafb}
+.c1{background:#fff;border:1px solid #e5e6ea;border-radius:8px;overflow:hidden;transition:box-shadow .16s}
+.c1:hover{box-shadow:0 3px 10px rgba(20,21,26,.06)}
+.c1 .hd{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid #eef0f3}
+.c1 .hd h3{margin:0;font-size:13.5px;font-weight:600;flex:1 1 auto;min-width:0;letter-spacing:-.1px}
+.c1 .bd{padding:10px 13px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center}
+.c1 .sum{font-size:17px;font-weight:600;letter-spacing:-.3px}
+.c1 .sum small{font-size:12px;font-weight:400;color:#6b6f76;letter-spacing:0;margin-left:6px}
+.c1 .bd .ai{grid-column:1/-1}
+.c1 .ft{display:flex;align-items:center;gap:8px;padding:8px 13px;border-top:1px solid #eef0f3;background:#fafafb}
+.c1 .ft .who{flex:1 1 auto}
+
+/* ═══════ 4 · Приподнятая — без панели, всё плавает ═══════ */
+.b4{display:grid;gap:16px}
+.b4 .ph{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.b4 .ph h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.5px}
+.b4 .ph p{margin:3px 0 0;font-size:13px;color:#6b6f76}
+.b4 .ph .right{margin-left:auto;display:flex;gap:8px}
+.b4 .btn{border-radius:9px;height:34px}
+.b4 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.b4 .stats div{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,21,26,.04),0 8px 24px rgba(20,21,26,.06)}
+.b4 .stats span{display:block;font-size:12px;color:#6b6f76}
+.b4 .stats b{display:block;font-size:22px;font-weight:600;letter-spacing:-.5px;margin-top:3px}
+.b4 .tabs{background:rgba(20,21,26,.05);border-radius:9px;padding:3px;display:inline-flex;gap:2px;justify-self:start}
+.b4 .tabs button{border-radius:7px;padding:6px 12px;border-bottom:0}
+.b4 .tabs button[aria-pressed="true"]{background:#fff;box-shadow:0 1px 3px rgba(20,21,26,.1)}
+.b4 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@container (max-width:760px){.b4 .cards{grid-template-columns:1fr}.b4 .c4{grid-template-columns:minmax(0,1fr) auto;align-items:center}.b4 .c4 .top{grid-column:1/-1}.b4 .c4 .ai{grid-column:1/-1}}
+.c4{background:#fff;border-radius:16px;padding:16px;display:grid;gap:10px;box-shadow:0 1px 2px rgba(20,21,26,.04),0 10px 30px rgba(20,21,26,.07);transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s}
+.c4:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(20,21,26,.04),0 16px 40px rgba(20,21,26,.1)}
+.c4 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.c4 .top h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.2px;line-height:1.3}
+.c4 .sum{font-size:24px;font-weight:600;letter-spacing:-.7px;line-height:1.05}
+.c4 .sum small{display:block;font-size:12px;font-weight:400;color:#6b6f76;letter-spacing:0;margin-top:3px}
+.c4 .ai{background:#f4f6fa;border-radius:9px;padding:8px 10px;font-size:12px}
+.c4 .who{margin-top:2px}
+
+/* ═══════ 7 · Строка — список в панели ═══════ */
+.b7{background:#fff;border:1px solid #e5e6ea;border-radius:10px;overflow:hidden}
+.b7 .ph{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid #eef0f3;flex-wrap:wrap}
+.b7 .ph h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px}
+.b7 .ph .inline{display:flex;gap:16px;font-size:12.5px;color:#6b6f76}
+.b7 .ph .inline b{color:#14151a;font-weight:600}
+.b7 .ph .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.b7 .bar{display:flex;align-items:center;gap:10px;padding:4px 16px 0;border-bottom:1px solid #eef0f3}
+.b7 .list{display:grid}
+.c7{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid #eef0f3;transition:background .14s}
+.c7:last-child{border-bottom:0}
+.c7:hover{background:#fafafb}
+.c7 .ic{width:32px;height:32px;border-radius:8px;background:rgba(27,132,255,.1);color:#1b84ff;display:grid;place-items:center}
+.c7 .mid{display:grid;gap:2px;min-width:0}
+.c7 h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c7 .ai{font-size:12px;color:#0b5fc4}
+.c7 .sum{font-size:14px;font-weight:600;letter-spacing:-.2px;white-space:nowrap;text-align:right}
+.c7 .sum small{display:block;font-size:11.5px;font-weight:400;color:#6b6f76;letter-spacing:0}
+.c7 .end{display:flex;align-items:center;gap:8px}
+.b7 .foot{display:flex;align-items:center;gap:10px;padding:9px 16px;border-top:1px solid #eef0f3;background:#fafafb;font-size:12px;color:#6b6f76}
+.b7 .foot .right{margin-left:auto}
+
+/* ═══════ 9 · Разделённая — у модели своя колонка ═══════ */
+.b9{display:grid;gap:12px}
+.b9 .ph{background:#fff;border:1px solid #e5e6ea;border-radius:10px;display:grid;grid-template-columns:minmax(0,1fr) 200px;overflow:hidden}
+.b9 .ph .l{padding:14px 16px;display:grid;gap:10px}
+.b9 .ph h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.2px}
+.b9 .ph .stats{display:flex;gap:22px}
+.b9 .ph .stats span{display:block;font-size:11.5px;color:#6b6f76}
+.b9 .ph .stats b{display:block;font-size:17px;font-weight:600;letter-spacing:-.3px}
+.b9 .ph .r{background:#f4f7fc;border-left:1px solid #e5e6ea;padding:13px 14px;display:grid;gap:4px;align-content:center}
+.b9 .ph .r .lab{font-size:10.5px;font-weight:600;color:#0b5fc4;letter-spacing:.03em;text-transform:uppercase}
+.b9 .ph .r .t{font-size:12px;line-height:16px;color:#4b5563}
+.b9 .ph .r .t b{color:#14151a;font-weight:600}
+.b9 .bar{display:flex;align-items:center;gap:10px;padding:0 4px}
+.b9 .bar .search{margin-left:auto}
+.c9{background:#fff;border:1px solid #e5e6ea;border-radius:10px;display:grid;grid-template-columns:minmax(0,1fr) 200px;overflow:hidden}
+.c9 .l{padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center}
+.c9 h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.c9 .meta{font-size:12px;color:#6b6f76;grid-column:1}
+.c9 .sum{font-size:17px;font-weight:600;letter-spacing:-.3px;grid-row:1/3;grid-column:2;text-align:right}
+.c9 .sum small{display:block;font-size:11.5px;font-weight:400;color:#6b6f76;letter-spacing:0}
+.c9 .r{background:#f4f7fc;border-left:1px solid #e5e6ea;padding:11px 13px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-content:center;align-items:center}
+.c9 .r .big{font-size:22px;font-weight:600;letter-spacing:-.6px;line-height:1;grid-row:1/3}
+.c9 .r .lab{font-size:10.5px;font-weight:600;color:#0b5fc4;letter-spacing:.03em;text-transform:uppercase}
+.c9 .r .t{font-size:11.5px;line-height:14px;color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>Раздел «Закупки» в четырёх языках</h1>
+  <p>Одни данные: три закупки с разными статусами, три цифры сверху, фильтры. Различаются язык карточки и то, как из неё вырастает обвязка раздела — панель, плавающие блоки, список или разделённые колонки.</p>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+(function(){
+  var SP='<svg class="sp" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg>';
+  var KB='<button class="kebab" type="button" aria-label="Действия"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>';
+  var CU='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>';
+  var PL='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+
+  var ITEMS=[
+    {t:'Бетон B25, 300 м³',s:'1 872 000 ₽',d:'к 06.10',st:'Ждёт согласования',sc:'w',ai:'Модель рекомендует поставщика',pc:79,w:'СЕ',wn:'Сергей Е.',act:'Согласовать'},
+    {t:'Арматура А500С ⌀12, 24 т',s:'1 708 800 ₽',d:'к 11.10',st:'Согласовано',sc:'g',ai:'Цена в рыночной вилке',pc:91,w:'АК',wn:'Антон К.',act:'Открыть'},
+    {t:'Кирпич М150, 62 тыс. шт',s:'1 494 200 ₽',d:'к 15.11',st:'Запрос отправлен',sc:'b',ai:'Ответили 3 из 8 поставщиков',pc:64,w:'ПС',wn:'Павел С.',act:'Открыть'}
+  ];
+  var TABS='<div class="tabs"><button type="button" aria-pressed="true">Все 3</button><button type="button" aria-pressed="false">Ждут решения 1</button><button type="button" aria-pressed="false">В работе 1</button><button type="button" aria-pressed="false">Закрытые 12</button></div>';
+  var SEARCH='<span class="search">Поиск по закупкам</span>';
+  function ai(it,extra){return '<div class="ai'+(extra||'')+'">'+SP+'<span>'+it.ai+'</span><span class="pc num">'+it.pc+'%</span></div>';}
+
+  var B=[
+    {n:'1 · Metronic',d:'Панель раздела держит всё: шапку с действиями, ряд цифр на разделителях, вкладки и карточки на слегка серой подложке. Строгая иерархия, много рамок — но привычно с первого взгляда.',
+     h:'<div class="b1"><div class="ph"><h2>Закупки</h2><span class="cnt">ЖК «Северный», корпус Б</span><span class="right"><button class="btn sec" type="button">Экспорт</button><button class="btn" type="button">'+PL+'Новая закупка</button></span></div>'+
+       '<div class="stats"><div><span>Открытых закупок</span><b class="num">3</b></div><div><span>Сумма</span><b class="num">5,08 млн ₽</b></div><div><span>Экономия по модели</span><b class="num" style="color:#0f8f3c">214 тыс. ₽</b></div></div>'+
+       '<div class="bar">'+TABS+SEARCH+'</div><div class="list">'+
+       ITEMS.map(function(it){return '<div class="c1"><div class="hd"><h3>'+it.t+'</h3><span class="bdg '+it.sc+'">'+it.st+'</span>'+KB+'</div><div class="bd"><div class="sum num">'+it.s+'<small>'+it.d+'</small></div><span class="who"><span class="av">'+it.w+'</span>'+it.wn+'</span>'+ai(it)+'</div></div>';}).join('')+
+       '</div></div>'},
+
+    {n:'4 · Приподнятая',d:'Панели нет — заголовок стоит прямо на холсте, цифры и карточки плавают на мягких тенях, фильтр как сегментированный контрол. Просторнее, дружелюбнее, но жадно до места.',
+     h:'<div class="b4"><div class="ph"><div><h2>Закупки</h2><p>ЖК «Северный», корпус Б · вторая смена</p></div><span class="right"><button class="btn sec" type="button">Экспорт</button><button class="btn" type="button">'+PL+'Новая закупка</button></span></div>'+
+       '<div class="stats"><div><span>Открытых закупок</span><b class="num">3</b></div><div><span>Сумма</span><b class="num">5,08 млн ₽</b></div><div><span>Экономия по модели</span><b class="num" style="color:#0f8f3c">214 тыс. ₽</b></div></div>'+
+       TABS+'<div class="cards">'+
+       ITEMS.map(function(it){return '<div class="c4"><div class="top"><h3>'+it.t+'</h3><span class="bdg '+it.sc+'">'+it.st+'</span></div><div class="sum num">'+it.s+'<small>'+it.d+' · '+it.wn+'</small></div>'+ai(it)+'</div>';}).join('')+
+       '</div></div>'},
+
+    {n:'7 · Строка',d:'Раздел — это список. Цифры ушли в шапку одной строкой, каждая закупка — строка с иконкой, названием, суммой и статусом. Максимум плотности: на экран влезает вдвое больше.',
+     h:'<div class="b7"><div class="ph"><h2>Закупки</h2><span class="inline"><span><b class="num">3</b> открытых</span><span><b class="num">5,08 млн ₽</b></span><span style="color:#0f8f3c"><b class="num" style="color:#0f8f3c">214 тыс.</b> экономия</span></span><span class="right">'+SEARCH+'<button class="btn sm" type="button">'+PL+'Новая</button></span></div>'+
+       '<div class="bar">'+TABS+'</div><div class="list">'+
+       ITEMS.map(function(it){return '<div class="c7"><span class="ic">'+CU+'</span><div class="mid"><h3>'+it.t+'</h3><div class="ai">'+SP+'<span>'+it.ai+' · '+it.pc+'%</span></div></div><div class="sum num">'+it.s+'<small>'+it.d+'</small></div><div class="end"><span class="bdg '+it.sc+'">'+it.st+'</span><span class="av">'+it.w+'</span>'+KB+'</div></div>';}).join('')+
+       '</div><div class="foot"><span>Показано 3 из 15</span><span class="right">Обновлено 14:20</span></div></div>'},
+
+    {n:'9 · Разделённая',d:'У модели своя правая колонка на каждом уровне: в шапке — сводка по разделу, в карточках — уверенность крупно. Роль ИИ читается структурно, не нужно искать её в тексте.',
+     h:'<div class="b9"><div class="ph"><div class="l"><h2>Закупки</h2><div class="stats"><div><span>Открытых</span><b class="num">3</b></div><div><span>Сумма</span><b class="num">5,08 млн ₽</b></div><div><span>Экономия</span><b class="num" style="color:#0f8f3c">214 тыс.</b></div></div></div><div class="r"><span class="lab">Модель</span><span class="t"><b>Одна закупка ждёт вас.</b> Бетон на критическом пути, срок до 6 октября.</span></div></div>'+
+       '<div class="bar">'+TABS+SEARCH+'</div>'+
+       ITEMS.map(function(it){return '<div class="c9"><div class="l"><h3>'+it.t+'</h3><div class="sum num">'+it.s+'<small>'+it.d+'</small></div><div class="meta"><span class="bdg '+it.sc+'">'+it.st+'</span> &nbsp; '+it.wn+'</div></div><div class="r"><span class="big num">'+it.pc+'%</span><span class="lab">Модель</span><span class="t">'+it.ai+'</span></div></div>';}).join('')+
+       '</div>'}
+  ];
+
+  var g=document.getElementById('grid');
+  B.forEach(function(b){
+    var it=document.createElement('div');it.className='item';
+    var t=document.createElement('template');t.innerHTML=b.h.trim();it.appendChild(t.content);
+    var l=document.createElement('div');l.className='lbl';
+    var s=document.createElement('b');s.textContent=b.n;l.appendChild(s);l.appendChild(document.createTextNode(' — '+b.d));
+    it.appendChild(l);g.appendChild(it);
+  });
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.tabs button');if(!b)return;
+    Array.prototype.forEach.call(b.parentElement.children,function(x){x.setAttribute('aria-pressed','false');});
+    b.setAttribute('aria-pressed','true');
+  });
+})();
+</script>
+</body>
+</html>

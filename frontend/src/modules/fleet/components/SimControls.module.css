@@ -1,0 +1,50 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) 0 0;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Правый край панели: переключатель камеры не спорит с управлением ходом. */
+.tail {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.caption {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+  padding-right: var(--sp-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chipIcon {
+  display: grid;
+  place-items: center;
+  color: var(--mut);
+}
+
+@media (max-width: 900px) {
+  .tail {
+    margin-left: 0;
+  }
+
+  .caption {
+    width: 100%;
+  }
+}

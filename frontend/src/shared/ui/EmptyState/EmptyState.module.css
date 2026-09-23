@@ -1,0 +1,41 @@
+/* Пустое состояние: иконка в утопленном квадрате, заголовок, одно действие.
+   Без иллюстраций. */
+
+.state {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  padding: 40px var(--sp-6);
+  text-align: center;
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--sunken);
+  color: var(--mut);
+  display: grid;
+  place-items: center;
+}
+
+.danger {
+  background: var(--er-soft);
+  color: var(--er-ink);
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.2px;
+}
+
+.text {
+  font-size: var(--fs-sm);
+  color: var(--mut);
+  max-width: 34ch;
+}
+
+.action {
+  margin-top: var(--sp-1);
+}

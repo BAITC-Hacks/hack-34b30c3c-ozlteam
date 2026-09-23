@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hackalem — варианты оформления</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=Bitter:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Karla:wght@400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li){overflow-wrap:anywhere}
+html{font:100%/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+body{margin:0;background:#1a1c20;color:#e9eaec;-webkit-font-smoothing:antialiased}
+
+/* ============ панель управления демкой ============ */
+.bar{position:sticky;top:0;z-index:10;background:rgba(26,28,32,.86);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);border-bottom:1px solid rgba(255,255,255,.1)}
+.bar-in{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.grp-l{font:500 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a9099;margin-right:2px}
+.tgl{font:500 12px/1 -apple-system,system-ui,sans-serif;padding:8px 11px;min-height:34px;border:1px solid rgba(255,255,255,.16);border-radius:7px;background:rgba(255,255,255,.05);color:#c9ccd2;cursor:pointer;transition:background .15s ease-out,border-color .15s ease-out,transform .1s ease-out}
+.tgl:hover{background:rgba(255,255,255,.1);color:#fff}
+.tgl:active{transform:scale(.97)}
+.tgl:focus-visible{outline:2px solid #6ea8ff;outline-offset:2px}
+.tgl[aria-pressed="true"]{background:#fff;border-color:#fff;color:#1a1c20;font-weight:600}
+.tgl .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+.stage{max-width:1080px;margin:0 auto;padding:22px 20px 60px}
+.cap{font:500 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#8a9099;margin:0 0 10px}
+.cap b{color:#e9eaec;font-weight:600}
+.frame{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+
+/* ============================================================
+   ЭКРАН — одна разметка, тема переключается переменными
+   ============================================================ */
+.screen{
+  --r:2px; --bw:1px; --ctrl:44px;
+  background:var(--page);color:var(--ink);font-family:var(--font);
+  padding:28px 24px 32px;
+}
+.screen-in{max-width:660px;margin:0 auto}
+
+.s-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:var(--hdr-rule)}
+.s-brand{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:-.013em;color:var(--brand-fg,var(--ink));text-decoration:none}
+.s-cap{font:500 10px/1.3 var(--font-mono);letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+
+.s-intro{padding:32px 0 24px;display:grid;gap:12px;max-width:34ch}
+.s-display{margin:0;font-family:var(--font-display);font-size:clamp(1.85rem,4.6vw,2.5rem);line-height:var(--display-lh,1.04);letter-spacing:var(--display-tr,-.025em);font-weight:var(--display-w,600);text-transform:var(--display-tt,none)}
+.s-display em{font-style:normal;color:var(--annotation)}
+.s-sub{margin:0;font-size:15px;color:var(--muted);max-width:32ch;line-height:1.55}
+
+.s-card{background:var(--surface);border:var(--card-bd);border-radius:var(--r);padding:22px;display:grid;gap:20px;box-shadow:var(--card-shadow,none)}
+.s-cardhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.s-cardhead h2{margin:5px 0 0;font-family:var(--font-display);font-size:21px;line-height:1.25;letter-spacing:var(--h2-tr,-.013em);font-weight:var(--display-w,600);text-transform:var(--display-tt,none)}
+.s-count{font:500 13px/1 var(--font-mono);font-variant-numeric:tabular-nums;border:var(--bw) solid var(--accent);color:var(--count-fg,var(--accent));background:var(--count-bg,transparent);border-radius:var(--r);padding:6px 9px;min-width:34px;text-align:center}
+
+.f{display:grid;gap:7px}
+.f-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.f-label{font-size:13px;font-weight:600}
+.f-counter{font:500 11px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--faint)}
+.f-counter[data-near="true"]{color:var(--warn)}
+.f-row{display:flex;gap:8px}
+@media(max-width:560px){.f-row{flex-direction:column}}
+.f-input{flex:1 1 auto;min-width:0;height:var(--ctrl);padding:0 12px;font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:var(--bw) solid var(--line-strong);border-radius:var(--r);transition:border-color .2s cubic-bezier(.22,.61,.36,1),background-color .2s cubic-bezier(.22,.61,.36,1);box-shadow:var(--field-shadow,none)}
+.f-input::placeholder{color:var(--faint)}
+.f-input:hover{border-color:var(--muted)}
+.f-input:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.f-input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.btn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--ctrl);padding:0 17px;font:inherit;font-family:var(--font);font-size:15px;font-weight:var(--btn-w,550);letter-spacing:-.005em;text-transform:var(--btn-tt,none);background:var(--accent);color:var(--on-accent);border:var(--btn-bd,var(--bw) solid var(--accent));border-radius:var(--r);cursor:pointer;position:relative;transition:filter .2s cubic-bezier(.22,.61,.36,1),transform .1s cubic-bezier(.22,.61,.36,1),opacity .2s ease-out}
+.btn:hover{filter:brightness(var(--btn-hover,1.12))}
+.btn:active{transform:scale(.98)}   /* отклик на нажатие, не на отпускание */
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none;filter:none}
+.btn-quiet{background:transparent;color:var(--muted);border:var(--bw) solid var(--line-strong)}
+.btn-quiet:hover{background:var(--sunken);color:var(--ink);filter:none}
+.btn-sm{min-height:34px;padding:0 11px;font-size:13px}
+
+.s-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--row-gap,0)}
+.s-list li{display:flex;align-items:center;gap:13px;padding:var(--row-pad,12px 0);border-top:var(--row-rule);background:var(--row-bg,transparent);border-left:var(--row-mark,0);transition:background-color .2s cubic-bezier(.22,.61,.36,1)}
+.s-list li:last-child{border-bottom:var(--row-rule-last,var(--row-rule))}
+.s-list li:hover{background:var(--row-hover,var(--sunken))}
+.s-list li[data-entering="true"]{animation:rowIn .32s cubic-bezier(.22,.61,.36,1)}
+.s-list li[data-leaving="true"]{animation:rowOut .2s cubic-bezier(.64,.39,.78,.4) forwards}
+@keyframes rowIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes rowOut{to{opacity:0;transform:translateY(-6px)}}
+.s-idx{font:500 11px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--annotation);width:22px;flex:none;display:var(--idx-display,block)}
+.s-body{flex:1 1 auto;min-width:0;display:grid;gap:3px}
+.s-title{font-size:15px;font-weight:550}
+.s-time{font:400 11px/1.3 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--faint)}
+
+.s-state{display:grid;gap:8px;justify-items:center;text-align:center;padding:34px 12px;border-top:var(--row-rule)}
+.s-state h3{margin:0;font-family:var(--font-display);font-size:17px;letter-spacing:-.008em;font-weight:600}
+.s-state p{margin:0;font-size:14px;color:var(--muted);max-width:32ch;line-height:1.5}
+.s-state .mark{width:40px;height:40px;display:grid;place-items:center;border:1px dashed var(--line-strong);border-radius:var(--r);color:var(--annotation)}
+.s-status{display:flex;align-items:center;gap:9px;font-size:14px;padding:11px 13px;border-radius:var(--r);border:var(--bw) solid;flex-wrap:wrap}
+.s-status.loading{color:var(--muted);border-color:var(--line);background:var(--sunken)}
+.s-status.error{color:var(--err);border-color:var(--err);background:var(--err-wash)}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(1turn)}}
+
+.s-toast{margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:var(--r);background:var(--toast-bg,var(--surface));border:var(--bw) solid var(--line-strong);box-shadow:0 1px 2px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.12);font-size:14px;backdrop-filter:var(--toast-blur,none);-webkit-backdrop-filter:var(--toast-blur,none)}
+.s-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:22px;padding-top:12px;border-top:var(--row-rule)}
+
+/* ================= ВАРИАНТ A · ЧЕРТЁЖ ================= */
+[data-v="a"]{
+  --page:#eef1f5; --surface:#fff; --sunken:#f7f9fb; --field:#f7f9fb;
+  --ink:#132234; --muted:#5b6b7d; --faint:#7b8b9c;
+  --line:#dce3eb; --line-strong:#c9d3de;
+  --accent:#1558d6; --on-accent:#fff; --annotation:#0b6e6d;
+  --warn:#8a5a00; --err:#c0322f; --err-wash:#fceeed;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --font-display:var(--font);
+  --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --hdr-rule:1px solid #132234; --card-bd:1px solid #132234; --row-rule:1px solid #dce3eb;
+  background-image:linear-gradient(#dce3eb 1px,transparent 1px),linear-gradient(90deg,#dce3eb 1px,transparent 1px);
+  background-size:24px 24px,24px 24px;
+}
+/* ================= ВАРИАНТ B · СПЕЦОДЕЖДА ================= */
+[data-v="b"]{
+  --r:0px; --bw:2px;
+  --page:#f4f2ed; --surface:#fff; --sunken:#f4f2ed; --field:#fff;
+  --ink:#1b1b1d; --muted:#6b6a66; --faint:#8a8883;
+  --line:#d8d5cd; --line-strong:#1b1b1d;
+  --accent:#ff6a00; --on-accent:#1b1b1d; --annotation:#d65200;
+  --warn:#8a5a00; --err:#c0201f; --err-wash:#fceeed;
+  --font:"Archivo",system-ui,sans-serif; --font-display:"Archivo Black",system-ui,sans-serif;
+  --font-mono:"Archivo",system-ui,sans-serif;
+  --display-tr:-.03em; --display-tt:uppercase; --display-w:400; --h2-tr:-.02em;
+  --btn-tt:uppercase; --btn-w:600; --btn-bd:2px solid #1b1b1d; --btn-hover:1.06;
+  --hdr-rule:3px solid #1b1b1d; --card-bd:2px solid #1b1b1d;
+  --row-rule:0; --row-rule-last:0; --row-gap:7px; --row-pad:11px 12px; --row-bg:#f4f2ed; --row-mark:5px solid #ff6a00; --row-hover:#ebe8e1;
+  --idx-display:none; --count-bg:#1b1b1d; --count-fg:#ffb400;
+}
+[data-v="b"] .s-count{border-color:#1b1b1d}
+[data-v="b"] .s-state,[data-v="b"] .s-footer{border-top:2px solid #1b1b1d}
+/* ================= ВАРИАНТ C · БЕТОН ================= */
+[data-v="c"]{
+  --r:3px; --bw:0px;
+  --page:#ddd9d2; --surface:#f0ede8; --sunken:#e6e2db; --field:#e6e2db;
+  --ink:#2b2a27; --muted:#6e6b64; --faint:#8d8a82;
+  --line:rgba(43,42,39,.13); --line-strong:rgba(43,42,39,.16);
+  --accent:#a9662f; --on-accent:#fbf8f4; --annotation:#5c6b4f;
+  --warn:#8a6212; --err:#a8412f; --err-wash:rgba(168,65,47,.09);
+  --font:"Karla",system-ui,sans-serif; --font-display:"Bitter",Georgia,serif;
+  --font-mono:"Karla",system-ui,sans-serif;
+  --display-lh:1.1; --display-tr:-.018em;
+  --hdr-rule:1px solid rgba(43,42,39,.13); --card-bd:0; --row-rule:1px solid rgba(43,42,39,.1);
+  --card-shadow:0 1px 0 rgba(255,255,255,.75) inset,0 -18px 34px rgba(43,42,39,.05) inset;
+  --field-shadow:0 1px 2px rgba(43,42,39,.12) inset;
+  --count-bg:rgba(169,102,47,.14);
+}
+[data-v="c"] .s-count{border:0}
+[data-v="c"] .s-sub,[data-v="c"] .s-state p{line-height:1.62}
+/* ================= ВАРИАНТ D · ЛЕСА ================= */
+[data-v="d"]{
+  --r:6px;
+  --page:#eef1f6; --surface:rgba(255,255,255,.72); --sunken:rgba(255,255,255,.5); --field:rgba(255,255,255,.65);
+  --ink:#0f1521; --muted:#5a6472; --faint:#828b99;
+  --line:#dfe3ea; --line-strong:#cfd6e0;
+  --accent:#16305c; --on-accent:#fff; --annotation:#e0552b;
+  --warn:#8a5c06; --err:#c0322f; --err-wash:rgba(192,50,47,.08);
+  --font:"IBM Plex Sans",system-ui,sans-serif; --font-display:"IBM Plex Sans",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --hdr-rule:1px solid rgba(255,255,255,.7); --card-bd:1px solid rgba(255,255,255,.7); --row-rule:1px solid #dfe3ea;
+  --card-shadow:0 1px 2px rgba(15,21,33,.05),0 18px 44px rgba(15,21,33,.09);
+  --toast-bg:rgba(255,255,255,.7); --toast-blur:blur(18px) saturate(170%);
+  background-image:linear-gradient(150deg,#e6ecf6 0%,#eef1f6 45%,#f4eeef 100%);
+}
+[data-v="d"] .s-card{backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%)}
+[data-v="d"] .s-count{border-color:#e0552b;color:#e0552b}
+
+@media(prefers-reduced-transparency:reduce){
+  [data-v="d"] .s-card,[data-v="d"] .s-toast{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border-color:#cfd6e0}
+  .bar{background:#1a1c20;backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:1ms!important;transition-duration:1ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="grp">
+      <span class="grp-l">Вариант</span>
+      <button class="tgl v" data-v="a" aria-pressed="true"><span class="dot" style="background:#1558d6"></span>A · Чертёж</button>
+      <button class="tgl v" data-v="b" aria-pressed="false"><span class="dot" style="background:#ff6a00"></span>B · Спецодежда</button>
+      <button class="tgl v" data-v="c" aria-pressed="false"><span class="dot" style="background:#a9662f"></span>C · Бетон</button>
+      <button class="tgl v" data-v="d" aria-pressed="false"><span class="dot" style="background:#16305c"></span>D · Леса</button>
+    </div>
+    <div class="grp">
+      <span class="grp-l">Состояние</span>
+      <button class="tgl" id="t-loading" aria-pressed="false">Загрузка</button>
+      <button class="tgl" id="t-error" aria-pressed="false">Ошибка</button>
+      <button class="tgl" id="t-empty" aria-pressed="false">Пусто</button>
+      <button class="tgl" id="t-toast" aria-pressed="false">Обновление</button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <p class="cap">Экран <b>«Заметки команды»</b> — тот же состав элементов, что в <b>NotesPage.tsx</b>. Можно печатать, добавлять и удалять.</p>
+  <div class="frame">
+    <div class="screen" id="screen" data-v="a">
+      <div class="screen-in">
+
+        <div class="s-header">
+          <a class="s-brand" href="#0" onclick="return false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M6 20V9l6-5 6 5v11"/><path d="M10 20v-6h4v6"/></svg>
+            hackalem
+          </a>
+          <span class="s-cap">Team workspace</span>
+        </div>
+
+        <div class="s-intro">
+          <span class="s-cap">От идеи к первому демо</span>
+          <h1 class="s-display">Большие идеи.<br><em>Первый шаг — здесь.</em></h1>
+          <p class="s-sub">Общее место для планов команды. Запишите идею, выберите главное и начните создавать.</p>
+        </div>
+
+        <section class="s-card" aria-labelledby="h-notes">
+          <div class="s-cardhead">
+            <div>
+              <span class="s-cap">01 · Рабочий стол</span>
+              <h2 id="h-notes">Заметки команды</h2>
+            </div>
+            <span class="s-count" id="p-count">3</span>
+          </div>
+
+          <form class="f" id="p-form" novalidate>
+            <div class="f-top">
+              <label class="f-label" for="p-input">Что нужно сделать команде?</label>
+              <span class="f-counter" id="p-counter">0 / 200</span>
+            </div>
+            <div class="f-row">
+              <input class="f-input" id="p-input" maxlength="200" placeholder="Например, обсудить идею MVP" autocomplete="off">
+              <button class="btn" id="p-add" type="submit" disabled>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                Добавить
+              </button>
+            </div>
+          </form>
+
+          <div id="p-status"></div>
+          <ul class="s-list" id="p-list"></ul>
+          <div id="p-empty" hidden>
+            <div class="s-state">
+              <span class="mark" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5"/><path d="M12 5h7v7"/></svg></span>
+              <h3>Начните с первой идеи</h3>
+              <p>Добавьте заметку — она сохранится в базе и останется после перезапуска.</p>
+            </div>
+          </div>
+        </section>
+
+        <aside class="s-toast" id="p-toast" hidden role="status">
+          Доступна новая версия приложения.
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-sm" type="button">Обновить</button>
+            <button class="btn btn-quiet btn-sm" type="button" id="toast-later">Позже</button>
+          </span>
+        </aside>
+
+        <div class="s-footer">
+          <span class="s-cap">Hackalem · сделано для совместной работы</span>
+          <span class="s-cap" style="color:var(--annotation)">Идея → прототип → результат</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var screen = document.getElementById('screen');
+  var list = document.getElementById('p-list');
+  var empty = document.getElementById('p-empty');
+  var status = document.getElementById('p-status');
+  var count = document.getElementById('p-count');
+  var input = document.getElementById('p-input');
+  var add = document.getElementById('p-add');
+  var counter = document.getElementById('p-counter');
+  var toast = document.getElementById('p-toast');
+  var MAX = 200;
+
+  var notes = [
+    { id: 1, t: 'Согласовать схему данных для pgvector', d: '11.09.2026, 10:24' },
+    { id: 2, t: 'Прогнать миграции на чистой базе', d: '11.09.2026, 11:02' },
+    { id: 3, t: 'Собрать фронтенд и проверить service worker', d: '11.09.2026, 12:40' }
+  ];
+  var seq = 4, loading = false, error = false, forcedEmpty = false;
+
+  function render(enterId) {
+    var shown = forcedEmpty ? [] : notes;
+    count.textContent = shown.length;
+
+    status.innerHTML = '';
+    if (error) {
+      var e = document.createElement('div');
+      e.className = 's-status error';
+      e.setAttribute('role', 'alert');
+      e.innerHTML = '<span>Не удалось загрузить заметки.</span>';
+      var retry = document.createElement('button');
+      retry.className = 'btn btn-quiet btn-sm';
+      retry.type = 'button';
+      retry.textContent = 'Повторить';
+      retry.style.marginLeft = 'auto';
+      retry.onclick = function () { setState('t-error', false); };
+      e.appendChild(retry);
+      status.appendChild(e);
+    } else if (loading) {
+      var l = document.createElement('div');
+      l.className = 's-status loading';
+      l.setAttribute('role', 'status');
+      l.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Загружаем заметки…</span>';
+      status.appendChild(l);
+    }
+
+    var hideList = loading || error;
+    list.hidden = hideList || shown.length === 0;
+    empty.hidden = hideList || shown.length > 0;
+
+    list.innerHTML = '';
+    shown.forEach(function (n, i) {
+      var li = document.createElement('li');
+      if (n.id === enterId) li.setAttribute('data-entering', 'true');
+      var idx = document.createElement('span');
+      idx.className = 's-idx';
+      idx.textContent = String(i + 1).padStart(2, '0');
+      var body = document.createElement('div');
+      body.className = 's-body';
+      var t = document.createElement('span');
+      t.className = 's-title'; t.textContent = n.t;
+      var time = document.createElement('time');
+      time.className = 's-time'; time.textContent = n.d;
+      body.appendChild(t); body.appendChild(time);
+      var del = document.createElement('button');
+      del.className = 'btn btn-quiet btn-sm';
+      del.type = 'button';
+      del.setAttribute('aria-label', 'Удалить заметку: ' + n.t);
+      del.textContent = 'Удалить';
+      del.onclick = function () {
+        li.setAttribute('data-leaving', 'true');
+        var done = function () { notes = notes.filter(function (x) { return x.id !== n.id; }); render(); };
+        var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (mq.matches) { done(); } else { setTimeout(done, 190); }
+      };
+      li.appendChild(idx); li.appendChild(body); li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  input.addEventListener('input', function () {
+    var n = input.value.length;
+    counter.textContent = n + ' / ' + MAX;
+    counter.setAttribute('data-near', n > MAX - 20 ? 'true' : 'false');
+    add.disabled = input.value.trim().length === 0;
+  });
+
+  document.getElementById('p-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = input.value.trim();
+    if (!v) return;
+    var id = seq++;
+    notes = notes.concat([{ id: id, t: v, d: '11.09.2026, только что' }]);
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    forcedEmpty = false;
+    setPressed('t-empty', false);
+    render(id);
+    input.focus();
+  });
+
+  function setPressed(id, on) { document.getElementById(id).setAttribute('aria-pressed', on ? 'true' : 'false'); }
+  function setState(id, on) {
+    setPressed(id, on);
+    if (id === 't-loading') { loading = on; if (on) { error = false; setPressed('t-error', false); } }
+    if (id === 't-error') { error = on; if (on) { loading = false; setPressed('t-loading', false); } }
+    if (id === 't-empty') { forcedEmpty = on; }
+    if (id === 't-toast') { toast.hidden = !on; return; }
+    render();
+  }
+  ['t-loading', 't-error', 't-empty', 't-toast'].forEach(function (id) {
+    document.getElementById(id).addEventListener('click', function () {
+      setState(id, this.getAttribute('aria-pressed') !== 'true');
+    });
+  });
+  document.getElementById('toast-later').addEventListener('click', function () { setState('t-toast', false); });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tgl.v'), function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.tgl.v'), function (o) { o.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      screen.setAttribute('data-v', b.getAttribute('data-v'));
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

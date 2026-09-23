@@ -1,0 +1,133 @@
+.search {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: var(--ctl);
+  align-items: center;
+  border-radius: var(--r-s);
+  outline: 2px solid transparent;
+  outline-offset: -1px;
+  color: var(--mut);
+  background: var(--sunken);
+  transition:
+    background-color var(--t-hover),
+    outline-color var(--t-hover);
+}
+
+.search:focus-within {
+  outline-color: var(--ac);
+  background: var(--panel);
+}
+
+.leading {
+  position: absolute;
+  left: 13px;
+  display: inline-grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 42px 0 39px;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  appearance: none;
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: 0;
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.input::placeholder {
+  color: var(--faint);
+}
+
+.clear {
+  position: absolute;
+  right: 6px;
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-xs);
+  color: var(--mut);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--t-hover),
+    background-color var(--t-hover),
+    transform var(--t-press);
+}
+
+.clear:active {
+  transform: scale(.96);
+  transition-duration: 0s;
+}
+
+.clear:focus-visible {
+  outline: 2px solid var(--ac);
+}
+
+.shortcut {
+  position: absolute;
+  right: 9px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 5px;
+  color: var(--mut);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--hair);
+  font: inherit;
+  font-size: var(--fs-micro);
+  pointer-events: none;
+}
+
+.disabled {
+  opacity: .48;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .search:not(.disabled):hover {
+    background: color-mix(in srgb, var(--sunken) 70%, var(--bg));
+    transition-duration: 0s;
+  }
+
+  .clear:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    transition-duration: 0s;
+  }
+}
+
+@media (pointer: coarse) {
+  .search {
+    min-height: var(--touch);
+  }
+
+  .clear {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search,
+  .clear {
+    transition-duration: 1ms;
+  }
+}

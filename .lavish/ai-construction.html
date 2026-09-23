@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Construction — экраны</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:where(p,h1,h2,h3,li,td,th){overflow-wrap:anywhere}
+body{margin:0;background:#0a0a0b;color:#e8e8ea;font:16px/1.5 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+.demo-bar{position:sticky;top:0;z-index:80;background:#0a0a0b;border-bottom:1px solid #232327}
+.demo-in{max-width:1400px;margin:0 auto;padding:9px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.grp>span{font-size:11px;color:#6d6d75;margin-right:2px}
+.sw{padding:7px 11px;min-height:32px;border:1px solid #2c2c31;border-radius:6px;background:transparent;color:#b6b6bd;font-size:12.5px;cursor:pointer;transition:color .15s,border-color .15s,background .15s,transform .08s}
+.sw:hover{color:#fff;border-color:#4a4a52}
+.sw:active{transform:scale(.97)}
+.sw:focus-visible{outline:2px solid #6ea8ff;outline-offset:2px}
+.sw[aria-pressed="true"]{background:#fff;border-color:#fff;color:#0a0a0b;font-weight:600}
+.v[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+
+.apple{
+  --sf:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+  --blue:#007aff;--red:#ff3b30;--green:#34c759;--orange:#ff9500;--purple:#af52de;--teal:#30b0c7;--gray:#8e8e93;
+  --label:#000;--label2:rgba(60,60,67,.6);--label3:rgba(60,60,67,.3);
+  --sep:rgba(60,60,67,.29);--hair:rgba(0,0,0,.1);
+  font-family:var(--sf);color:var(--label);
+}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------------- macOS-оболочка ---------------- */
+.mac{background:#ececee;min-height:840px;display:flex;justify-content:center;padding:20px}
+.w{width:100%;max-width:1220px;height:780px;border-radius:11px;overflow:hidden;display:flex;background:#fff;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 22px 70px rgba(0,0,0,.28)}
+.w-side{flex:none;width:224px;background:rgba(246,246,248,.82);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+  border-right:.5px solid var(--hair);padding:12px 10px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.w-dots{display:flex;gap:8px;padding:2px 6px 6px}
+.w-dots i{width:12px;height:12px;border-radius:50%;display:block}
+.w-sec h3{margin:0 0 4px;padding:0 8px;font-size:11px;font-weight:600;color:var(--label2)}
+.w-side a{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;color:var(--label);text-decoration:none;font-size:13px;letter-spacing:-.08px}
+.w-side a:hover{background:rgba(0,0,0,.05)}
+.w-side a[aria-current]{background:var(--blue);color:#fff}
+.w-side a[aria-current] .sq{background:#fff!important}
+.w-side a b{margin-left:auto;font-size:11.5px;font-weight:500;color:var(--label2)}
+.w-side a[aria-current] b{color:rgba(255,255,255,.85)}
+.sq{width:14px;height:14px;border-radius:4px;flex:none;background:var(--gray)}
+.w-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:#fff}
+.w-tool{flex:none;display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 16px;flex-wrap:wrap;
+  background:rgba(255,255,255,.74);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+  border-bottom:.5px solid var(--hair)}
+.w-tool h1{margin:0;font-size:13px;font-weight:600;letter-spacing:-.08px}
+.w-tool .sub{font-size:12px;color:var(--label2)}
+.w-tool .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.w-body{flex:1 1 auto;overflow:auto;padding:16px}
+.btn{height:26px;padding:0 12px;border:0;border-radius:6px;background:var(--blue);color:#fff;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:active{filter:brightness(.92)}
+.btn:focus-visible{outline:2px solid var(--label);outline-offset:2px}
+.btn.sec{background:#fff;color:var(--label);border:.5px solid rgba(0,0,0,.14);box-shadow:0 .5px 1px rgba(0,0,0,.05)}
+.btn.sec:active{background:#e9e9eb}
+.btn.quiet{background:transparent;color:var(--blue)}
+.btn[disabled]{background:rgba(118,118,128,.18);color:var(--label2);cursor:not-allowed}
+
+/* общие блоки */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px}
+.tile{border:.5px solid var(--hair);border-radius:10px;padding:12px 13px;background:#fff}
+.tile h4{margin:0;font-size:11.5px;font-weight:500;color:var(--label2)}
+.tile b{display:block;font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.5px;margin-top:3px}
+.tile .d{font-size:11.5px;margin-top:2px}
+.up{color:var(--red)}.ok{color:var(--green)}.warn{color:var(--orange)}.mut{color:var(--label2)}
+.card{border:.5px solid var(--hair);border-radius:10px;background:#fff;overflow:hidden;margin-top:14px}
+.card>header{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:.5px solid var(--hair)}
+.card>header h2{margin:0;font-size:13px;font-weight:600;letter-spacing:-.08px}
+.card>header .sub{font-size:11.5px;color:var(--label2)}
+.card>header .right{margin-left:auto;display:flex;gap:6px}
+.pad{padding:13px}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;font-weight:500;color:var(--label2);font-size:11.5px;padding:7px 13px;border-bottom:.5px solid var(--hair);white-space:nowrap}
+table.t td{padding:8px 13px;border-bottom:.5px solid rgba(0,0,0,.06);vertical-align:middle}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:hover{background:rgba(0,0,0,.025)}
+table.t td.r,table.t th.r{text-align:right}
+table.t td.r{white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.g{background:rgba(52,199,89,.14);color:#1e7a3c}
+.tag.o{background:rgba(255,149,0,.16);color:#8a5200}
+.tag.r{background:rgba(255,59,48,.12);color:#b32019}
+.tag.b{background:rgba(0,122,255,.12);color:#0059b8}
+.tag.n{background:rgba(118,118,128,.14);color:var(--label2)}
+.meter{height:5px;border-radius:3px;background:rgba(118,118,128,.18);overflow:hidden;min-width:56px}
+.meter i{display:block;height:100%;border-radius:3px}
+
+/* блок ИИ */
+.ai{border:.5px solid rgba(0,122,255,.28);border-radius:10px;background:linear-gradient(180deg,rgba(0,122,255,.06),rgba(0,122,255,.02));overflow:hidden}
+.ai-h{display:flex;align-items:flex-start;gap:10px;padding:12px 13px}
+.ai-sp{flex:none;width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#0a84ff,#af52de);display:grid;place-items:center;color:#fff}
+.ai-b{flex:1 1 auto;min-width:0}
+.ai-t{font-size:13px;font-weight:600;letter-spacing:-.08px;line-height:18px}
+.ai-s{font-size:12px;color:var(--label2);margin-top:2px;line-height:17px}
+.ai-acts{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.ai-why{border-top:.5px solid rgba(0,122,255,.2);padding:11px 13px;background:rgba(255,255,255,.5);font-size:12px;line-height:18px;color:var(--label2)}
+.ai-why ul{margin:6px 0 0;padding-left:16px}
+.ai-why li{margin-bottom:3px}
+.conf{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--label2)}
+.conf .meter{width:44px;min-width:44px}
+
+/* ---------------- iOS-оболочка ---------------- */
+.ios{background:#f2f2f7;min-height:840px;display:flex;justify-content:center;padding:0 0 118px}
+.ph{width:100%;max-width:430px;position:relative;min-height:840px}
+.ph-nav{position:sticky;top:0;z-index:20;background:rgba(242,242,247,.84);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep)}
+.ph-nav-in{display:flex;align-items:center;justify-content:space-between;gap:10px;height:44px;padding:0 16px}
+.ph-nav b{font-size:17px;font-weight:600;letter-spacing:-.43px}
+.ph-act{border:0;background:none;color:var(--blue);font-size:17px;letter-spacing:-.43px;cursor:pointer;padding:6px 2px;min-height:34px}
+.ph-act:active{opacity:.35}
+.ph-act:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.ph-large{padding:8px 16px 2px}
+.ph-large h1{margin:0;font-size:34px;line-height:41px;font-weight:700;letter-spacing:.37px}
+.ph-large p{margin:2px 0 0;font-size:15px;line-height:20px;color:var(--label2);letter-spacing:-.24px}
+.ph-sec{margin:20px 0 0}
+.ph-sec h2{margin:0 0 7px;padding:0 32px;font-size:13px;line-height:18px;color:var(--label2);letter-spacing:-.08px;font-weight:400}
+.ph-grp{margin:0 16px;background:#fff;border-radius:10px;overflow:hidden}
+.ph-row{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:60px;position:relative;background:#fff}
+.ph-row:active{background:#d1d1d6}
+.ph-row+.ph-row::before{content:"";position:absolute;left:64px;right:0;top:0;height:.5px;background:var(--sep)}
+.ph-th{flex:none;width:40px;height:40px;border-radius:8px;background:#d8d8dd;overflow:hidden;position:relative}
+.ph-b{flex:1 1 auto;min-width:0;padding:10px 0}
+.ph-t{font-size:17px;line-height:22px;letter-spacing:-.43px}
+.ph-s{font-size:15px;line-height:20px;color:var(--label2);letter-spacing:-.24px;margin-top:1px}
+.ph-tr{flex:none;display:flex;align-items:center;gap:8px;color:var(--label3)}
+.chev{color:var(--label3)}
+.ph-bar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;padding:10px 16px 26px;
+  background:linear-gradient(180deg,rgba(242,242,247,0),rgba(242,242,247,.94) 34%)}
+.ph-bar .in{width:100%;max-width:430px;display:flex;gap:9px}
+.ph-btn{flex:1 1 auto;height:48px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-size:17px;font-weight:600;letter-spacing:-.43px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.ph-btn:active{filter:brightness(.92)}
+.ph-btn.sec{background:rgba(118,118,128,.12);color:var(--blue)}
+.ph-btn:focus-visible{outline:2px solid var(--label);outline-offset:2px}
+
+/* экран отклонения */
+.dv-shot{margin:0 16px;border-radius:12px;overflow:hidden;background:#1c1c1e;position:relative}
+.dv-shot svg{display:block;width:100%;height:auto}
+.dv-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 32px 0;font-size:12.5px;color:var(--label2)}
+.dv-legend span{display:inline-flex;align-items:center;gap:6px}
+.dv-legend i{width:12px;height:3px;border-radius:2px;display:block}
+.dv-card{margin:14px 16px 0;background:#fff;border-radius:10px;overflow:hidden}
+.dv-card .row{padding:13px 16px;border-bottom:.5px solid var(--sep)}
+.dv-card .row:last-child{border-bottom:0}
+.dv-k{font-size:13px;color:var(--label2);letter-spacing:-.08px}
+.dv-v{font-size:17px;line-height:22px;letter-spacing:-.43px;margin-top:2px}
+.dv-v.bad{color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="demo-in">
+    <div class="grp"><span>Менеджер</span>
+      <button class="sw" data-go="s-project" aria-pressed="true">Проект</button>
+      <button class="sw" data-go="s-estimate" aria-pressed="false">Смета</button>
+      <button class="sw" data-go="s-materials" aria-pressed="false">Материалы</button>
+      <button class="sw" data-go="s-schedule" aria-pressed="false">График</button>
+    </div>
+    <div class="grp"><span>Прораб</span>
+      <button class="sw" data-go="s-walks" aria-pressed="false">Обходы</button>
+      <button class="sw" data-go="s-deviation" aria-pressed="false">Отклонение</button>
+    </div>
+    <div class="grp"><span>Закупка</span>
+      <button class="sw" data-go="s-suppliers" aria-pressed="false">Сравнение</button>
+      <button class="sw" data-go="s-supplier" aria-pressed="false">Поставщик</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ПРОЕКТ ==================== -->
+<div class="v apple mac" id="s-project">
+  <div class="w">
+    <aside class="w-side" data-nav="project"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>ЖК «Северный», корпус Б</h1><span class="sub">монолит, 12 этажей · срок до 30.04.2027</span>
+        <span class="right"><button class="btn sec" type="button">Отчёт</button><button class="btn" type="button">Пересчитать план</button></span>
+      </div>
+      <div class="w-body">
+        <div class="tiles">
+          <div class="tile"><h4>Бюджет освоен</h4><b class="num">86,4 млн</b><div class="d mut">из 184,2 млн, 47%</div></div>
+          <div class="tile"><h4>Отклонение по смете</h4><b class="num up">+2,1%</b><div class="d up">+3,9 млн к плану</div></div>
+          <div class="tile"><h4>Прогноз срока</h4><b class="num warn">+6 дней</b><div class="d warn">критический путь: монолит</div></div>
+          <div class="tile"><h4>Открытых отклонений</h4><b class="num">5</b><div class="d mut">2 требуют решения</div></div>
+        </div>
+
+        <div class="card" style="border-color:transparent;padding:0;background:none;margin-top:14px">
+          <div class="ai">
+            <div class="ai-h">
+              <span class="ai-sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+              <div class="ai-b">
+                <div class="ai-t">Бетон на 4-й этаж законтрактован позже, чем нужен по графику</div>
+                <div class="ai-s">Заливка захватки 4-го этажа стоит на 6 октября, ближайшая подтверждённая поставка — 9 октября. Сдвиг тянет за собой опалубку и каменку, прогноз по корпусу: +6 дней.</div>
+                <div class="ai-acts">
+                  <button class="btn" type="button">Подобрать поставщика на 6 октября</button>
+                  <button class="btn sec" type="button">Сдвинуть этап</button>
+                  <button class="btn quiet why" type="button" data-why="why-1">Почему</button>
+                  <span class="conf" style="margin-left:4px">уверенность 88% <span class="meter" aria-hidden="true"><i style="width:88%;background:var(--blue)"></i></span></span>
+                </div>
+              </div>
+            </div>
+            <div class="ai-why" id="why-1" hidden>
+              Вывод собран из четырёх источников:
+              <ul>
+                <li>График работ: «Монолит, захватка 4 эт.» — старт 06.10, критический путь.</li>
+                <li>Договор №П-114 с «БетонТрансСтрой»: ближайшее окно поставки 09.10, подтверждено 02.10.</li>
+                <li>Потребность по смете: 420 м³ B25, на складе 0 м³ (бетон не хранится).</li>
+                <li>История подрядчика «МонолитПро»: при сдвиге старта более 2 дней среднее отставание этапа 4,8 дня.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <header><h2>Этапы</h2><span class="sub">факт против плана</span><span class="right"><button class="btn sec" type="button">Все этапы</button></span></header>
+          <table class="t">
+            <thead><tr><th>Этап</th><th>Подрядчик</th><th>Срок по плану</th><th style="width:150px">Готовность</th><th class="r">Состояние</th></tr></thead>
+            <tbody>
+              <tr><td>Земляные работы</td><td>СтройБаза</td><td class="num">завершён 12.05</td><td><span class="meter"><i style="width:100%;background:var(--green)"></i></span></td><td class="r"><span class="tag g">Закрыт</span></td></tr>
+              <tr><td>Фундаментная плита</td><td>МонолитПро</td><td class="num">завершён 28.06</td><td><span class="meter"><i style="width:100%;background:var(--green)"></i></span></td><td class="r"><span class="tag g">Закрыт</span></td></tr>
+              <tr><td>Монолит, этажи 1–3</td><td>МонолитПро</td><td class="num">10.08 — 02.10</td><td><span class="meter"><i style="width:92%;background:var(--blue)"></i></span></td><td class="r"><span class="tag b">В работе</span></td></tr>
+              <tr><td>Монолит, этажи 4–8</td><td>МонолитПро</td><td class="num">06.10 — 24.12</td><td><span class="meter"><i style="width:0%;background:var(--orange)"></i></span></td><td class="r"><span class="tag o">Риск срыва</span></td></tr>
+              <tr><td>Кладка и перегородки</td><td>не назначен</td><td class="num">15.11 — 20.02</td><td><span class="meter"><i style="width:0%"></i></span></td><td class="r"><span class="tag n">Ждёт подрядчика</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== СМЕТА ==================== -->
+<div class="v apple mac" id="s-estimate" hidden>
+  <div class="w">
+    <aside class="w-side" data-nav="estimate"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>Смета</h1><span class="sub">редакция 4 · загружена 02.09, 1 284 позиции</span>
+        <span class="right"><button class="btn sec" type="button">Импорт ГЭСН</button><button class="btn" type="button">Выгрузить</button></span>
+      </div>
+      <div class="w-body">
+        <div class="tiles">
+          <div class="tile"><h4>Всего по смете</h4><b class="num">184,2 млн</b><div class="d mut">с НДС</div></div>
+          <div class="tile"><h4>Выше рынка</h4><b class="num up">14 позиций</b><div class="d up">потенциал −4,1 млн</div></div>
+          <div class="tile"><h4>Нет аналогов</h4><b class="num">7 позиций</b><div class="d mut">нужна ручная проверка</div></div>
+          <div class="tile"><h4>Проверено ИИ</h4><b class="num">1 277</b><div class="d ok">99,5% позиций</div></div>
+        </div>
+
+        <div class="card">
+          <header><h2>Позиции с отклонением от рынка</h2><span class="sub">сравнение с закупками по региону за 90 дней</span></header>
+          <table class="t">
+            <thead><tr><th>Позиция</th><th class="r">Объём</th><th class="r">Цена в смете</th><th class="r">Рынок</th><th class="r">Разница</th><th class="r">Действие</th></tr></thead>
+            <tbody>
+              <tr><td>Бетон B25 W6 F150</td><td class="r num">2 840 м³</td><td class="r num">6 950 ₽/м³</td><td class="r num mut">5 900 — 6 300</td><td class="r"><span class="tag r">+12%</span></td><td class="r"><button class="btn quiet" type="button">Подобрать</button></td></tr>
+              <tr><td>Арматура А500С, ⌀12</td><td class="r num">186 т</td><td class="r num">71 200 ₽/т</td><td class="r num mut">66 000 — 69 500</td><td class="r"><span class="tag o">+4%</span></td><td class="r"><button class="btn quiet" type="button">Подобрать</button></td></tr>
+              <tr><td>Опалубка стеновая, аренда</td><td class="r num">92 сут</td><td class="r num">310 ₽/м²</td><td class="r num mut">280 — 330</td><td class="r"><span class="tag g">в рынке</span></td><td class="r mut">—</td></tr>
+              <tr><td>Кирпич керамический М150</td><td class="r num">248 тыс. шт</td><td class="r num">24,10 ₽/шт</td><td class="r num mut">21,00 — 22,80</td><td class="r"><span class="tag r">+9%</span></td><td class="r"><button class="btn quiet" type="button">Подобрать</button></td></tr>
+              <tr><td>Гидроизоляция рулонная</td><td class="r num">4 200 м²</td><td class="r num">340 ₽/м²</td><td class="r num mut">нет данных</td><td class="r"><span class="tag n">не с чем сравнить</span></td><td class="r"><button class="btn quiet" type="button">Проверить</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card" style="border:0;background:none;padding:0">
+          <div class="ai">
+            <div class="ai-h">
+              <span class="ai-sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+              <div class="ai-b">
+                <div class="ai-t">Бетон занимает 10,7% сметы и даёт наибольший потенциал экономии</div>
+                <div class="ai-s">При переходе на рыночную вилку по трём позициям смета снижается на 4,1 млн без изменения марок и объёмов. Выгода требует проверки логистики: два поставщика возят от 60 км.</div>
+                <div class="ai-acts">
+                  <button class="btn" type="button">Собрать запрос поставщикам</button>
+                  <button class="btn quiet why" type="button" data-why="why-2">Почему</button>
+                  <span class="conf" style="margin-left:4px">уверенность 81% <span class="meter" aria-hidden="true"><i style="width:81%;background:var(--blue)"></i></span></span>
+                </div>
+              </div>
+            </div>
+            <div class="ai-why" id="why-2" hidden>
+              Сравнение построено на 34 закупках бетона B25 W6 F150 в радиусе 120 км за последние 90 дней. Из выборки исключены объёмы менее 100 м³ и поставки с доставкой заказчика, поэтому вилка отражает сопоставимые условия. Позиции без достаточной выборки помечены отдельно и не влияют на итог.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== МАТЕРИАЛЫ ==================== -->
+<div class="v apple mac" id="s-materials" hidden>
+  <div class="w">
+    <aside class="w-side" data-nav="materials"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>Материалы</h1><span class="sub">потребность против законтрактованного</span>
+        <span class="right"><button class="btn sec" type="button">Склад</button><button class="btn" type="button">Создать закупку</button></span>
+      </div>
+      <div class="w-body">
+        <div class="tiles">
+          <div class="tile"><h4>Дефицит в ближайшие 2 недели</h4><b class="num up">3 позиции</b><div class="d up">блокируют 2 этапа</div></div>
+          <div class="tile"><h4>Законтрактовано</h4><b class="num">68%</b><div class="d mut">от годовой потребности</div></div>
+          <div class="tile"><h4>Излишек на складе</h4><b class="num">1,2 млн</b><div class="d warn">арматура ⌀8, 18 т</div></div>
+          <div class="tile"><h4>Ближайшая поставка</h4><b class="num">09.10</b><div class="d mut">бетон, 120 м³</div></div>
+        </div>
+
+        <div class="card">
+          <header><h2>Потребность по неделям</h2><span class="sub">красным — дата, когда материал нужен, но не обеспечен</span></header>
+          <table class="t">
+            <thead><tr><th>Материал</th><th class="r">Нужно</th><th class="r">На складе</th><th class="r">Законтрактовано</th><th class="r">Дефицит</th><th>Нужен к</th><th class="r"></th></tr></thead>
+            <tbody>
+              <tr><td>Бетон B25 W6 F150</td><td class="r num">420 м³</td><td class="r num">0</td><td class="r num">120 м³</td><td class="r num up">300 м³</td><td><span class="tag r">06.10</span></td><td class="r"><button class="btn" type="button">Закупить</button></td></tr>
+              <tr><td>Арматура А500С, ⌀12</td><td class="r num">24 т</td><td class="r num">6 т</td><td class="r num">24 т</td><td class="r num ok">нет</td><td><span class="tag n">11.10</span></td><td class="r mut">—</td></tr>
+              <tr><td>Опалубка стеновая</td><td class="r num">640 м²</td><td class="r num">640 м²</td><td class="r num">—</td><td class="r num ok">нет</td><td><span class="tag n">06.10</span></td><td class="r mut">—</td></tr>
+              <tr><td>Кирпич М150</td><td class="r num">62 тыс. шт</td><td class="r num">0</td><td class="r num">0</td><td class="r num up">62 тыс. шт</td><td><span class="tag o">15.11</span></td><td class="r"><button class="btn sec" type="button">Запросить</button></td></tr>
+              <tr><td>Смесь кладочная</td><td class="r num">84 т</td><td class="r num">12 т</td><td class="r num">40 т</td><td class="r num up">32 т</td><td><span class="tag o">18.11</span></td><td class="r"><button class="btn sec" type="button">Запросить</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ГРАФИК ==================== -->
+<div class="v apple mac" id="s-schedule" hidden>
+  <div class="w">
+    <aside class="w-side" data-nav="schedule"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>График</h1><span class="sub">сентябрь 2026 — февраль 2027 · сегодня 12.09</span>
+        <span class="right"><button class="btn sec" type="button">Базовый план</button><button class="btn" type="button">Пересчитать</button></span>
+      </div>
+      <div class="w-body">
+        <div class="ai" style="margin-bottom:14px">
+          <div class="ai-h">
+            <span class="ai-sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+            <div class="ai-b">
+              <div class="ai-t">Прогноз сдачи корпуса: 06.05.2027, на 6 дней позже договорного срока</div>
+              <div class="ai-s">Задержка целиком приходится на монолит этажей 4–8. Кладку можно начать на неделю раньше и вернуть 4 дня из 6 — она не зависит от верхних этажей до отметки +21,6 м.</div>
+              <div class="ai-acts">
+                <button class="btn" type="button">Применить сдвиг кладки</button>
+                <button class="btn quiet why" type="button" data-why="why-3">Почему</button>
+                <span class="conf" style="margin-left:4px">уверенность 74% <span class="meter" aria-hidden="true"><i style="width:74%;background:var(--blue)"></i></span></span>
+              </div>
+            </div>
+          </div>
+          <div class="ai-why" id="why-3" hidden>
+            Прогноз опирается на фактический темп монолита за 6 недель: 4,1 дня на захватку против 3,5 по плану. При сохранении темпа этажи 4–8 занимают на 6 дней больше. Кладка привязана к готовности перекрытия на два этажа ниже текущего, поэтому её старт можно перенести с 15.11 на 08.11 без нарушения технологической последовательности. Уверенность снижена: темп измерен на трёх захватках, выборка небольшая.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:0">
+          <header><h2>Диаграмма</h2><span class="sub">светлое — план, плотное — факт и прогноз</span></header>
+          <div class="pad" id="gantt"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ОБХОДЫ (телефон) ==================== -->
+<div class="v apple ios" id="s-walks" hidden>
+  <div class="ph">
+    <div class="ph-nav"><div class="ph-nav-in"><button class="ph-act" type="button">Объекты</button><b>Обходы</b><button class="ph-act" type="button">Фильтр</button></div></div>
+    <div class="ph-large"><h1>Обходы</h1><p>ЖК «Северный», корпус Б</p></div>
+
+    <div class="ph-sec">
+      <h2>Сегодня</h2>
+      <div class="ph-grp">
+        <div class="ph-row">
+          <span class="ph-th" style="background:linear-gradient(135deg,#5a5a60,#2c2c2e)"></span>
+          <div class="ph-b"><div class="ph-t">Этаж 3, захватка Б</div><div class="ph-s">14 фото · 2 отклонения</div></div>
+          <div class="ph-tr"><span class="tag r">Требует решения</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2"><path d="m1.5 1.5 5 5-5 5"/></svg></div>
+        </div>
+        <div class="ph-row">
+          <span class="ph-th" style="background:linear-gradient(135deg,#6b6b72,#3a3a3c)"></span>
+          <div class="ph-b"><div class="ph-t">Этаж 3, лестничный узел</div><div class="ph-s">6 фото · расхождений нет</div></div>
+          <div class="ph-tr"><span class="tag g">Принято</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2"><path d="m1.5 1.5 5 5-5 5"/></svg></div>
+        </div>
+        <div class="ph-row">
+          <span class="ph-th" style="background:linear-gradient(135deg,#7a7a80,#48484a)"></span>
+          <div class="ph-b"><div class="ph-t">Фасад, оси 1–3</div><div class="ph-s">Видео 2:14 · обрабатывается</div></div>
+          <div class="ph-tr"><span class="tag b">Анализ</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2"><path d="m1.5 1.5 5 5-5 5"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ph-sec">
+      <h2>Вчера</h2>
+      <div class="ph-grp">
+        <div class="ph-row">
+          <span class="ph-th" style="background:linear-gradient(135deg,#5a5a60,#2c2c2e)"></span>
+          <div class="ph-b"><div class="ph-t">Этаж 2, захватка А</div><div class="ph-s">21 фото · 1 отклонение устранено</div></div>
+          <div class="ph-tr"><span class="tag g">Закрыт</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2"><path d="m1.5 1.5 5 5-5 5"/></svg></div>
+        </div>
+        <div class="ph-row">
+          <span class="ph-th" style="background:linear-gradient(135deg,#6b6b72,#3a3a3c)"></span>
+          <div class="ph-b"><div class="ph-t">Подвал, гидроизоляция</div><div class="ph-s">9 фото · расхождений нет</div></div>
+          <div class="ph-tr"><span class="tag g">Принято</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2"><path d="m1.5 1.5 5 5-5 5"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="ph-s" style="padding:14px 32px 0">Снимайте захватку целиком: модель сверяет геометрию с рабочей документацией и отмечает расхождения.</p>
+  </div>
+  <div class="ph-bar"><div class="in">
+    <button class="ph-btn sec" type="button">Загрузить</button>
+    <button class="ph-btn" type="button">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>
+      Снять обход
+    </button>
+  </div></div>
+</div>
+
+<!-- ==================== ОТКЛОНЕНИЕ (телефон) ==================== -->
+<div class="v apple ios" id="s-deviation" hidden>
+  <div class="ph">
+    <div class="ph-nav"><div class="ph-nav-in"><button class="ph-act" type="button">Обход</button><b>Отклонение 1 из 2</b><button class="ph-act" type="button">Ещё</button></div></div>
+    <div class="ph-large"><h1>Шаг арматуры</h1><p>Этаж 3, захватка Б · 12.09, 11:24</p></div>
+
+    <div class="dv-shot" style="margin-top:14px">
+      <svg viewBox="0 0 400 260" role="img" aria-label="Кадр обхода: сетка арматуры с отмеченным расхождением шага">
+        <rect width="400" height="260" fill="#2c2c2e"/>
+        <rect y="196" width="400" height="64" fill="#3a3a3c"/>
+        <g stroke="#8e8e93" stroke-width="3" stroke-linecap="round">
+          <path d="M40 40v170M84 40v170M128 40v170M172 40v170M228 40v170M284 40v170M340 40v170"/>
+        </g>
+        <g stroke="#7a7a80" stroke-width="3" stroke-linecap="round">
+          <path d="M28 78h348M28 128h348M28 178h348"/>
+        </g>
+        <g stroke="#ff453a" stroke-width="2.5" fill="none">
+          <rect x="196" y="34" width="120" height="182" rx="6"/>
+        </g>
+        <g stroke="#ff453a" stroke-width="2" stroke-linecap="round">
+          <path d="M228 246h56M228 240v12M284 240v12"/>
+        </g>
+        <text x="256" y="236" fill="#ff453a" font-size="13" font-family="-apple-system,system-ui,sans-serif" font-weight="600" text-anchor="middle">250 мм</text>
+        <g stroke="#30d158" stroke-width="2" stroke-linecap="round">
+          <path d="M84 246h44M84 240v12M128 240v12"/>
+        </g>
+        <text x="106" y="236" fill="#30d158" font-size="13" font-family="-apple-system,system-ui,sans-serif" font-weight="600" text-anchor="middle">200 мм</text>
+      </svg>
+    </div>
+    <div class="dv-legend">
+      <span><i style="background:#30d158"></i>по проекту</span>
+      <span><i style="background:#ff453a"></i>расхождение</span>
+      <span style="margin-left:auto">кадр 7 из 14</span>
+    </div>
+
+    <div class="dv-card">
+      <div class="row"><div class="dv-k">Что нашла модель</div><div class="dv-v bad">Шаг стержней 250 мм вместо 200 мм</div></div>
+      <div class="row"><div class="dv-k">Основание</div><div class="dv-v">Лист КЖ-14, узел 3, ряд Б, оси 2–3</div></div>
+      <div class="row"><div class="dv-k">Уверенность</div><div class="dv-v" style="display:flex;align-items:center;gap:10px">92%<span class="meter" style="flex:1 1 auto"><i style="width:92%;background:var(--blue)"></i></span></div></div>
+      <div class="row"><div class="dv-k">Последствие</div><div class="dv-v">Скрытые работы не примут без переармирования участка 2,4 м²</div></div>
+    </div>
+
+    <div class="dv-card">
+      <div class="row" style="display:flex;align-items:center;gap:12px">
+        <span class="ai-sp" style="width:28px;height:28px"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="dv-v" style="font-size:15px;line-height:20px">Назначить «МонолитПро», срок до заливки 05.10</div>
+          <div class="dv-k" style="margin-top:2px">Заливка захватки назначена на 06.10</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="ph-s" style="padding:14px 32px 0" id="dv-status">Решение остаётся за прорабом: модель предлагает, но не закрывает замечание сама.</p>
+  </div>
+  <div class="ph-bar"><div class="in">
+    <button class="ph-btn sec" type="button" id="dv-no">Это не ошибка</button>
+    <button class="ph-btn" type="button" id="dv-yes">Подтвердить</button>
+  </div></div>
+</div>
+
+<!-- ==================== СРАВНЕНИЕ ПОСТАВЩИКОВ ==================== -->
+<div class="v apple mac" id="s-suppliers" hidden>
+  <div class="w">
+    <aside class="w-side" data-nav="procure"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>Бетон B25 W6 F150 — 300 м³</h1><span class="sub">нужен к 06.10 · запрос разослан 8 поставщикам, ответили 5</span>
+        <span class="right"><button class="btn sec" type="button">Условия запроса</button><button class="btn" type="button" id="sp-order" disabled>Оформить заказ</button></span>
+      </div>
+      <div class="w-body">
+        <div class="ai" style="margin-bottom:14px">
+          <div class="ai-h">
+            <span class="ai-sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 5.6L20 9.8l-5.8 2.2L12 18l-2.2-6L4 9.8l5.8-2.2z"/></svg></span>
+            <div class="ai-b">
+              <div class="ai-t">Рекомендую «БетонТрансСтрой», хотя он не самый дешёвый</div>
+              <div class="ai-s">Дешевле на 214 тыс. предлагает «СтройБетон-Н», но у него два срыва срока из семи поставок за год и нет своего автобетононасоса. При заливке на критическом пути риск дороже разницы в цене.</div>
+              <div class="ai-acts">
+                <button class="btn" type="button" id="sp-pick">Выбрать рекомендованного</button>
+                <button class="btn quiet why" type="button" data-why="why-4">Почему</button>
+                <span class="conf" style="margin-left:4px">уверенность 79% <span class="meter" aria-hidden="true"><i style="width:79%;background:var(--blue)"></i></span></span>
+              </div>
+            </div>
+          </div>
+          <div class="ai-why" id="why-4" hidden>
+            Оценка складывается из четырёх весов: срок 40%, история исполнения 30%, цена 20%, качество по протоколам испытаний 10%. Веса заданы тем, что позиция лежит на критическом пути; для некритичных закупок цена весит 45%. «СтройБетон-Н» выигрывает по цене, но теряет на истории: срывы 14.03 и 27.06, оба по одной причине — нехватка миксеров в пик сезона, а октябрь тоже пиковый.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:0">
+          <header><h2>Предложения</h2><span class="sub">выберите строку, чтобы оформить заказ</span></header>
+          <table class="t">
+            <thead><tr><th style="width:30px"></th><th>Поставщик</th><th class="r">Цена за м³</th><th class="r">Сумма</th><th>Поставка</th><th class="r">История</th><th class="r">Качество</th><th class="r">Оценка</th></tr></thead>
+            <tbody id="sp-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== КАРТОЧКА ПОСТАВЩИКА ==================== -->
+<div class="v apple mac" id="s-supplier" hidden>
+  <div class="w">
+    <aside class="w-side" data-nav="procure"></aside>
+    <div class="w-main">
+      <div class="w-tool">
+        <h1>БетонТрансСтрой</h1><span class="sub">ИНН 7724xxxxxx · работаем с марта 2024</span>
+        <span class="right"><button class="btn sec" type="button">Документы</button><button class="btn" type="button">Запросить цену</button></span>
+      </div>
+      <div class="w-body">
+        <div class="tiles">
+          <div class="tile"><h4>Поставок за год</h4><b class="num">11</b><div class="d mut">на 24,8 млн</div></div>
+          <div class="tile"><h4>В срок</h4><b class="num ok">11 из 11</b><div class="d ok">без срывов</div></div>
+          <div class="tile"><h4>Средний отказ по прочности</h4><b class="num">0,4%</b><div class="d ok">норма до 5%</div></div>
+          <div class="tile"><h4>Среднее плечо</h4><b class="num">18 км</b><div class="d mut">свой автобетононасос</div></div>
+        </div>
+
+        <div class="card">
+          <header><h2>Последние поставки</h2><span class="sub">факт против заявленного срока</span></header>
+          <table class="t">
+            <thead><tr><th>Дата</th><th>Объект</th><th>Позиция</th><th class="r">Объём</th><th class="r">Цена</th><th class="r">Срок</th></tr></thead>
+            <tbody>
+              <tr><td class="num">02.09.2026</td><td>Северный, корпус Б</td><td>Бетон B25 W6</td><td class="r num">120 м³</td><td class="r num">6 240 ₽</td><td class="r"><span class="tag g">в срок</span></td></tr>
+              <tr><td class="num">14.08.2026</td><td>Северный, корпус Б</td><td>Бетон B25 W6</td><td class="r num">180 м³</td><td class="r num">6 240 ₽</td><td class="r"><span class="tag g">в срок</span></td></tr>
+              <tr><td class="num">27.06.2026</td><td>Заводская, склад</td><td>Бетон B15</td><td class="r num">60 м³</td><td class="r num">5 480 ₽</td><td class="r"><span class="tag g">в срок</span></td></tr>
+              <tr><td class="num">19.05.2026</td><td>Северный, корпус А</td><td>Бетон B25 W6</td><td class="r num">240 м³</td><td class="r num">6 100 ₽</td><td class="r"><span class="tag g">в срок</span></td></tr>
+              <tr><td class="num">03.04.2026</td><td>Северный, корпус А</td><td>Бетон B30</td><td class="r num">90 м³</td><td class="r num">7 010 ₽</td><td class="r"><span class="tag o">+4 часа</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <header><h2>Цена за м³, B25 W6</h2><span class="sub">последние 12 месяцев · серым — вилка по региону</span></header>
+          <div class="pad" id="spark"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ---------- боковая панель: одна разметка на все экраны ---------- */
+  var NAV=[
+    {h:'ЖК «Северный»',items:[
+      {k:'project',t:'Проект',c:'#007aff'},
+      {k:'estimate',t:'Смета',c:'#af52de',b:'1 284'},
+      {k:'materials',t:'Материалы',c:'#ff9500',b:'3'},
+      {k:'procure',t:'Закупки',c:'#30b0c7',b:'2'},
+      {k:'contractors',t:'Подрядчики',c:'#34c759'},
+      {k:'schedule',t:'График',c:'#ff3b30'}
+    ]},
+    {h:'Контроль',items:[
+      {k:'walks',t:'Обходы',c:'#8e8e93'},
+      {k:'deviations',t:'Отклонения',c:'#8e8e93',b:'5'},
+      {k:'acts',t:'Скрытые работы',c:'#8e8e93'}
+    ]}
+  ];
+  Array.prototype.forEach.call(document.querySelectorAll('.w-side'),function(side){
+    var active=side.getAttribute('data-nav');
+    var dots=document.createElement('div');dots.className='w-dots';
+    ['#ff5f57','#febc2e','#28c840'].forEach(function(c){var i=document.createElement('i');i.style.background=c;dots.appendChild(i);});
+    side.appendChild(dots);
+    NAV.forEach(function(sec){
+      var box=document.createElement('div');box.className='w-sec';
+      var h=document.createElement('h3');h.textContent=sec.h;box.appendChild(h);
+      sec.items.forEach(function(it){
+        var a=document.createElement('a');a.href='#0';a.onclick=function(){return false;};
+        if(it.k===active)a.setAttribute('aria-current','page');
+        var sq=document.createElement('span');sq.className='sq';sq.style.background=it.c;
+        a.appendChild(sq);a.appendChild(document.createTextNode(it.t));
+        if(it.b){var b=document.createElement('b');b.textContent=it.b;a.appendChild(b);}
+        box.appendChild(a);
+      });
+      side.appendChild(box);
+    });
+  });
+
+  /* ---------- «Почему» раскрывает обоснование ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.why'),function(b){
+    var target=document.getElementById(b.getAttribute('data-why'));
+    b.setAttribute('aria-expanded','false');
+    b.setAttribute('aria-controls',b.getAttribute('data-why'));
+    b.addEventListener('click',function(){
+      var open=target.hidden;
+      target.hidden=!open;
+      b.setAttribute('aria-expanded',open?'true':'false');
+      b.textContent=open?'Скрыть':'Почему';
+    });
+  });
+
+  /* ---------- диаграмма Ганта ---------- */
+  var TASKS=[
+    {t:'Монолит, этажи 1–3',   plan:[0,26],  fact:[0,24],  crit:false,done:true},
+    {t:'Монолит, этажи 4–8',   plan:[26,64], fact:[26,70], crit:true, done:false},
+    {t:'Монолит, этажи 9–12',  plan:[64,92], fact:[70,98], crit:true, done:false},
+    {t:'Кладка и перегородки', plan:[54,120],fact:[54,120],crit:false,done:false},
+    {t:'Фасад',                plan:[86,140],fact:[86,140],crit:false,done:false},
+    {t:'Внутренняя отделка',   plan:[104,162],fact:[104,162],crit:false,done:false}
+  ];
+  var MONTHS=['сен','окт','ноя','дек','янв','фев'];
+  var SPAN=170, TODAY=14;
+  var g=document.getElementById('gantt');
+  if(g){
+    var head=document.createElement('div');
+    head.style.cssText='display:grid;grid-template-columns:172px minmax(0,1fr);gap:12px;font-size:11px;color:var(--label2);margin-bottom:7px';
+    head.appendChild(document.createElement('span'));
+    var mrow=document.createElement('div');
+    mrow.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);border-left:.5px solid var(--hair)';
+    MONTHS.forEach(function(m){var s=document.createElement('span');s.textContent=m;s.style.cssText='padding-left:6px;border-right:.5px solid var(--hair)';mrow.appendChild(s);});
+    head.appendChild(mrow);g.appendChild(head);
+
+    TASKS.forEach(function(t){
+      var row=document.createElement('div');
+      row.style.cssText='display:grid;grid-template-columns:172px minmax(0,1fr);gap:12px;align-items:center;padding:5px 0';
+      var label=document.createElement('span');
+      label.textContent=t.t;
+      label.style.cssText='font-size:12.5px;letter-spacing:-.08px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      var track=document.createElement('div');
+      track.style.cssText='position:relative;height:22px;border-left:.5px solid var(--hair);background:repeating-linear-gradient(90deg,transparent 0,transparent calc(16.666% - .5px),rgba(0,0,0,.07) calc(16.666% - .5px),rgba(0,0,0,.07) 16.666%)';
+      function bar(range,cls){
+        var b=document.createElement('i');
+        b.style.cssText='position:absolute;top:'+(cls==='plan'?'3px':'11px')+';height:8px;border-radius:4px;left:'+
+          (range[0]/SPAN*100)+'%;width:'+((range[1]-range[0])/SPAN*100)+'%;';
+        b.style.background = cls==='plan' ? 'rgba(118,118,128,.25)'
+          : (t.done ? 'var(--green)' : (t.crit ? 'var(--red)' : 'var(--blue)'));
+        track.appendChild(b);
+      }
+      bar(t.plan,'plan'); bar(t.fact,'fact');
+      var now=document.createElement('i');
+      now.style.cssText='position:absolute;top:0;bottom:0;width:1.5px;background:rgba(0,0,0,.45);left:'+(TODAY/SPAN*100)+'%';
+      track.appendChild(now);
+      row.appendChild(label);row.appendChild(track);g.appendChild(row);
+    });
+    var leg=document.createElement('div');
+    leg.style.cssText='display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--label2);margin-top:10px';
+    leg.innerHTML='<span>план</span><span style="color:var(--green)">закрыто</span><span style="color:var(--blue)">идёт по плану</span><span style="color:var(--red)">критический путь, прогноз позже плана</span><span style="margin-left:auto">вертикаль — сегодня, 12.09</span>';
+    g.appendChild(leg);
+  }
+
+  /* ---------- спарклайн цены ---------- */
+  var sp=document.getElementById('spark');
+  if(sp){
+    var vals=[6100,6100,5980,6020,6240,6240,6180,6240,6240,6300,6240,6240];
+    var lo=5700,hi=6600,W=640,H=120;
+    var pts=vals.map(function(v,i){return [i/(vals.length-1)*W, H-(v-lo)/(hi-lo)*H];});
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" role="img" aria-label="Цена за кубометр стабильна в пределах рыночной вилки">';
+    svg+='<rect x="0" y="'+(H-(6300-lo)/(hi-lo)*H)+'" width="'+W+'" height="'+((6300-5900)/(hi-lo)*H)+'" fill="rgba(118,118,128,.14)"/>';
+    svg+='<polyline fill="none" stroke="#007aff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'"/>';
+    svg+='<circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="4" fill="#007aff"/>';
+    svg+='</svg>';
+    sp.innerHTML=svg+'<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--label2);margin-top:7px"><span>окт 2025</span><span>серая полоса — рыночная вилка 5 900 — 6 300 ₽</span><span class="num">6 240 ₽</span></div>';
+  }
+
+  /* ---------- сравнение поставщиков ---------- */
+  var SUP=[
+    {n:'БетонТрансСтрой',price:6240,days:'06.10, к 07:00',hist:'11 из 11 в срок',histOk:true,q:'отказ 0,4%',qOk:true,score:92,rec:true},
+    {n:'СтройБетон-Н',   price:5527,days:'06.10, к 11:00',hist:'5 из 7 в срок', histOk:false,q:'отказ 1,9%',qOk:true,score:71},
+    {n:'РегионБетон',    price:6010,days:'07.10, к 08:00',hist:'9 из 9 в срок', histOk:true,q:'отказ 0,8%',qOk:true,score:84},
+    {n:'ПромМикс',       price:6380,days:'06.10, к 06:00',hist:'4 из 4 в срок', histOk:true,q:'нет данных',qOk:false,score:76},
+    {n:'БетонЛайн',      price:5890,days:'09.10, к 10:00',hist:'6 из 8 в срок', histOk:false,q:'отказ 2,4%',qOk:false,score:58}
+  ];
+  var rows=document.getElementById('sp-rows'), chosen=null;
+  function money(v){return v.toLocaleString('ru-RU');}
+  if(rows){
+    SUP.forEach(function(s,idx){
+      var tr=document.createElement('tr');
+      tr.style.cursor='pointer';
+      var td0=document.createElement('td');
+      var rb=document.createElement('input');rb.type='radio';rb.name='sup';rb.value=s.n;
+      rb.setAttribute('aria-label','Выбрать '+s.n);
+      td0.appendChild(rb);
+      var td1=document.createElement('td');
+      td1.innerHTML='<div style="font-weight:500">'+s.n+'</div>'+(s.rec?'<div style="font-size:11px;color:#0059b8;margin-top:1px">рекомендация модели</div>':'');
+      var td2=document.createElement('td');td2.className='r num';td2.textContent=money(s.price)+' ₽';
+      var td3=document.createElement('td');td3.className='r num';td3.textContent=money(s.price*300)+' ₽';
+      var td4=document.createElement('td');td4.innerHTML='<span class="num">'+s.days+'</span>';
+      var td5=document.createElement('td');td5.className='r';
+      td5.innerHTML='<span class="tag '+(s.histOk?'g':'o')+'">'+s.hist+'</span>';
+      var td6=document.createElement('td');td6.className='r';
+      td6.innerHTML='<span class="tag '+(s.qOk?'g':'n')+'">'+s.q+'</span>';
+      var td7=document.createElement('td');td7.className='r';
+      td7.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="num" style="font-weight:600">'+s.score+'</span><span class="meter" style="width:52px"><i style="width:'+s.score+'%;background:'+(s.score>=84?'var(--green)':s.score>=70?'var(--blue)':'var(--orange)')+'"></i></span></span>';
+      [td0,td1,td2,td3,td4,td5,td6,td7].forEach(function(td){tr.appendChild(td);});
+      function pick(){
+        chosen=s;rb.checked=true;
+        Array.prototype.forEach.call(rows.children,function(r){r.style.background='';});
+        tr.style.background='rgba(0,122,255,.08)';
+        var btn=document.getElementById('sp-order');
+        btn.disabled=false;btn.textContent='Оформить заказ — '+money(s.price*300)+' ₽';
+      }
+      tr.addEventListener('click',pick);
+      rb.addEventListener('change',pick);
+      rows.appendChild(tr);
+      if(idx===0){ /* рекомендация подсвечена, но не выбрана за пользователя */
+        tr.style.boxShadow='inset 3px 0 0 var(--blue)';
+      }
+    });
+    var pickBtn=document.getElementById('sp-pick');
+    if(pickBtn) pickBtn.addEventListener('click',function(){ rows.children[0].click(); });
+  }
+
+  /* ---------- решение по отклонению ---------- */
+  var st=document.getElementById('dv-status');
+  function decide(text,color){
+    return function(){
+      st.textContent=text;st.style.color=color;
+      document.getElementById('dv-yes').disabled=true;
+      document.getElementById('dv-no').disabled=true;
+    };
+  }
+  var yes=document.getElementById('dv-yes'), no=document.getElementById('dv-no');
+  if(yes) yes.addEventListener('click',decide('Замечание подтверждено и назначено «МонолитПро», срок до 05.10. Появится в отчёте по скрытым работам.','var(--green)'));
+  if(no) no.addEventListener('click',decide('Отмечено как ложное срабатывание. Кадр уйдёт в дообучение модели, замечание закрыто без задачи.','var(--label2)'));
+
+  /* ---------- переключение экранов ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.sw'),function(b){
+    b.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.sw'),function(o){o.setAttribute('aria-pressed','false');});
+      Array.prototype.forEach.call(document.querySelectorAll('.v'),function(o){o.hidden=true;});
+      b.setAttribute('aria-pressed','true');
+      document.getElementById(b.getAttribute('data-go')).hidden=false;
+      window.scrollTo({top:0,behavior:'instant'});
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 460px;
+  overflow: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 48px 24px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 11px var(--sp-3) 11px var(--sp-1);
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--t-hover);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: -2px;
+}
+
+.active {
+  background: var(--ac-soft);
+}
+
+.time {
+  font-size: var(--fs-micro);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 20px;
+  color: var(--mut);
+}
+
+.warn .icon {
+  color: var(--wr-ink);
+}
+
+.alert .icon {
+  color: var(--er-ink);
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.detail {
+  font-size: var(--fs-cap);
+  color: var(--mut);
+  line-height: 1.4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+
+  .row.active:hover {
+    background: var(--ac-soft);
+  }
+}

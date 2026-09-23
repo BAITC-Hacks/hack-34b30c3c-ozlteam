@@ -1,0 +1,93 @@
+/* Сводка: шапка → ряд чисел → две колонки. Значения только из токенов. */
+
+/* Grid тянет элемент по всей ширине трека, а сегменты должны остаться группой слева. */
+.filter {
+  justify-self: start;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cols {
+  display: grid;
+  /* minmax(0, …) обязателен: иначе таблица внутри распирает трек шире экрана. */
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: var(--gap-cards);
+  align-items: start;
+}
+
+.side {
+  display: grid;
+  gap: var(--gap-cards);
+}
+
+.form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+
+.form > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--mut);
+  font-size: var(--fs-sm);
+}
+
+.muted {
+  margin: 0;
+  color: var(--mut);
+  font-size: var(--fs-sm);
+}
+
+.noteTitle {
+  display: block;
+  font-weight: 500;
+}
+
+.noteTime {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-micro);
+  color: var(--deco);
+}
+
+.facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.facts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 7px 0;
+  font-size: var(--fs-sm);
+}
+
+.facts li + li {
+  border-top: 1px solid var(--hair);
+}
+
+@media (max-width: 1100px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

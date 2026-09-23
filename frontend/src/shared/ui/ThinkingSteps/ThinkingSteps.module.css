@@ -1,0 +1,108 @@
+.root {
+  display: grid;
+  min-width: 0;
+  padding: var(--sp-4);
+  gap: var(--sp-3);
+  border-radius: var(--r-s);
+  color: var(--mut);
+  background: var(--sunken);
+}
+
+.title {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: var(--lh-body);
+}
+
+.steps {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  gap: var(--sp-2);
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  animation: step-appear var(--t-hover) ease both;
+  transition: color var(--t-hover);
+}
+
+.active {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.active .icon {
+  color: var(--ac);
+}
+
+.complete .icon {
+  color: var(--ok);
+}
+
+.pending .icon {
+  color: var(--deco);
+}
+
+.icon {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  color: currentColor;
+}
+
+.label {
+  min-width: 0;
+}
+
+.compact {
+  padding: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.compact .steps {
+  gap: var(--sp-1);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes step-appear {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    animation: none;
+    transition-duration: 1ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .root {
+    outline: 1px solid var(--ink);
+    outline-offset: -1px;
+  }
+}
