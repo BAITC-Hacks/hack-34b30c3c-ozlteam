@@ -1,29 +1,33 @@
-from typing import Annotated
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from app.Domains.Ai.contracts import LlmRequestFailed, LlmUnavailable
-from app.Domains.Ai.dependencies import get_llm_provider
+from app.core.errors import ERROR_RESPONSES, ErrorResponse
+from app.Domains.Ai.controllers.conversations import Service, no_cache
 from app.Domains.Ai.DTO.chat import AskAssistant
+from app.Domains.Ai.DTO.conversation import CreateConversation, SendMessage
 from app.Domains.Ai.resources.chat import AssistantAnswer
-from app.Domains.Ai.services.assistant_service import AssistantService
 
-router = APIRouter(prefix="/ai", tags=["Ai"])
-
-
-def get_assistant() -> AssistantService:
-    return AssistantService(get_llm_provider())
-
-
-Service = Annotated[AssistantService, Depends(get_assistant)]
+router = APIRouter(
+    prefix="/ai",
+    tags=["Ai"],
+    dependencies=[Depends(no_cache)],
+    responses={**ERROR_RESPONSES, 429: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+)
 
 
-@router.post("/chat", response_model=AssistantAnswer)
+@router.post(
+    "/chat",
+    response_model=AssistantAnswer,
+    deprecated=True,
+    summary="Совместимость: один справочный вопрос",
+    description="Требует входа, сохраняет новый личный диалог. Используйте /ai/conversations "
+    "для продолжения истории. Переданная клиентом history больше не используется.",
+)
 async def ask(command: AskAssistant, service: Service):
-    try:
-        return AssistantAnswer(answer=await service.ask(command))
-    except LlmUnavailable as error:
-        # Ключа нет или провайдер не настроен: это конфигурация, а не сбой запроса.
-        raise HTTPException(status_code=503, detail=str(error)) from error
-    except LlmRequestFailed as error:
-        raise HTTPException(status_code=502, detail=str(error)) from error
+    conversation = await service.create(CreateConversation())
+    result = await service.send(
+        conversation.id,
+        SendMessage(content=command.question, client_request_id=uuid4(), assistant_id="help"),
+    )
+    return AssistantAnswer(answer=result.messages[-1].content)

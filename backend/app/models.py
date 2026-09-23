@@ -4,6 +4,7 @@
 междоменный FK — например `jobs.created_by` на `users.id` — падает с NoReferencedTableError.
 """
 
+from app.Domains.Ai.models.conversation import AgentMessage, AgentProposal, Conversation
 from app.Domains.Catalogs.models import Category, Product, Supplier, Warehouse
 from app.Domains.DataImports.models import ImportBatch
 from app.Domains.DataImports.models.packages import (
@@ -36,6 +37,9 @@ from app.Domains.Security.models.session import AuthSession
 from app.Domains.Users.models import Permission, Role, User
 
 __all__ = [
+    "AgentMessage",
+    "AgentProposal",
+    "Conversation",
     "AuthSession",
     "File",
     "Job",

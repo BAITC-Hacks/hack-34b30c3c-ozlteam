@@ -1,0 +1,53 @@
+.workspace { display: grid; gap: var(--sp-4); min-width: 0; width: min(100%, 960px); margin: 0 auto; }
+.toolbar { display: flex; align-items: end; gap: var(--sp-3); flex-wrap: wrap; }
+.toolbar > :first-child { flex: 1; min-width: 0; }
+.toolbar a, .sources a, .result a, .note a { color: var(--ac-ink); }
+.scope { padding: var(--sp-4); background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
+.scope summary { cursor: pointer; font-weight: 600; }
+.controls { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
+.contextItem { display: flex; gap: var(--sp-2); align-items: center; justify-content: space-between; font-size: var(--fs-cap); }
+.contextItem span { overflow-wrap: anywhere; user-select: text; }
+.contextItem button, .note button { color: var(--ac-ink); background: none; border: 0; cursor: pointer; font: inherit; }
+.permission { display: flex; align-items: start; gap: var(--sp-2); font-size: var(--fs-sm); line-height: var(--lh-body); }
+.permission input { flex: none; margin-top: var(--sp-1); }
+.messages { position: relative; isolation: isolate; display: grid; align-content: start; gap: var(--sp-4); min-width: 0; min-height: 180px; }
+.mine, .theirs { min-width: 0; max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
+.mine { justify-self: end; background: var(--ac-soft); color: var(--ink); }
+.theirs { justify-self: start; background: var(--panel); box-shadow: var(--sh-1); }
+.mine p, .theirs p { margin: var(--sp-2) 0 0; }
+.mine small, .theirs small { color: var(--mut); }
+.theirs details { margin-top: var(--sp-3); font-size: var(--fs-sm); }
+.sources, .result { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); font-size: var(--fs-sm); }
+.previewFields { display: grid; gap: var(--sp-2); margin: var(--sp-2) 0; overflow-wrap: anywhere; font-size: var(--fs-sm); }
+.previewFields > div { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: var(--sp-3); }
+.previewFields dt { color: var(--mut); }
+.previewFields dd { margin: 0; user-select: text; }
+.previewList { padding-left: var(--sp-5); margin: var(--sp-2) 0; }
+.previewList li { margin-bottom: var(--sp-3); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.note { font-size: var(--fs-cap); line-height: var(--lh-body); color: var(--mut); margin: var(--sp-2) 0; }
+.composer { display: flex; gap: var(--sp-2); align-items: end; padding: var(--sp-3); background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
+.composer:focus-within { outline: 2px solid var(--ac); }
+.composer textarea { min-width: 0; flex: 1; resize: vertical; max-height: 180px; border: 0; background: transparent; color: var(--ink); font: inherit; line-height: var(--lh-body); }
+.composer textarea:focus { outline: none; }
+.composer button { display: grid; place-items: center; width: var(--touch); height: var(--touch); flex: none; border: 0; border-radius: var(--r-pill); color: var(--panel); background: var(--ac); cursor: pointer; }
+.composer button:disabled { color: var(--mut); background: var(--sunken); cursor: not-allowed; }
+.workspace button:focus-visible, .workspace summary:focus-visible, .workspace a:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.empty { display: grid; justify-items: center; text-align: center; gap: var(--sp-2); padding: var(--sp-4); }
+.empty h2 { font-size: var(--fs-h2); margin: 0; }
+.empty p { color: var(--mut); font-size: var(--fs-sm); }
+.smallOrb { width: 84px; height: 84px; }
+.compact { gap: var(--sp-3); max-height: 60dvh; overflow-y: auto; padding: var(--sp-3); }
+.compact .messages { max-height: 48dvh; overflow-y: auto; padding: var(--sp-1); }
+.compact .toolbar { align-items: center; }
+.compact .composer { align-items: center; }
+.compact .composer textarea { resize: none; }
+.compact .toolbar a { font-size: var(--fs-cap); }
+.compact .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
+.skeleton { display: grid; gap: var(--sp-3); padding: var(--sp-4); background: var(--panel); border-radius: var(--r); min-height: 100px; }
+.skeleton i { display: block; height: var(--sp-4); border-radius: var(--r-xs); background: linear-gradient(90deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.8s linear infinite; }
+.skeleton i:nth-child(2) { width: 75%; }
+.skeleton i:nth-child(3) { width: 55%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton i { animation: none; } }
+@media (max-width: 560px) { .toolbar { gap: var(--sp-2); } .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); } .composer textarea { font-size: 16px; } .contextItem button { min-height: var(--touch); } }

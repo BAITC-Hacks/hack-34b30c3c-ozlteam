@@ -8,6 +8,7 @@ import { ApiError } from "../../../shared/api/client";
 import { createOrders, createRun, getCatalog, getJob, getOverview, getRecommendation, getRecommendations, getRun, getRuns } from "../api/runs";
 import type { CatalogOption, CreatedOrder, JobStatus, ReplenishmentOverview, Run, SavedRecommendation, SavedRecommendationDetail, SavedRecommendationPage } from "../runTypes";
 import styles from "./RunsPage.module.css";
+import { breakdownValue, describeWarnings } from "../lib/presentation";
 
 const urgency = {
   none: { label: "Без заказа", tone: "neutral" },
@@ -15,14 +16,6 @@ const urgency = {
   high: { label: "Высокий", tone: "warning" },
   critical: { label: "Критично", tone: "danger" },
 } as const;
-const warningText: Record<string, string> = {
-  missing_client_ids_day_level_outliers_only: "Нет обезличенных ID клиентов: крупные продажи проверены только по дням.",
-  insufficient_history_for_annual_seasonality: "Истории недостаточно для годового сезонного профиля.",
-  stale_stock_snapshot: "Снимок остатков мог устареть к дате расчёта.",
-  overdue_inbound_excluded: "Просроченные поставки не учтены как будущие поступления.",
-  incomplete_sources: "В расчёте использованы неполные источники данных.",
-};
-const describeWarnings = (values: string[]) => values.map((value) => warningText[value] ?? `Код предупреждения: ${value}`).join(" · ");
 
 const historyLimit = 30;
 const orderAttemptStorage = "hackalem.order-attempt";
@@ -382,7 +375,7 @@ export function RunsPage() {
               <Td><input type="checkbox" aria-label={`Выбрать ${row.name}`} checked={selected.has(row.id) && isOrderable(row)} disabled={loadingRows || !isOrderable(row)} onChange={(event) => setSelected((current) => { const next = new Set(current); if (event.target.checked) next.add(row.id); else next.delete(row.id); return next; })} /></Td>
               <Td><button type="button" className={styles.productLink} onClick={() => navigate(`/recommendations/${row.id}?${new URLSearchParams({ from: `${location.pathname}${location.search}${location.hash}` })}`)}>{row.name}</button><small className={styles.sku}>{row.sku}</small></Td>
               <Td>{row.order_id ? <><Badge tone="info">В заказе</Badge><button type="button" className={styles.orderLink} onClick={() => navigate(`/orders?id=${encodeURIComponent(row.order_id!)}`)}>Открыть заказ</button></> : <Badge tone={row.status === "blocked" ? "danger" : urgency[row.urgency].tone}>{row.status === "blocked" ? "Нет данных" : urgency[row.urgency].label}</Badge>}</Td>
-              <Td numeric>{quantity(row.recommended_quantity)} {row.unit}</Td>
+              <Td numeric>{row.status === "blocked" ? "—" : `${quantity(row.recommended_quantity)} ${row.unit}`}</Td>
               <Td className={styles.explanation}>{row.explanation}</Td>
             </Tr>)}</tbody></Table>
           </section>)}
@@ -394,7 +387,8 @@ export function RunsPage() {
           {loadingDetail && !detail ? <div className={styles.skeletonCard} role="status" aria-busy="true" aria-label="Загружаем обоснование"><i /><i /><i /></div> : null}
           {detail ? <div className={styles.detailBody}>
             {detail.details.warnings.length ? <Alert tone="warning" title="Ограничения расчёта">{describeWarnings(detail.details.warnings)}</Alert> : null}
-            <dl className={styles.breakdown}>{Object.entries(detail.details.breakdown).filter(([, value]) => value !== null).map(([key, value]) => <div key={key}><dt>{breakdownLabels[key] ?? key}</dt><dd>{typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value) ? quantity(value) : String(value)}</dd></div>)}</dl>
+            {detail.status === "blocked" ? <Alert tone="info">Промежуточный результат: {quantity(detail.recommended_quantity)} {detail.unit}. Он получен при неполных данных и не является количеством к заказу.</Alert> : null}
+            <dl className={styles.breakdown}>{Object.keys(detail.details.breakdown).map((key) => <div key={key}><dt>{breakdownLabels[key] ?? "Параметр расчёта"}</dt><dd>{breakdownValue(detail, key)}</dd></div>)}</dl>
             <div className={styles.detailFacts}><p>История: {detail.details.history.length} дн.</p><p>Прогноз: {detail.details.forecast.length} дн.</p><p>Исключено продаж: {detail.details.excluded_sales.length}</p><p>Поступлений в пути: {detail.details.inbound.length}</p></div>
           </div> : null}
         </Card> : null}
