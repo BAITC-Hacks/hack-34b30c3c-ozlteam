@@ -81,11 +81,13 @@
 .compact .chatTitle { display: none; }
 .compact .composer textarea { resize: none; }
 .iconAction { position: relative; flex: none; }
-.iconActionButton { display: grid; place-items: center; width: var(--ctl); height: var(--ctl); padding: 0; border: 0; border-radius: var(--r-s); background: var(--panel); box-shadow: var(--sh-1); color: var(--mut); cursor: pointer; text-decoration: none; transition: background-color var(--t-hover), transform var(--t-press); }
+.iconActionButton { display: grid; place-items: center; width: var(--ctl); height: var(--ctl); padding: 0; border: 0; border-radius: var(--r-s); background: var(--panel); box-shadow: var(--sh-1); color: var(--mut); cursor: pointer; text-decoration: none; transition: color var(--t-hover), background-color var(--t-hover), transform var(--t-press); }
+.iconActionButton[aria-expanded="true"] { color: var(--ac-ink); background: var(--ac-soft); }
 .iconActionButton:active:not(:disabled) { transform: scale(.98); }
 .iconActionButton:disabled { opacity: .48; box-shadow: none; cursor: not-allowed; }
 @media (hover: hover) and (pointer: fine) {
-  .iconActionButton:hover:not(:disabled) { background: var(--sunken); transition-duration: 0s; }
+  .iconActionButton:hover:not(:disabled) { color: var(--ac-ink); background: var(--ac-soft); transition-duration: 0s; }
+  .iconActionButton[aria-expanded="true"]:hover { filter: brightness(.96); }
 }
 @media (pointer: coarse) { .iconActionButton { width: var(--touch); height: var(--touch); } }
 .compact .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
