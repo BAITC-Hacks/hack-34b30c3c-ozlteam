@@ -1,8 +1,7 @@
-import { Bell, Bot, CheckSquare, FileText, RefreshCw, X } from "lucide-react";
+import { Bell, CheckSquare, FileText, RefreshCw, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { AssistantPanel } from "../modules/assistant";
 import { listOrders } from "../modules/orders/api/orders";
 import type { SupplierOrder } from "../modules/orders/types";
 import { getRuns } from "../modules/replenishment/api/runs";
@@ -10,7 +9,7 @@ import type { Run } from "../modules/replenishment/runTypes";
 import { DocumentsPanel } from "../modules/rail-documents";
 import styles from "./RightRail.module.css";
 
-type RailSection = "agents" | "notifications" | "documents" | "tasks";
+type RailSection = "notifications" | "documents" | "tasks";
 
 interface RailItem {
   id: RailSection;
@@ -19,7 +18,6 @@ interface RailItem {
 }
 
 const RAIL_ITEMS: RailItem[] = [
-  { id: "agents", label: "ИИ-ассистент", icon: <Bot size={19} strokeWidth={1.8} /> },
   { id: "notifications", label: "События", icon: <Bell size={19} strokeWidth={1.8} /> },
   { id: "documents", label: "Документы", icon: <FileText size={19} strokeWidth={1.8} /> },
   { id: "tasks", label: "Мои задачи", icon: <CheckSquare size={19} strokeWidth={1.8} /> },
@@ -80,7 +78,7 @@ function ActivityPanel({
 
 export function RightRail() {
   const panelId = useId();
-  const [activeSection, setActiveSection] = useState<RailSection>("agents");
+  const [activeSection, setActiveSection] = useState<RailSection>("notifications");
   const [isOpen, setIsOpen] = useState(false);
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
   const [tasksOffset, setTasksOffset] = useState(0);
@@ -148,12 +146,11 @@ export function RightRail() {
   return <div className={styles.rail} ref={root}>
     <aside id={panelId} className={`${styles.panel} ${isOpen ? styles.panelOpen : ""}`} role="dialog" aria-modal="false" aria-label={activeItem.label} aria-hidden={!isOpen}>
       <header className={styles.panelHeader}>
-        <div><h2>{activeItem.label}</h2><p>{activeSection === "agents" ? "Помощь по закупкам" : activeSection === "notifications" ? "Последние расчёты и заказы" : activeSection === "tasks" ? "Черновики на проверку" : "Загруженные файлы"}</p></div>
+        <div><h2>{activeItem.label}</h2><p>{activeSection === "notifications" ? "Последние расчёты и заказы" : activeSection === "tasks" ? "Черновики на проверку" : "Загруженные файлы"}</p></div>
         {(activeSection === "notifications" || activeSection === "tasks") && <button className={styles.closeButton} type="button" aria-label="Обновить данные" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={17} strokeWidth={1.8} /></button>}
         <button className={styles.closeButton} type="button" aria-label="Закрыть панель" onClick={() => setIsOpen(false)}><X size={17} strokeWidth={1.8} /></button>
       </header>
-      <div className={styles.assistantSlot} hidden={activeSection !== "agents"}><AssistantPanel /></div>
-      {activeSection === "agents" ? null : activeSection === "documents" ? <DocumentsPanel /> : <ActivityPanel section={activeSection} orders={orders} runs={runs} loading={loading} error={error} onRefresh={() => setRefresh((value) => value + 1)} onNavigate={() => setIsOpen(false)} hasMoreTasks={hasMoreTasks} loadingMoreTasks={loadingMoreTasks} moreError={moreError} onLoadMoreTasks={() => void loadMoreTasks()} />}
+      {activeSection === "documents" ? <DocumentsPanel /> : <ActivityPanel section={activeSection} orders={orders} runs={runs} loading={loading} error={error} onRefresh={() => setRefresh((value) => value + 1)} onNavigate={() => setIsOpen(false)} hasMoreTasks={hasMoreTasks} loadingMoreTasks={loadingMoreTasks} moreError={moreError} onLoadMoreTasks={() => void loadMoreTasks()} />}
     </aside>
     <nav className={styles.tabs} aria-label="Быстрые разделы">
       {RAIL_ITEMS.map((item) => <button key={item.id} className={styles.tab} type="button" aria-label={item.label} aria-expanded={isOpen && activeSection === item.id} aria-controls={panelId} onClick={() => selectSection(item.id)}>

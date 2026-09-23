@@ -15,6 +15,7 @@ from app.Domains.Replenishment.resources.calculation import (
     RecommendationOut,
 )
 from app.Domains.Replenishment.services.engine import ALGORITHM_VERSION
+from app.Domains.Replenishment.services.explanation import explain_saved
 
 CALCULATE_REPLENISHMENT = "calculate_replenishment"
 CALCULATION_STEPS = ("Фиксирую данные", "Рассчитываю потребность", "Сохраняю рекомендации")
@@ -83,7 +84,9 @@ class ReplenishmentService:
             identifier, limit, offset, supplier_id, urgency
         )
         items = [
-            RecommendationOut.model_validate(row).model_copy(update={"order_id": order_id})
+            RecommendationOut.model_validate(row).model_copy(
+                update={"order_id": order_id, "explanation": explain_saved(row)}
+            )
             for row, order_id in rows
         ]
         groups = defaultdict(list)
@@ -105,7 +108,7 @@ class ReplenishmentService:
             raise DomainError("Рекомендация не найдена", 404, "recommendation_not_found")
         recommendation, order_id = row
         return RecommendationDetailOut.model_validate(recommendation).model_copy(
-            update={"order_id": order_id}
+            update={"order_id": order_id, "explanation": explain_saved(recommendation)}
         )
 
     async def overview(self, warehouse_id: UUID | None, draft_order_count: int):

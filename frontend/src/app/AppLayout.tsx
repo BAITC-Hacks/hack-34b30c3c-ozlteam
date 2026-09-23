@@ -6,6 +6,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { Button, ConfirmModal } from "../shared/ui";
 import { useCurrentUser, useLogout } from "../modules/auth";
 import styles from "./AppLayout.module.css";
+import { FloatingAssistant } from "./FloatingAssistant";
 import { MobileNav } from "./MobileNav";
 
 interface NavItem {
@@ -185,6 +186,8 @@ export function AppLayout() {
       <main className={styles.main}>
         <Outlet />
       </main>
+
+      <FloatingAssistant />
 
       <MobileNav
         primary={MOBILE_PRIMARY}

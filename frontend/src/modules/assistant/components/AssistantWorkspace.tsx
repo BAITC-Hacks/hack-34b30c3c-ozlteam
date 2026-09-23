@@ -94,7 +94,7 @@ export function AssistantWorkspace({ compact = false, decorated = true }: { comp
     </div>
     {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
-      <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
+      <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>
     </form>
     <p className={styles.note}>Enter — отправить, Shift + Enter — новая строка. Действия выполняются только после вашего подтверждения.</p>

@@ -40,6 +40,8 @@
 .compact { gap: var(--sp-3); max-height: 60dvh; overflow-y: auto; padding: var(--sp-3); }
 .compact .messages { max-height: 48dvh; overflow-y: auto; padding: var(--sp-1); }
 .compact .toolbar { align-items: center; }
+.compact .composer { align-items: center; }
+.compact .composer textarea { resize: none; }
 .compact .toolbar a { font-size: var(--fs-cap); }
 .compact .previewFields > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
 .skeleton { display: grid; gap: var(--sp-3); padding: var(--sp-4); background: var(--panel); border-radius: var(--r); min-height: 100px; }
