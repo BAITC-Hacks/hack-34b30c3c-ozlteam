@@ -1,0 +1,73 @@
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-blocks);
+  min-width: 0;
+}
+.stack > button {
+  justify-self: start;
+}
+.hint {
+  margin: 0;
+  color: var(--mut);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+.tableWrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+  margin-top: var(--sp-3);
+}
+.tableWrap td {
+  max-width: var(--side-w);
+  overflow-wrap: anywhere;
+}
+.tableWrap > div {
+  overflow: visible;
+}
+.tableWrap code {
+  font-size: var(--fs-xs);
+}
+.technical {
+  min-width: 0;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+.technical summary {
+  display: list-item;
+  width: fit-content;
+  min-height: var(--touch);
+  padding: var(--sp-3) 0;
+  cursor: pointer;
+  color: var(--ac-ink);
+  border-radius: var(--r-xs);
+}
+.technical > .stack {
+  padding-top: var(--sp-2);
+}
+.tableWrap:focus-visible,
+.technical summary:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+.fieldKey {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--mut);
+}
+.errors {
+  margin: var(--sp-2) 0;
+  padding-left: var(--sp-5);
+  overflow-wrap: anywhere;
+}
+.errors li + li {
+  margin-top: var(--sp-2);
+}
+@media (max-width: 560px) {
+  .stack > button {
+    justify-self: stretch;
+    min-height: var(--touch);
+  }
+}

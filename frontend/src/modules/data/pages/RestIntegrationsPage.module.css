@@ -1,0 +1,163 @@
+.page {
+  display: grid;
+  gap: var(--gap-blocks);
+  min-width: 0;
+}
+.sourceLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  color: var(--mut);
+}
+.sourceLine > svg {
+  flex: none;
+}
+.sourceLine > div {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.sourceLine strong {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.sourceLine span {
+  font-size: var(--fs-xs);
+}
+.sourceLine > button {
+  margin-left: auto;
+  flex: none;
+}
+.editor {
+  width: 100%;
+  max-width: var(--modal-sheet-max);
+  margin-inline: auto;
+  min-width: 0;
+}
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.listHeader h2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+  letter-spacing: var(--ls-h2);
+}
+.reports {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-cards);
+}
+.report {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--pad-card);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background var(--t-hover),
+    transform var(--t-press);
+}
+.report > svg {
+  flex: none;
+  color: var(--mut);
+}
+.reportIcon {
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  flex: none;
+  background: var(--sunken);
+  border-radius: var(--r-s);
+  color: var(--mut);
+}
+.reportCopy {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.reportCopy strong {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+.reportCopy > span,
+.reportCopy small {
+  color: var(--mut);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-body);
+}
+.report:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+.report:active {
+  transform: scale(0.98);
+}
+.empty,
+.modalBody {
+  display: grid;
+  gap: var(--sp-4);
+}
+.empty p {
+  margin: 0;
+  color: var(--mut);
+  max-width: var(--modal-md);
+  line-height: var(--lh-body);
+}
+.empty > button {
+  justify-self: start;
+}
+.footnote {
+  margin: 0;
+  color: var(--mut);
+  font-size: var(--fs-xs);
+}
+@media (hover: hover) and (pointer: fine) {
+  .report:hover {
+    background: var(--sunken);
+    transition-duration: 0s;
+  }
+}
+@media (max-width: 700px) {
+  .reports {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .listHeader {
+    flex-wrap: wrap;
+  }
+  .sourceLine > button,
+  .empty > button {
+    min-height: var(--touch);
+  }
+  .report {
+    padding: var(--sp-4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .report {
+    transition: none;
+  }
+  .report:active {
+    transform: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .report {
+    outline: 1px solid var(--ink);
+  }
+}

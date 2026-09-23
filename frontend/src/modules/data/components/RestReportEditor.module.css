@@ -1,0 +1,132 @@
+.kindChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.legend {
+  margin-bottom: var(--sp-3);
+  color: var(--mut);
+  font-size: var(--fs-xs);
+}
+.kindChoice {
+  display: flex;
+  align-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-s);
+  background: var(--sunken);
+  cursor: pointer;
+  transition: background var(--t-hover);
+}
+.kindChoice:has(input:checked) {
+  background: var(--ac-soft);
+}
+.kindChoice input {
+  flex: none;
+  margin: var(--sp-1) 0 0;
+  accent-color: var(--ac);
+}
+.kindChoice:has(input:focus-visible),
+.advanced > summary:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+}
+.kindChoice:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}
+.kindChoice > span,
+.ready,
+.mapping,
+.mappingLabel {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.kindChoice strong,
+.chosenKind strong,
+.ready strong,
+.mappingLabel strong {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.kindChoice small {
+  color: var(--mut);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-body);
+}
+.chosenKind {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.chosenKind > div {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.advanced {
+  border-top: 1px solid var(--hair);
+}
+.advanced > summary {
+  display: list-item;
+  min-height: var(--touch);
+  padding: var(--sp-3) 0;
+  color: var(--mut);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+.advanced > div {
+  padding-top: var(--sp-3);
+}
+.mappingRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--hair);
+}
+.mappingLabel {
+  gap: var(--sp-1);
+}
+.mappingLabel code {
+  color: var(--mut);
+  font-size: var(--fs-micro);
+  overflow-wrap: anywhere;
+}
+.technical {
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kindChoice:hover:not(:has(input:disabled)) {
+    background: var(--ac-soft);
+    transition-duration: 0s;
+  }
+}
+@media (max-width: 560px) {
+  .kindChoices,
+  .mappingRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mappingRow {
+    gap: var(--sp-2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kindChoice {
+    transition: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .kindChoice {
+    outline: 1px solid var(--ink);
+  }
+}
