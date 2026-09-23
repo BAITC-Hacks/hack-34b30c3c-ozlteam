@@ -27,6 +27,19 @@ PERMISSIONS: dict[str, str] = {
     "users.read": "Просмотр пользователей",
     "users.write": "Создание и изменение пользователей",
     "roles.manage": "Управление ролями и правами",
+    "catalogs.read": "Просмотр справочников",
+    "catalogs.write": "Изменение справочников",
+    "inventory.read": "Просмотр запасов и продаж",
+    "imports.read": "Просмотр загрузок",
+    "imports.write": "Проверка и применение загрузок",
+    "integrations.read": "Просмотр обмена с 1С",
+    "integrations.write": "Обмен данными с 1С",
+    "replenishment.read": "Просмотр рекомендаций",
+    "replenishment.run": "Расчёт пополнения",
+    "orders.read": "Просмотр заказов поставщикам",
+    "orders.write": "Подготовка заказов поставщикам",
+    "orders.approve": "Утверждение заказов поставщикам",
+    "orders.export": "Экспорт заказов поставщикам",
 }
 
 READ_PERMISSIONS: tuple[str, ...] = tuple(code for code in PERMISSIONS if code.endswith(".read"))
@@ -37,6 +50,24 @@ ROLES: dict[str, tuple[str, tuple[str, ...]]] = {
     "manager": ("Руководитель направления", (*READ_PERMISSIONS, "files.write", "jobs.write")),
     "dispatcher": ("Диспетчер", ("files.read", "files.write", "jobs.read")),
     "viewer": ("Наблюдатель", READ_PERMISSIONS),
+    "purchaser": (
+        "Менеджер закупок",
+        (
+            *READ_PERMISSIONS,
+            "files.write",
+            "jobs.write",
+            "imports.write",
+            "catalogs.write",
+            "replenishment.run",
+            "orders.write",
+            "orders.approve",
+            "orders.export",
+        ),
+    ),
+    "integration": (
+        "Обмен с 1С",
+        ("integrations.read", "integrations.write", "orders.read", "orders.export"),
+    ),
 }
 
 ADMIN_ROLE = "admin"

@@ -4,10 +4,57 @@
 междоменный FK — например `jobs.created_by` на `users.id` — падает с NoReferencedTableError.
 """
 
+from app.Domains.Catalogs.models import Category, Product, Supplier, Warehouse
+from app.Domains.DataImports.models import ImportBatch
 from app.Domains.Files.models.file import File
+from app.Domains.Integrations1C.models import ExchangeBatch, IntegrationSource
+from app.Domains.Inventory.models import (
+    GrowthForecast,
+    InboundShipment,
+    InventorySnapshot,
+    Sale,
+    StockoutInterval,
+)
 from app.Domains.Jobs.models.job import Job
 from app.Domains.Notes.models.note import Note
+from app.Domains.Procurement.models import (
+    Order,
+    OrderAllocation,
+    OrderAudit,
+    OrderCreation,
+    OrderDelivery,
+    OrderLine,
+)
+from app.Domains.Replenishment.models.calculation import CalculationRun, Recommendation
 from app.Domains.Security.models.session import AuthSession
 from app.Domains.Users.models import Permission, Role, User
 
-__all__ = ["AuthSession", "File", "Job", "Note", "Permission", "Role", "User"]
+__all__ = [
+    "AuthSession",
+    "File",
+    "Job",
+    "Note",
+    "Permission",
+    "Role",
+    "User",
+    "Category",
+    "Product",
+    "Supplier",
+    "Warehouse",
+    "ImportBatch",
+    "ExchangeBatch",
+    "IntegrationSource",
+    "GrowthForecast",
+    "InboundShipment",
+    "InventorySnapshot",
+    "Sale",
+    "StockoutInterval",
+    "Order",
+    "OrderAllocation",
+    "OrderAudit",
+    "OrderCreation",
+    "OrderDelivery",
+    "OrderLine",
+    "CalculationRun",
+    "Recommendation",
+]

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Table, func
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Table, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -43,7 +43,7 @@ role_permissions = Table(
 class Permission(Base):
     __tablename__ = "permissions"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     code: Mapped[str] = mapped_column(String(100), unique=True)
     name: Mapped[str] = mapped_column(String(200))
 
@@ -51,7 +51,7 @@ class Permission(Base):
 class Role(Base):
     __tablename__ = "roles"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     code: Mapped[str] = mapped_column(String(100), unique=True)
     name: Mapped[str] = mapped_column(String(200))
     permissions: Mapped[list[Permission]] = relationship(
@@ -64,7 +64,7 @@ class Role(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     first_name: Mapped[str] = mapped_column(String(200))
     last_name: Mapped[str | None] = mapped_column(String(200))
     middle_name: Mapped[str | None] = mapped_column(String(200))

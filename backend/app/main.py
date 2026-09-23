@@ -10,12 +10,19 @@ from sqlalchemy.exc import SQLAlchemyError
 import app.models  # noqa: F401 - регистрирует таблицы для междоменных внешних ключей
 from app.core.config import get_settings
 from app.core.database import engine
+from app.core.errors import DomainError
 from app.core.security_middleware import MaxBodySizeMiddleware, SecurityHeadersMiddleware
 from app.Domains.Ai.controllers.http import router as ai_router
+from app.Domains.Catalogs.controllers.http import router as catalogs_router
+from app.Domains.DataImports.controllers.http import router as imports_router
 from app.Domains.Files.controllers.http import router as files_router
+from app.Domains.Integrations1C.controllers.http import router as integrations_router
+from app.Domains.Inventory.controllers.http import router as inventory_router
 from app.Domains.Jobs.controllers.http import router as jobs_router
 from app.Domains.Notes.controllers.http import router as notes_router
 from app.Domains.Notes.services.note_service import NoteNotFound
+from app.Domains.Procurement.controllers.http import router as orders_router
+from app.Domains.Replenishment.controllers.http import router as replenishment_router
 from app.Domains.Security.controllers.http import router as security_router
 
 
@@ -27,7 +34,14 @@ async def lifespan(app: FastAPI):
 
 settings = get_settings()
 
-app = FastAPI(title="Hackalem API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="Электрокомплект — закупки и пополнение склада",
+    version="0.2.0",
+    lifespan=lifespan,
+    description="Объяснимый расчёт пополнения, проверка данных, обмен с 1С и утверждение заказов. "
+    "Защищённые операции используют Bearer-сессию. Данные общие для одной компании; "
+    "права выдаются по действиям. Все новые внутренние идентификаторы — UUIDv7.",
+)
 
 # Порядок важен: ограничение размера отрабатывает раньше всех остальных.
 app.add_middleware(MaxBodySizeMiddleware, max_bytes=settings.max_upload_bytes)
@@ -46,6 +60,19 @@ app.include_router(security_router, prefix="/api/v1")
 app.include_router(files_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(catalogs_router, prefix="/api/v1")
+app.include_router(imports_router, prefix="/api/v1")
+app.include_router(integrations_router, prefix="/api/v1")
+app.include_router(inventory_router, prefix="/api/v1")
+app.include_router(orders_router, prefix="/api/v1")
+app.include_router(replenishment_router, prefix="/api/v1")
+
+
+@app.exception_handler(DomainError)
+async def domain_error(request: Request, exc: DomainError):
+    return JSONResponse(
+        status_code=exc.status_code, content={"detail": exc.detail, "code": exc.code}
+    )
 
 
 @app.exception_handler(RequestValidationError)

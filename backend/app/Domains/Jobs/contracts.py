@@ -17,11 +17,17 @@ JobPayload = dict[str, JsonValue]
 JobResult = dict[str, JsonValue]
 
 PARSE_DOCUMENT = "parse_document"
+CALCULATE_REPLENISHMENT = "calculate_replenishment"
 
 # Visible progress of every job kind. The order is the order the worker completes them in,
 # and the arq task is registered under the same name as the kind.
 JOB_STEPS: dict[str, tuple[str, ...]] = {
     PARSE_DOCUMENT: ("Читаю документ", "Спрашиваю модель", "Собираю ответ"),
+    CALCULATE_REPLENISHMENT: (
+        "Фиксирую данные",
+        "Рассчитываю потребность",
+        "Сохраняю рекомендации",
+    ),
 }
 
 

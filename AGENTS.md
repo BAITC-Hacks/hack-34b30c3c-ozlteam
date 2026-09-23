@@ -2,7 +2,11 @@
 
 Read `CONTEXT.md` first: what the product is, who it serves, what is decided and what is still open.
 The industry changed on 21.09.2026 — the team is now on track 05, Logistics, and the construction
-material in the prototype no longer applies. Cases are not published yet. The shell, roles, mock
+material in the prototype no longer applies. The selected case is now supplier replenishment
+for Электрокомплект (23.09.2026); read `docs/hackathon/tracklogic.md` before domain work.
+It records the supplied case, real workbook schemas, data gaps and 1C/UUIDv7 requirements.
+The old `TrackLogic/hackalem_ai_context.txt` is historical construction brainstorming,
+not current requirements or official hackathon rules. The shell, roles, mock
 data and the assistant prompt are already adapted to logistics; the scaffold, design system and UI
 kit carry over unchanged. Subject-matter background lives in `docs/logistic`, including a registry
 of trade documents and which of them have a legally prescribed form.

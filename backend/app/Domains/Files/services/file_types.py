@@ -25,6 +25,7 @@ class AllowedType:
 
 
 ALLOWED_TYPES: dict[str, AllowedType] = {
+    ".csv": AllowedType(SHEET, frozenset({"text/csv", "application/csv", "text/plain"})),
     ".png": AllowedType(IMAGE, frozenset({"image/png"})),
     ".jpg": AllowedType(IMAGE, frozenset({"image/jpeg"})),
     ".jpeg": AllowedType(IMAGE, frozenset({"image/jpeg"})),

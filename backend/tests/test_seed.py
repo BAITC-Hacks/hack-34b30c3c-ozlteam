@@ -26,7 +26,14 @@ def test_permission_codes_follow_domain_action_convention():
 
 
 def test_role_catalogue_matches_contract():
-    assert set(seed.ROLES) == {"admin", "manager", "dispatcher", "viewer"}
+    assert set(seed.ROLES) == {
+        "admin",
+        "manager",
+        "dispatcher",
+        "viewer",
+        "purchaser",
+        "integration",
+    }
     assert set(seed.ROLES["admin"][1]) == set(seed.PERMISSIONS)
     assert set(seed.ROLES["viewer"][1]) == set(seed.READ_PERMISSIONS)
     assert set(seed.ROLES["manager"][1]) == set(seed.READ_PERMISSIONS) | {
@@ -47,6 +54,19 @@ def test_permission_catalogue_matches_contract():
         "users.read",
         "users.write",
         "roles.manage",
+        "catalogs.read",
+        "catalogs.write",
+        "inventory.read",
+        "imports.read",
+        "imports.write",
+        "integrations.read",
+        "integrations.write",
+        "replenishment.read",
+        "replenishment.run",
+        "orders.read",
+        "orders.write",
+        "orders.approve",
+        "orders.export",
     }
 
 

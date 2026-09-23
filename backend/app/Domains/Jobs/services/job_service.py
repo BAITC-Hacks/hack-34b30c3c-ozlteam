@@ -21,12 +21,10 @@ class JobService:
         self.queue = queue
 
     async def enqueue(self, kind: str, payload: JobPayload, user_id: UUID | None) -> Job:
-        """Record the job with its planned steps and hand it to the worker."""
+        """Persist the outbox inside the caller's transaction; dispatch only after commit."""
         if kind not in JOB_STEPS:
             raise UnknownJobKind(f"Unknown job kind '{kind}'")
-        job = await self.repository.add(kind, self._plan(kind), user_id)
-        await self.queue.enqueue(kind, job.id, payload)
-        return job
+        return await self.repository.add(kind, self._plan(kind), user_id, payload)
 
     async def get(self, job_id: UUID) -> JobOut:
         return JobOut.model_validate(await self._job(job_id))

@@ -35,6 +35,12 @@ class FilesDocumentSource:
             raise DocumentsUnavailable(f"File {file_id} is not readable: {error}") from error
         if file.kind == IMAGE:
             return Document(name=file.filename, text="", images=[data])
+        if file.filename.lower().endswith(".csv"):
+            try:
+                text = data.decode("utf-8-sig")
+            except UnicodeDecodeError as error:
+                raise DocumentsUnavailable("CSV must be encoded as UTF-8") from error
+            return Document(name=file.filename, text=text[: self.max_characters], images=[])
         # Parsing is CPU bound and synchronous; keep it off the worker event loop.
         text = await to_thread(self._extract, file.kind, data)
         return Document(name=file.filename, text=text[: self.max_characters], images=[])

@@ -6,6 +6,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
+from app.core.access import require_permission
+from app.core.errors import ERROR_RESPONSES
 from app.Domains.Files.adapters.previews import PREVIEW_CONTENT_TYPE
 from app.Domains.Files.contracts import (
     EmptyFile,
@@ -21,9 +23,12 @@ from app.Domains.Files.dependencies import get_file_service
 from app.Domains.Files.DTO.file import UploadFile as UploadFileCommand
 from app.Domains.Files.resources.file import FileResource
 from app.Domains.Files.services.file_service import FileService
+from app.Domains.Users.models.user import User
 
-router = APIRouter(prefix="/files", tags=["Files"])
+router = APIRouter(prefix="/files", tags=["Files"], responses=ERROR_RESPONSES)
 Service = Annotated[FileService, Depends(get_file_service)]
+Reader = Annotated[User, Depends(require_permission("files.read"))]
+Writer = Annotated[User, Depends(require_permission("files.write"))]
 
 READ_CHUNK_SIZE = 64 * 1024
 _STATUS_CODES: dict[type[FilesError], int] = {
@@ -48,7 +53,7 @@ async def _chunks(upload: UploadFile) -> AsyncIterator[bytes]:
 
 
 @router.post("", response_model=FileResource, status_code=201)
-async def upload_file(file: UploadFile, service: Service):
+async def upload_file(file: UploadFile, service: Service, user: Writer):
     try:
         return await service.upload(
             UploadFileCommand(
@@ -56,6 +61,7 @@ async def upload_file(file: UploadFile, service: Service):
                 content_type=file.content_type or "",
                 stream=_chunks(file),
                 declared_size=file.size,
+                created_by=user.id,
             )
         )
     except FilesError as error:
@@ -63,15 +69,28 @@ async def upload_file(file: UploadFile, service: Service):
 
 
 @router.get("/{file_id}", response_model=FileResource)
-async def get_file(file_id: UUID, service: Service):
+async def get_file(file_id: UUID, service: Service, user: Reader):
     try:
         return await service.get(file_id)
     except FilesError as error:
         raise _http_error(error) from error
 
 
-@router.get("/{file_id}/content")
-async def get_file_content(file_id: UUID, service: Service):
+@router.get(
+    "/{file_id}/content",
+    response_class=StreamingResponse,
+    summary="Скачать исходный файл",
+    description="Тип содержимого соответствует загруженному файлу. Доступ по files.read.",
+    responses={
+        200: {
+            "content": {
+                "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+            },
+            "headers": {"Content-Disposition": {"schema": {"type": "string"}}},
+        }
+    },
+)
+async def get_file_content(file_id: UUID, service: Service, user: Reader):
     try:
         download = await service.download(file_id)
     except FilesError as error:
@@ -88,8 +107,18 @@ async def get_file_content(file_id: UUID, service: Service):
     )
 
 
-@router.get("/{file_id}/preview")
-async def get_file_preview(file_id: UUID, service: Service):
+@router.get(
+    "/{file_id}/preview",
+    response_class=Response,
+    summary="Предпросмотр файла",
+    responses={
+        200: {
+            "content": {PREVIEW_CONTENT_TYPE: {"schema": {"type": "string", "format": "binary"}}}
+        },
+        422: {"description": "Предпросмотр для этого формата недоступен"},
+    },
+)
+async def get_file_preview(file_id: UUID, service: Service, user: Reader):
     try:
         preview = await service.preview(file_id)
     except FilesError as error:

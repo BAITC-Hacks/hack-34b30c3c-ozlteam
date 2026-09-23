@@ -45,8 +45,8 @@ class FileService:
         if upload.declared_size is not None and upload.declared_size > self.max_upload_bytes:
             raise FileTooLarge(f"Upload exceeds {self.max_upload_bytes} bytes")
 
-        file_id = uuid4()
-        storage_key = f"{file_id}/{storage_name(upload.filename)}"
+        # The object-store key is independent from the database's UUIDv7 identity.
+        storage_key = f"{uuid4()}/{storage_name(upload.filename)}"
         digest = sha256()
         # Images are the only kind we must decode, so only they are buffered in memory,
         # and the buffer can never outgrow the upload limit enforced below.
@@ -76,7 +76,6 @@ class FileService:
 
         file = await self.repository.add(
             File(
-                id=file_id,
                 filename=display_name(upload.filename),
                 content_type=normalize_content_type(upload.content_type),
                 size_bytes=size_bytes,

@@ -17,7 +17,7 @@ from app.Domains.Jobs.dependencies import open_document_source, open_job_service
 logger = structlog.get_logger(__name__)
 
 SYSTEM_PROMPT = (
-    "Ты ассистент строительной компании. Отвечай по-русски, только по содержимому документа. "
+    "Ты ассистент отдела закупок. Отвечай по-русски, только по содержимому документа. "
     "Если в документе нет ответа, так и скажи вместо догадки."
 )
 # The job row is committed by the request that queued it, which can land just after the

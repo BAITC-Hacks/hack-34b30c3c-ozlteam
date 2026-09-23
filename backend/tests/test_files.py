@@ -20,6 +20,8 @@ from app.Domains.Files.dependencies import get_file_service, get_file_storage
 from app.Domains.Files.DTO.file import UploadFile
 from app.Domains.Files.models.file import File
 from app.Domains.Files.services.file_service import FileService
+from app.Domains.Security.dependencies import get_current_user
+from app.Domains.Users.models.user import Permission, User
 
 DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 DEFAULT_LIMIT = 25 * 1024 * 1024
@@ -30,6 +32,7 @@ class MemoryFileRepository:
         self.files: dict[UUID, File] = {}
 
     async def add(self, file: File) -> File:
+        file.id = file.id or uuid4()
         self.files[file.id] = file
         return file
 
@@ -49,6 +52,12 @@ def png_bytes(size: tuple[int, int] = (8, 8), color: tuple[int, int, int] = (200
 def build_app(service: FileService) -> FastAPI:
     api = FastAPI()
     api.include_router(router, prefix="/api/v1")
+    api.dependency_overrides[get_current_user] = lambda: User(
+        id=uuid4(),
+        first_name="Тест",
+        roles=[],
+        permissions=[Permission(code=code, name=code) for code in ("files.read", "files.write")],
+    )
     api.dependency_overrides[get_file_service] = lambda: service
     return api
 
@@ -93,7 +102,8 @@ async def test_upload_png_returns_resource_and_stores_content(tmp_path):
 
         stored = repository.files[UUID(body["id"])]
         # The client supplied name never reaches the filesystem verbatim.
-        assert stored.storage_key == f"{body['id']}/1.png"
+        assert stored.storage_key.endswith("/1.png")
+        UUID(stored.storage_key.split("/")[0])
         assert len(stored.sha256) == 64
         assert stored_files(tmp_path)[0].read_bytes() == content
 
@@ -113,7 +123,8 @@ async def test_upload_strips_client_supplied_path(tmp_path):
         assert response.status_code == 201, response.text
         stored = repository.files[UUID(response.json()["id"])]
         assert response.json()["filename"] == "passwd.png"
-        assert stored.storage_key == f"{response.json()['id']}/passwd.png"
+        assert stored.storage_key.endswith("/passwd.png")
+        UUID(stored.storage_key.split("/")[0])
         assert stored_files(tmp_path)[0].parent.parent == tmp_path
 
 
@@ -235,6 +246,19 @@ async def test_upload_persists_to_the_database(tmp_path):
 
             api = FastAPI()
             api.include_router(router, prefix="/api/v1")
+            async with sessions() as session, session.begin():
+                actor = User(first_name="Тест", roles=[], permissions=[])
+                session.add(actor)
+                await session.flush()
+                actor_id = actor.id
+            api.dependency_overrides[get_current_user] = lambda: User(
+                id=actor_id,
+                first_name="Тест",
+                roles=[],
+                permissions=[
+                    Permission(code=code, name=code) for code in ("files.read", "files.write")
+                ],
+            )
             api.dependency_overrides[get_session] = session_dependency
             api.dependency_overrides[get_file_storage] = lambda: LocalFileStorage(tmp_path)
             try:
@@ -261,7 +285,8 @@ async def test_upload_persists_to_the_database(tmp_path):
                         assert row.content_type == "image/png"
                         assert row.size_bytes == len(content)
                         assert row.kind == "image"
-                        assert row.storage_key == f"{file_id}/file.png"
+                        assert row.storage_key.endswith("/file.png")
+                        assert UUID(file_id).version == 7
                     assert (await client.get(f"/api/v1/files/{file_id}")).status_code == 200
                     preview = await client.get(f"/api/v1/files/{file_id}/preview")
                     assert preview.status_code == 200, preview.text

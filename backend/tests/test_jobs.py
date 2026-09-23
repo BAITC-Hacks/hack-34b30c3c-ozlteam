@@ -18,6 +18,8 @@ from app.Domains.Jobs.dependencies import get_job_service, get_job_stream
 from app.Domains.Jobs.models.job import Job
 from app.Domains.Jobs.services.job_service import JobService
 from app.Domains.Jobs.services.job_stream import JobStream
+from app.Domains.Security.dependencies import get_current_user
+from app.Domains.Users.models.user import Permission, User
 
 PAYLOAD = {"file_id": str(uuid4()), "prompt": "Что по срокам?"}
 READ, ASK, COLLECT = JOB_STEPS[PARSE_DOCUMENT]
@@ -27,7 +29,7 @@ class MemoryJobRepository:
     def __init__(self):
         self.jobs: dict[UUID, Job] = {}
 
-    async def add(self, kind, steps, user_id):
+    async def add(self, kind, steps, user_id, payload):
         now = datetime.now(UTC)
         job = Job(
             id=uuid4(),
@@ -39,6 +41,7 @@ class MemoryJobRepository:
             created_at=now,
             updated_at=now,
             created_by=user_id,
+            payload=payload,
         )
         self.jobs[job.id] = job
         return job
@@ -89,6 +92,12 @@ def service(queue):
 async def client(service):
     app = FastAPI()
     app.include_router(router, prefix="/api/v1")
+    app.dependency_overrides[get_current_user] = lambda: User(
+        id=uuid4(),
+        first_name="Тест",
+        roles=[],
+        permissions=[Permission(code="jobs.read", name="Чтение")],
+    )
     app.dependency_overrides[get_job_service] = lambda: service
     app.dependency_overrides[get_job_stream] = lambda: JobStream(
         open_service(service), poll_interval=0.0
@@ -97,14 +106,15 @@ async def client(service):
         yield client
 
 
-async def test_enqueue_records_pending_steps_and_queues_the_task(service, queue):
+async def test_enqueue_records_durable_payload_without_publishing_before_commit(service, queue):
     user_id = uuid4()
     job = await service.enqueue(PARSE_DOCUMENT, PAYLOAD, user_id)
 
     assert job.status == "queued"
     assert job.created_by == user_id
     assert job.steps == [{"name": name, "state": "pending"} for name in JOB_STEPS[PARSE_DOCUMENT]]
-    assert queue.queued == [(PARSE_DOCUMENT, job.id, PAYLOAD)]
+    assert queue.queued == []
+    assert job.payload == PAYLOAD
 
 
 async def test_unknown_kind_is_neither_stored_nor_queued(service, queue):
