@@ -14,6 +14,11 @@ import styles from "./Workspace.module.css";
 import hero from "../pages/AssistantPage.module.css";
 
 const contextLabels: Record<ContextKey, string> = { warehouse_id: "Склад", run_id: "Расчёт", recommendation_id: "Рекомендация", order_id: "Заказ", package_id: "Пакет" };
+function toolSummary(name: string, summary: string) {
+  return name === "search_help" && summary === "Найдено разделов справки: 0"
+    ? "Подходящие разделы справки не найдены."
+    : summary;
+}
 const uuid = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 function incomingContext(pathname: string, search: string): AssistantContext {
   const params = new URLSearchParams(search);
@@ -27,6 +32,7 @@ function Loading({ label }: { label: string }) { return <div className={styles.s
 export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: boolean; onOpenFull?: () => void }) {
   const [offset, setOffset] = useState(0);
   const [dismissedHistoryErrorAt, setDismissedHistoryErrorAt] = useState(0);
+  const [dismissedError, setDismissedError] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const modalId = useId();
@@ -47,12 +53,14 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
   }, [workspace.userId, location.pathname, location.search, state.busy]);
   const latestMessageId = conversation.data?.messages.at(-1)?.id;
   const pending = state.pendingMessage?.conversationId === state.activeId ? state.pendingMessage : null;
-  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id]);
+  useEffect(() => { if (latestMessageId || pending) tail.current?.scrollIntoView({ block: "nearest", behavior: "auto" }); }, [latestMessageId, pending?.id, pending?.error]);
   const chat = conversation.data;
   const assistant = assistants.data?.find((item) => item.id === state.assistantId);
-  const initialLoading = !!state.activeId && conversation.isPending;
+  const initialLoading = !!state.activeId && conversation.isPending && !pending;
   const empty = !initialLoading && !chat?.messages.length && !pending;
   const historyErrorVisible = conversations.isError && conversations.errorUpdatedAt !== dismissedHistoryErrorAt;
+  useEffect(() => { if (!state.error) setDismissedError(""); }, [state.error]);
+  const resultErrorVisible = !!state.error && !pending?.error && state.error !== dismissedError;
   async function send(text: string) {
     await workspace.send(text);
   }
@@ -85,11 +93,11 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
         <Link className={styles.iconActionButton} to="/assistant" onClick={onOpenFull} title="Открыть помощника" aria-label="Открыть помощника"><Maximize2 size={17} strokeWidth={1.8} /></Link>
       </span> : null}
     </div>
-    <div className={styles.contextBar}>
-      <span>{state.allowData ? "Учётные сводки разрешены" : "Без учётных сводок"}</span>
+    {state.allowData || Object.keys(state.context).length || state.assistantId !== "auto" ? <div className={styles.contextBar}>
+      {state.allowData ? <span>Учётные сводки разрешены</span> : null}
       {Object.keys(state.context).map((key) => <button type="button" key={key} onClick={() => setContextOpen(true)}>{contextName(key as ContextKey)}</button>)}
       {state.assistantId !== "auto" ? <button type="button" onClick={() => setContextOpen(true)}>{assistant?.title ?? "Выбрана тема"}</button> : null}
-    </div>
+    </div> : null}
     <Modal id={`${modalId}-history`} title="История диалогов" open={historyOpen} onOpenChange={setHistoryOpen} bodyScroll size="sm">
     {conversations.isPending ? <Loading label="Загружаем диалоги" /> : null}
     <div className={styles.historyList}>
@@ -123,20 +131,20 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
     </aside>
     <section className={styles.chat} aria-label="Чат помощника">
     <div className={`${styles.messages} ${empty && !compact ? styles.emptyMessages : ""}`} role="log" aria-label="История диалога" aria-busy={initialLoading}>
-      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
+      {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError && !pending ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
         {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
-          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{toolLabel(tool.name)}</b> · {toolStatusLabel(tool.status)}<p>{tool.status === "error" ? "Не удалось выполнить действие. Уточните запрос или повторите попытку." : tool.summary}</p></li>)}</ul></details> : null}
+          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{toolLabel(tool.name)}</b> · {toolStatusLabel(tool.status)}<p>{tool.status === "error" ? "Не удалось выполнить действие. Уточните запрос или повторите попытку." : toolSummary(tool.name, tool.summary)}</p></li>)}</ul></details> : null}
           {message.sources.length ? <div className={styles.sources}><b>Источники</b>{message.sources.map((source, index) => { const url = safeSourceUrl(source.url); return url ? <Link key={index} to={url}>{source.title}</Link> : <span key={index}>{source.title} (ссылка недоступна)</span>; })}</div> : null}
         </article>)}
       </>}
       {chat?.proposals.map((proposal) => <ProposalCard key={proposal.id} proposal={proposal} busy={state.busy} onDecision={(item, decision) => void workspace.decide(item, decision)} />)}
       {pending && !chat?.messages.some((message) => message.id === pending.existingMessageId) ? <article className={styles.mine} aria-label="Отправленный вопрос"><small>Вы</small><p>{pending.content}</p></article> : null}
+      {pending?.error ? <article className={`${styles.theirs} ${styles.failedAnswer}`} role="alert"><small>Помощник · запрос не выполнен</small><p>Не удалось ответить: {pending.error}</p><Button variant="ghost" size="sm" disabled={state.busy} onClick={() => void workspace.send(state.retry ? "" : pending.content, !!state.retry)}>Повторить вопрос</Button></article> : null}
       {state.busy ? <p className={styles.note} role="status">{pending ? "Помощник готовит ответ…" : "Запрос выполняется. Результат ещё не подтверждён сервером."}</p> : null}
       <div ref={tail} />
     </div>
-    {historyErrorVisible ? <Alert className={styles.historyNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.retryHistory} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : null}
-    {state.error ? <Alert tone="danger" title="Не удалось получить результат" action={state.retry ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.send("", true)}>Повторить тот же вопрос</Button> : <Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{state.error}{state.retry ? <p>Вопрос сохранён для повтора: {state.retry.input.content}</p> : null}</Alert> : null}
+    {historyErrorVisible ? <Alert className={styles.statusNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.noticeAction} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : resultErrorVisible ? <Alert className={styles.statusNotice} tone="danger" onDismiss={() => setDismissedError(state.error)} dismissLabel="Закрыть сообщение об ошибке диалога">Не удалось получить результат: {state.error} <button className={styles.noticeAction} type="button" disabled={state.busy} onClick={() => { if (state.retry) void workspace.send("", true); else void conversation.refetch(); }}>{state.retry ? "Повторить вопрос" : "Обновить диалог"}</button></Alert> : null}
     {state.allowData ? <div className={styles.dataAccess}>
       <span>Доступ к данным разрешён для этого диалога</span>
       <Button variant="ghost" size="sm" disabled={state.busy} onClick={() => setDataAccess(false)}>Отозвать доступ</Button>

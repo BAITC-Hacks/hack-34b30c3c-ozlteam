@@ -10,7 +10,7 @@ interface WorkspaceState {
   busy: boolean; error: string; retry: { id: string; input: SendInput } | null;
   drafts: Drafts;
   freshAnswer: { id: string; receivedAt: number } | null;
-  pendingMessage: { id: string; conversationId: string; content: string; existingMessageId?: string } | null;
+  pendingMessage: { id: string; conversationId: string; content: string; existingMessageId?: string; error?: string } | null;
 }
 function initialState(userId: string): WorkspaceState {
   let activeId = "";
@@ -46,7 +46,7 @@ export function useWorkspace(offset = 0) {
   const conversation = useQuery({ queryKey: conversationKey(state.activeId), queryFn: ({ signal }) => getConversation(state.activeId, signal), enabled: !!userId && !!state.activeId, retry: false, refetchOnWindowFocus: false });
   function select(id: string) {
     if (state.busy) return;
-    update({ activeId: id, error: "", retry: null, allowData: false, freshAnswer: null });
+    update({ activeId: id, error: "", retry: null, allowData: false, freshAnswer: null, pendingMessage: null });
     try { sessionStorage.setItem(`assistant.active.${userId}`, id); } catch { /* Optional navigation persistence. */ }
   }
   function save(result: Conversation) {
@@ -55,7 +55,7 @@ export function useWorkspace(offset = 0) {
   }
   async function newConversation() {
     if (!userId || client.getQueryData<WorkspaceState>(key)?.busy) return;
-    update({ busy: true, error: "" });
+    update({ busy: true, error: "", pendingMessage: null });
     try {
       const added = await createConversation();
       update({ activeId: added.id, retry: null, context: {}, allowData: false, freshAnswer: null });
@@ -105,7 +105,7 @@ export function useWorkspace(offset = 0) {
     } catch (error) {
       update((current) => ({
         error: errorMessage(error),
-        pendingMessage: null,
+        pendingMessage: current.pendingMessage ? { ...current.pendingMessage, error: errorMessage(error) } : null,
         drafts: restoreFailedDraft(current.drafts, draftId, submittedText),
       }));
       if (attempt) void client.invalidateQueries({ queryKey: conversationKey(attempt.id) });

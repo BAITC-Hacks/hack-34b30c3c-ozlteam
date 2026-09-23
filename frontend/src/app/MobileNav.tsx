@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { NovaOrb } from "../modules/assistant";
+import { LanguageSwitcher } from "../shared/i18n/LanguageSwitcher";
+import { useI18n } from "../shared/i18n/I18nContext";
 
 import { Button } from "../shared/ui";
 import styles from "./MobileNav.module.css";
@@ -36,6 +38,7 @@ export function MobileNav({
   onLogout,
   loggingOut,
 }: Props) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const sheet = useRef<HTMLDivElement>(null);
@@ -78,12 +81,12 @@ export function MobileNav({
         data-open={open ? "" : undefined}
         role="dialog"
         aria-modal="true"
-        aria-label="Ещё разделы"
+        aria-label={t("Ещё разделы", "Қосымша бөлімдер", "More sections")}
         aria-hidden={open ? undefined : "true"}
         ref={sheet}
       >
         <div className={styles.grab} aria-hidden="true" />
-        <nav className={styles.sheetNav} aria-label="Остальные разделы">
+        <nav className={styles.sheetNav} aria-label={t("Остальные разделы", "Басқа бөлімдер", "Other sections")}>
           {availableRest.map((item) => (
             <NavLink
               key={item.to}
@@ -98,7 +101,7 @@ export function MobileNav({
               <span>{item.label}</span>
             </NavLink>
           ))}
-          {disabledRest.length > 0 ? <div className={styles.disabledGroup}>Недоступно</div> : null}
+          {disabledRest.length > 0 ? <div className={styles.disabledGroup}>{t("Недоступно", "Қолжетімсіз", "Unavailable")}</div> : null}
           {disabledRest.map((item) => (
             <span
               key={item.to}
@@ -111,6 +114,8 @@ export function MobileNav({
             </span>
           ))}
         </nav>
+
+        <LanguageSwitcher className={styles.language} />
 
         <div className={styles.me}>
           <span className={styles.avatar} aria-hidden="true">
@@ -128,12 +133,12 @@ export function MobileNav({
             onClick={onLogout}
             tabIndex={open ? undefined : -1}
           >
-            Выйти
+            {t("Выйти", "Шығу", "Sign out")}
           </Button>
         </div>
       </div>
 
-      <nav className={styles.bar} aria-label="Основные разделы">
+      <nav className={styles.bar} aria-label={t("Основные разделы", "Негізгі бөлімдер", "Main sections")}>
         {primary.slice(0, 2).map((item) => (
           <NavLink
             key={item.to}
@@ -152,12 +157,12 @@ export function MobileNav({
           className={({ isActive }) =>
             isActive ? `${styles.cell} ${styles.assistantCell} ${styles.activeAssistantCell}` : `${styles.cell} ${styles.assistantCell}`
           }
-          aria-label="Помощник по закупкам"
+          aria-label={t("Помощник по закупкам", "Сатып алу көмекшісі", "Procurement assistant")}
         >
           {location.pathname.replace(/\/$/, "") === "/assistant" ? <Sparkles size={20} aria-hidden="true" /> : <span className={styles.assistantOrb} aria-hidden="true">
             <NovaOrb variant="mini" size={64} />
           </span>}
-          <span className={styles.assistantLabel}>Помощник</span>
+          <span className={styles.assistantLabel}>{t("Помощник", "Көмекші", "Assistant")}</span>
         </NavLink>
         {primary.slice(2).map((item) => (
           <NavLink
@@ -179,7 +184,7 @@ export function MobileNav({
           onClick={() => setOpen((value) => !value)}
         >
           {open ? <X size={20} strokeWidth={1.8} /> : <Menu size={20} strokeWidth={1.8} />}
-          <span>Ещё</span>
+          <span>{t("Ещё", "Тағы", "More")}</span>
         </button>
       </nav>
     </>

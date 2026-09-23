@@ -3,10 +3,11 @@
 .chat { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; min-height: 0; padding-bottom: 120px; }
 .workspace:not(.compact) .chat > .composer { position: absolute; z-index: 1; bottom: 30px; left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
 .workspace:not(.compact) .chat > .note { position: absolute; bottom: 0; left: 50%; width: min(760px, 100%); margin: 0; transform: translateX(-50%); text-align: center; }
-.workspace:not(.compact) .chat:has(> .historyNotice) { padding-bottom: 180px; }
-.historyNotice { padding: var(--sp-2) var(--sp-3); align-items: center; background: color-mix(in srgb, var(--wr-soft) 55%, var(--panel)); box-shadow: var(--sh-1); }
-.retryHistory { border: 0; padding: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; cursor: pointer; }
-.workspace:not(.compact) .chat > .historyNotice { position: absolute; z-index: 1; bottom: calc(30px + var(--touch) + var(--sp-6) + var(--sp-2)); left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
+.workspace:not(.compact) .chat:has(> .statusNotice) { padding-bottom: 180px; }
+.statusNotice { padding: var(--sp-2) var(--sp-3); align-items: center; background: color-mix(in srgb, var(--alert-soft) 55%, var(--panel)); box-shadow: var(--sh-1); }
+.noticeAction { border: 0; padding: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.noticeAction:disabled { opacity: .5; cursor: not-allowed; }
+.workspace:not(.compact) .chat > .statusNotice { position: absolute; z-index: 1; bottom: calc(30px + var(--touch) + var(--sp-6) + var(--sp-2)); left: 50%; width: min(760px, 100%); transform: translateX(-50%); }
 .toolbar { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .chatTitle { min-width: 0; max-width: 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--mut); }
 .contextBar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); color: var(--mut); font-size: var(--fs-cap); }
@@ -22,7 +23,8 @@
 .toolbar a, .sources a, .result a, .note a { color: var(--ac-ink); }
 .scope { padding: var(--sp-4); background: var(--panel); border-radius: var(--r); box-shadow: var(--sh-1); }
 .scope summary { cursor: pointer; font-weight: 600; }
-.controls { display: grid; gap: var(--sp-3); margin-top: var(--sp-3); }
+.controls { display: grid; gap: var(--sp-3); }
+.controls > .note:first-child { margin-top: 0; }
 .contextItem { display: flex; gap: var(--sp-2); align-items: center; justify-content: space-between; font-size: var(--fs-cap); }
 .contextItem span { overflow-wrap: anywhere; user-select: text; }
 .contextItem button, .note button { color: var(--ac-ink); background: none; border: 0; cursor: pointer; font: inherit; }
@@ -30,15 +32,26 @@
 .permission input { flex: none; margin-top: var(--sp-1); }
 .messages { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: var(--sp-4); min-width: 0; min-height: 0; flex: 1 1 auto; overflow-y: auto; }
 .emptyMessages { overflow: visible; }
+.chat:has(> .statusNotice) .emptyMessages { overflow-y: auto; padding-bottom: var(--sp-3); }
 .workspace:not(.compact) .messages { width: min(760px, 100%); align-self: center; }
 .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }
 .workspace:not(.compact) .emptyMessages > div > :first-child { transform: none; }
-.mine, .theirs { min-width: 0; max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
+.mine, .theirs { min-width: min(220px, 70%); max-width: 92%; padding: var(--sp-4); border-radius: var(--r); white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--fs-body); line-height: var(--lh-body); user-select: text; }
 .mine { justify-self: end; background: var(--ac-soft); color: var(--ink); }
 .theirs { justify-self: start; background: var(--panel); box-shadow: var(--sh-1); }
+.failedAnswer { background: color-mix(in srgb, var(--er-soft) 55%, var(--panel)); }
+.failedAnswer button { margin-top: var(--sp-3); }
 .mine p, .theirs p { margin: var(--sp-2) 0 0; }
 .mine small, .theirs small { color: var(--mut); }
+.failedAnswer small { color: var(--er-ink); }
 .theirs details { margin-top: var(--sp-3); font-size: var(--fs-sm); }
+.theirs details summary { width: fit-content; padding: var(--sp-1) var(--sp-2); border-radius: var(--r-xs); cursor: pointer; user-select: none; transition: background-color var(--t-hover), transform var(--t-press); }
+.theirs details[open] summary { margin-bottom: var(--sp-4); }
+.theirs details ul { display: grid; gap: var(--sp-3); margin: 0; padding-left: var(--sp-5); }
+.theirs details li p { margin: var(--sp-3) 0 0; }
+.theirs details summary:active { transform: scale(.98); }
+@media (hover: hover) and (pointer: fine) { .theirs details summary:hover { background: var(--sunken); } }
+@media (prefers-reduced-motion: reduce) { .theirs details summary { transition: none; } }
 .sources, .result { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); font-size: var(--fs-sm); }
 .previewFields { display: grid; gap: var(--sp-2); margin: var(--sp-2) 0; overflow-wrap: anywhere; font-size: var(--fs-sm); }
 .previewFields > div { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: var(--sp-3); }
@@ -89,9 +102,9 @@
   .workspace:not(.compact) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: var(--sp-3); }
   .workspace:not(.compact) .sidebar { max-height: 36dvh; }
   .workspace:not(.compact) .chat { padding-bottom: 80px; }
-  .workspace:not(.compact) .chat:has(> .historyNotice) { padding-bottom: 140px; }
+  .workspace:not(.compact) .chat:has(> .statusNotice) { padding-bottom: 140px; }
   .workspace:not(.compact) .chat > .composer { bottom: 0; }
-  .workspace:not(.compact) .chat > .historyNotice { bottom: calc(var(--touch) + var(--sp-6) + var(--sp-3)); }
+  .workspace:not(.compact) .chat > .statusNotice { bottom: calc(var(--touch) + var(--sp-6) + var(--sp-3)); }
   .workspace:not(.compact) .chat > .note { display: none; }
   .workspace:not(.compact) .emptyMessages { overflow-y: auto; }
   .workspace:not(.compact) .emptyMessages > div > :not(:first-child) { transform: none; }

@@ -421,12 +421,7 @@ class AgentEngine:
                     ],
                 )
             except (LlmRequestFailed, LlmUnavailable):
-                if not observations:
-                    raise
-                answer = (
-                    "Данные проверены, но модель сейчас недоступна для пояснения. "
-                    "Повторите запрос. Изменений не выполнено."
-                )
+                raise
         return self._result(answer[:12000], selected, calls, sources, proposal)
 
     @staticmethod

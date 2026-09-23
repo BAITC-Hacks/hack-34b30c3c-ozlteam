@@ -276,7 +276,7 @@ function OrderDetail({ id, onBack, onOpen }: { id: string; onBack: () => void; o
       {error ? <Alert tone="danger" title="Действие не выполнено" action={<Button size="sm" variant="secondary" onClick={() => setReload((value) => value + 1)}>Обновить заказ</Button>}>{error}</Alert> : null}
       {notice ? <Alert tone="success" onDismiss={() => setNotice(null)}>{notice}</Alert> : null}
       <Card title={order.supplier_name} subtitle={`Создан ${dateTime(order.created_at)} · версия ${order.version}`} actions={<Badge tone={order.status === "approved" ? "success" : "warning"}>{order.status === "approved" ? "Утверждён" : "Черновик"}</Badge>}>
-        <div className={styles.summary}><span>Склад <b className={styles.identifier}>{warehouseNames.get(order.warehouse_id) ?? order.warehouse_id}</b></span><span>Позиций <b>{order.lines.length}</b></span>{order.approved_at ? <span>Утверждён <b>{dateTime(order.approved_at)}</b></span> : null}</div>
+        <div className={styles.summary}><span>Склад <b className={styles.identifier}>{warehouseNames.get(order.warehouse_id) ?? order.external_references.warehouse.name}</b></span><span>Позиций <b>{order.lines.length}</b></span>{order.approved_at ? <span>Утверждён <b>{dateTime(order.approved_at)}</b></span> : null}</div>
         {order.supersedes_order_id ? <p className={styles.comment}>Предыдущая редакция: <button type="button" className={styles.textButton} onClick={() => onOpen(order.supersedes_order_id!)}>Открыть</button></p> : null}
         {typeof successorId === "string" ? <p className={styles.comment}>Есть новая редакция: <button type="button" className={styles.textButton} onClick={() => onOpen(successorId)}>Открыть</button></p> : null}
         {commentEditing ? <div className={styles.commentForm}>

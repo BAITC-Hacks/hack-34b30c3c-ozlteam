@@ -4,6 +4,7 @@ import { RouterProvider } from "react-router-dom";
 
 import { CURRENT_USER_KEY } from "../modules/auth";
 import { onUnauthorized } from "../shared/api/client";
+import { I18nProvider } from "../shared/i18n/I18nContext";
 import { PwaUpdate } from "../shared/pwa/PwaUpdate";
 import { ModalProvider } from "../shared/ui";
 import { router } from "./routes";
@@ -39,11 +40,13 @@ export function App() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ModalProvider>
-        <RouterProvider router={router} />
-        <PwaUpdate />
-      </ModalProvider>
-    </QueryClientProvider>
+    <I18nProvider>
+      <QueryClientProvider client={queryClient}>
+        <ModalProvider>
+          <RouterProvider router={router} />
+          <PwaUpdate />
+        </ModalProvider>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }

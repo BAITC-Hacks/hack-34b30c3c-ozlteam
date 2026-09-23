@@ -3,17 +3,19 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { AssistantPanel, NovaOrb } from "../modules/assistant";
+import { useI18n } from "../shared/i18n/I18nContext";
 import styles from "./FloatingAssistant.module.css";
 
-const NUDGE_MESSAGES = [
-  "Нужна помощь с расчётом?",
-  "Подсказать, что проверить в заказе?",
-  "Есть вопрос по остаткам?",
-];
 const NUDGE_DISMISSED_KEY = "assistant-nudge-dismissed";
 
 /** Desktop entry point for the same assistant panel formerly opened from the header. */
 export function FloatingAssistant() {
+  const { t } = useI18n();
+  const nudgeMessages = [
+    t("Нужна помощь с расчётом?", "Есептеуге көмек керек пе?", "Need help with a calculation?"),
+    t("Подсказать, что проверить в заказе?", "Тапсырыста нені тексеру керегін айтайын ба?", "Want to know what to check in an order?"),
+    t("Есть вопрос по остаткам?", "Қалдықтар туралы сұрағыңыз бар ма?", "Have a question about stock?"),
+  ];
   const panelId = useId();
   const { pathname } = useLocation();
   const onAssistantPage = pathname.replace(/\/$/, "") === "/assistant";
@@ -36,7 +38,7 @@ export function FloatingAssistant() {
     let nextIndex = 0;
     const showNext = () => {
       setNudgeIndex(nextIndex);
-      nextIndex = (nextIndex + 1) % NUDGE_MESSAGES.length;
+      nextIndex = (nextIndex + 1) % nudgeMessages.length;
     };
     const first = window.setTimeout(showNext, 9000);
     const interval = window.setInterval(showNext, 42000);
@@ -95,23 +97,23 @@ export function FloatingAssistant() {
   return (
     <div className={styles.root} ref={root}>
       <div className={styles.nudge} data-visible={nudgeIndex >= 0 && !isOpen && pathname !== "/assistant" ? "" : undefined} aria-hidden={nudgeIndex < 0 || isOpen || pathname === "/assistant"}>
-        {NUDGE_MESSAGES[Math.max(0, nudgeIndex)]}
+        {nudgeMessages[Math.max(0, nudgeIndex)]}
       </div>
       <aside
         id={panelId}
         className={`${styles.panel} ${isOpen ? styles.panelOpen : ""}`}
         role="dialog"
-        aria-label="ИИ Помощник"
+        aria-label={t("ИИ Помощник", "ЖИ көмекшісі", "AI assistant")}
         aria-modal="false"
         aria-hidden={!isOpen}
         inert={!isOpen}
       >
         <header className={styles.header}>
           <div>
-            <h2>ИИ Помощник</h2>
-            <p>Помощь по закупкам</p>
+            <h2>{t("ИИ Помощник", "ЖИ көмекшісі", "AI assistant")}</h2>
+            <p>{t("Помощь по закупкам", "Сатып алу бойынша көмек", "Procurement help")}</p>
           </div>
-          <button type="button" className={styles.close} aria-label="Закрыть помощника" onClick={() => { setIsOpen(false); trigger.current?.focus(); }}>
+          <button type="button" className={styles.close} aria-label={t("Закрыть помощника", "Көмекшіні жабу", "Close assistant")} onClick={() => { setIsOpen(false); trigger.current?.focus(); }}>
             <X size={18} strokeWidth={1.8} />
           </button>
         </header>
@@ -122,7 +124,7 @@ export function FloatingAssistant() {
         ref={trigger}
         type="button"
         className={styles.trigger}
-        aria-label={isOpen ? "Закрыть ИИ-помощника" : "Открыть ИИ-помощника"}
+        aria-label={isOpen ? t("Закрыть ИИ-помощника", "ЖИ көмекшісін жабу", "Close AI assistant") : t("Открыть ИИ-помощника", "ЖИ көмекшісін ашу", "Open AI assistant")}
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => { dismissNudge(); setIsOpen((current) => !current); }}
