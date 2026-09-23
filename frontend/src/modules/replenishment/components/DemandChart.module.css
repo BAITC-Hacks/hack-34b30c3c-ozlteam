@@ -1,0 +1,32 @@
+.chart { min-width: 0; margin-top: var(--sp-3); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); min-height: var(--sp-6); color: var(--mut); font-size: var(--fs-xs); }
+.legend span { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.legend i { display: inline-block; width: var(--sp-4); height: 0; border-top: 3px solid; border-radius: var(--r-xs); }
+.legend .rawKey { color: var(--ac); border-top-style: dashed; }
+.forecastKey { color: var(--ac); }
+.correctedKey { color: var(--ok); }
+.stockoutKey { color: var(--wr); }
+.plot { position: relative; margin-top: var(--sp-2); border-radius: var(--r-xs); outline: none; }
+.plot:focus-visible { outline: 2px solid var(--ac); outline-offset: var(--sp-1); }
+.plot svg { display: block; width: 100%; height: var(--chart-height); overflow: visible; }
+.axis, .grid { stroke: var(--hair); stroke-width: 1; }
+.grid { stroke-dasharray: 3 5; }
+.axisText { fill: var(--mut); font-family: var(--font); font-size: var(--fs-micro); font-variant-numeric: tabular-nums; }
+.rawLine, .forecastLine, .correctedLine { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.rawLine { stroke: var(--ac); stroke-width: 2; stroke-dasharray: 5 5; }
+.forecastLine { stroke: var(--ac); }
+.correctedLine { stroke: var(--ok); }
+.forecastArea { fill: var(--ac-soft); }
+.correctedArea { fill: var(--ok-soft); }
+.stockoutDot { fill: var(--wr); }
+.cursor { stroke: var(--deco); stroke-width: 1; stroke-dasharray: 3 4; }
+.rawDot, .correctedDot { stroke: var(--panel); stroke-width: 2; }
+.rawDot { fill: var(--ac); }
+.correctedDot { fill: var(--ok); }
+.tooltip { position: absolute; top: var(--sp-4); display: grid; gap: var(--sp-2); max-width: calc(100% - var(--sp-4)); padding: var(--sp-3); border-radius: var(--r-s); background: var(--panel); box-shadow: var(--sh-2); font-size: var(--fs-xs); pointer-events: none; }
+.tooltipLeft { left: var(--sp-2); }
+.tooltipRight { right: var(--sp-2); }
+.tooltip strong { font-weight: 600; }
+.tooltip span { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-1) var(--sp-3); color: var(--mut); }
+.tooltip b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.hint, .empty { margin-top: var(--sp-2); color: var(--mut); font-size: var(--fs-micro); }

@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Resource(BaseModel):
@@ -12,13 +12,15 @@ class Resource(BaseModel):
 
 class LineOut(Resource):
     id: UUID
-    recommendation_id: UUID
-    run_id: UUID
+    recommendation_id: UUID | None = Field(description="Рекомендация; null для ручной строки.")
+    run_id: UUID | None = Field(description="Расчёт рекомендации; null для ручной строки.")
     product_id: UUID
     sku: str
     name: str
     unit: str
-    recommended_quantity: Decimal
+    recommended_quantity: Decimal | None = Field(
+        description="Исходное количество алгоритма; null, если количество указал пользователь."
+    )
     quantity: Decimal
     reason: str
 

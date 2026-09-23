@@ -1,0 +1,21 @@
+.scroll { margin-top: var(--sp-3); }
+.scrollHint { display: none; margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-xs); }
+.table { table-layout: fixed; min-width: 900px; }
+.table th, .table td { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+.table td { padding-top: var(--sp-3); padding-bottom: var(--sp-3); vertical-align: top; }
+.dateColumn { width: 11%; }
+.productColumn { width: 31%; }
+.warehouseColumn { width: 13%; }
+.documentColumn { width: 19%; }
+.quantityColumn { width: 14%; }
+.statusColumn { width: 12%; }
+.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.product, .warehouse { overflow-wrap: anywhere; }
+.product strong { font-weight: 600; }
+.secondary { display: block; margin-top: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
+.table .quantity { white-space: normal; overflow-wrap: anywhere; }
+.unit { color: var(--mut); white-space: nowrap; }
+.document { display: grid; justify-items: start; gap: var(--sp-2); min-width: 0; }
+.document button { max-width: 100%; }
+.error { color: var(--er-ink); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+@media (max-width: 1000px) { .scrollHint { display: block; } }

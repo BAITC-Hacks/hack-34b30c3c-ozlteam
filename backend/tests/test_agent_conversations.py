@@ -38,6 +38,9 @@ class FakeTools:
         self.writes = []
         self.preview = {"lines": [{"quantity": "12"}]}
 
+    def can_use_supplier_context(self):
+        return True
+
     async def prepare(self, kind, payload):
         return dict(
             kind=kind,
@@ -164,6 +167,39 @@ async def test_private_tool_context_is_not_reused_after_consent_changes(workspac
     await w.service.send(w.conversation.id, message(content="Объясни интерфейс"))
     assert w.llm.calls[-1][1] == []
     assert not w.llm.calls[-1][2]["allow_business_data"]
+
+
+async def test_user_order_intent_survives_with_current_consent_but_not_private_answers(workspace):
+    w = workspace
+    w.llm.result["content"] = "PRIVATE_SUMMARY"
+    await w.service.send(w.conversation.id, message(content="Заказ IEK", allow_business_data=True))
+    await w.service.send(
+        w.conversation.id, message(content="CABLE-01 — 10 шт", allow_business_data=True)
+    )
+    assert w.llm.calls[-1][1] == [{"role": "user", "content": "Заказ IEK"}]
+    w.tools.can_use_supplier_context = lambda: False
+    await w.service.send(w.conversation.id, message(content="Продолжай", allow_business_data=True))
+    assert w.llm.calls[-1][1] == []
+
+
+async def test_short_confirmation_retains_only_sanitized_test_offer(workspace):
+    from app.Domains.Ai.services.test_order_context import TEST_ORDER_OFFER
+
+    w = workspace
+    w.llm.result["content"] = (
+        "PRIVATE_STOCK. Могу подготовить тестовый заказ по 1 штуке каждого. Подтвердите."
+    )
+    await w.service.send(
+        w.conversation.id,
+        message(content="Выбери 5 любых товаров IEK", allow_business_data=True),
+    )
+    await w.service.send(w.conversation.id, message(content="Да, сделай", allow_business_data=True))
+    assert w.llm.calls[-1][1] == [
+        {"role": "user", "content": "Выбери 5 любых товаров IEK"},
+        {"role": "assistant", "content": TEST_ORDER_OFFER},
+    ]
+    await w.service.send(w.conversation.id, message(content="Продолжай"))
+    assert w.llm.calls[-1][1] == []
 
 
 async def prepare_proposal(w):

@@ -104,6 +104,11 @@ export async function apiFormRequest<T>(path: string, form: FormData): Promise<T
   return (await response.json()) as T;
 }
 
+/** Файл через общий транспорт: авторизация и ошибки обрабатываются как у JSON. */
+export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  return (await request(path, { signal })).blob();
+}
+
 /** Поток статуса фоновой задачи. Возвращает функцию отписки. */
 export function apiEvents(path: string, onMessage: (data: unknown) => void): () => void {
   const source = new EventSource(`/api${path}`);

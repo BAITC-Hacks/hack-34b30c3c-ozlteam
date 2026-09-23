@@ -17,7 +17,9 @@ from app.Domains.Procurement.dependencies import get_order_service
 from app.Domains.Procurement.DTO.order import (
     Acknowledge,
     CreateOrders,
+    CreateSupplierDraft,
     DeleteLine,
+    DeleteOrder,
     EditLine,
     EditOrder,
     ReviseOrder,
@@ -67,6 +69,7 @@ class MemoryRepository:
             x
             for x in self.entities[Order]
             if (status is None or x.status == status)
+            and x.deleted_at is None
             and (supplier_id is None or x.supplier_id == supplier_id)
             and (warehouse_id is None or x.warehouse_id == warehouse_id)
         ][offset : offset + limit]
@@ -76,6 +79,11 @@ class MemoryRepository:
 
     async def delete_line(self, line):
         self.entities[OrderLine].remove(line)
+
+    async def release_allocations(self, order_id):
+        self.entities[OrderAllocation] = [
+            row for row in self.entities[OrderAllocation] if row.order_id != order_id
+        ]
 
     async def audits(self, order_id, limit, offset):
         return [x for x in self.entities[OrderAudit] if x.order_id == order_id][
@@ -118,6 +126,16 @@ class MemorySource:
 
     async def recommendations(self, ids):
         return [x.copy() for x in self.rows if x["id"] in ids]
+
+    async def manual_catalog(self, ids, supplier_id, warehouse_id):
+        refs = await self.references(ids, supplier_id, warehouse_id)
+        return {
+            "supplier": {**refs["supplier"], "active": True},
+            "warehouse": {**refs["warehouse"], "active": True},
+            "products": [
+                {**row, "active": True, "supplier_id": supplier_id} for row in refs["products"]
+            ],
+        }
 
     async def suppliers(self, ids):
         return [dict(id=identifier, name="Поставщик", active=True) for identifier in ids]
@@ -262,38 +280,13 @@ async def test_exports_equal_snapshot_quantities_and_no_formula_execution(contex
     )
     csv_data = await context.service.export(order.id, "csv")
     rows = list(csv.DictReader(StringIO(csv_data.decode("utf-8-sig"))))
-    assert list(rows[0]) == [
-        "Поставщик",
-        "Склад",
-        "Артикул",
-        "Наименование товара",
-        "Ед. изм.",
-        "Количество",
-        "Редакция",
-    ]
-    assert rows[0]["Количество"] == str(approved.lines[0].quantity)
-    assert rows[0]["Артикул"] == "'=SUM(1,2)"
-    assert rows[0]["Поставщик"] == "Поставщик"
-    assert rows[0]["Склад"] == "External name"
-    assert str(order.id) not in csv_data.decode("utf-8-sig")
-    assert str(order.supplier_id) not in csv_data.decode("utf-8-sig")
-    assert str(order.warehouse_id) not in csv_data.decode("utf-8-sig")
+    assert rows[0]["quantity"] == str(approved.lines[0].quantity)
+    assert rows[0]["sku"] == "'=SUM(1,2)"
     xlsx_data = await context.service.export(order.id, "xlsx")
     workbook = load_workbook(BytesIO(xlsx_data))
-    assert [cell.value for cell in workbook.active[1]] == [
-        "Поставщик",
-        "Склад",
-        "Артикул",
-        "Наименование товара",
-        "Ед. изм.",
-        "Количество",
-        "Редакция",
-    ]
-    assert workbook.active["C2"].value == "=SUM(1,2)"
-    assert workbook.active["C2"].data_type == "s"
-    assert workbook.active["F2"].value == rows[0]["Количество"]
-    assert workbook.active["A2"].value == "Поставщик"
-    assert workbook.active["B2"].value == "External name"
+    assert workbook.active["E2"].value == "=SUM(1,2)"
+    assert workbook.active["E2"].data_type == "s"
+    assert workbook.active["H2"].value == rows[0]["quantity"]
     workbook.close()
     handoff = await context.service.handoff(order.id)
     assert handoff.order == approved
@@ -481,9 +474,18 @@ async def test_api_forbidden_approval_and_version_conflict(api, context):
     assert export.status_code == 200 and "text/csv" in export.headers["content-type"]
     assert "attachment" in export.headers["content-disposition"]
     assert export.headers["cache-control"] == "no-store"
+    document = await api.get(f"/api/v1/orders/{order.id}/export?format=csv&layout=document")
+    assert document.status_code == 200
+    assert "Поставщик" in document.content.decode("utf-8-sig").splitlines()[0]
+    assert (await api.get(f"/api/v1/orders/{order.id}/export?layout=invalid")).status_code == 422
     schema = (await api.get("/openapi.json")).json()
     operation = schema["paths"]["/api/v1/orders/{order_id}/export"]["get"]
     assert "text/csv" in operation["responses"]["200"]["content"]
+    layout = next(
+        parameter for parameter in operation["parameters"] if parameter["name"] == "layout"
+    )
+    assert layout["schema"]["default"] == "exchange"
+    assert layout["schema"]["enum"] == ["document", "exchange"]
 
 
 async def test_api_requires_authentication():
@@ -516,3 +518,56 @@ async def test_api_revision_requires_write_and_exports_actual_revision(api, cont
     assert approval.status_code == 200
     export = await api.get(f"/api/v1/orders/{new_id}/export?format=csv")
     assert "-r2.csv" in export.headers["content-disposition"]
+
+
+async def test_explicit_manual_draft_idempotency_and_deleted_replay(context, api):
+    command = CreateSupplierDraft(
+        supplier_id=context.source.supplier_id,
+        warehouse_id=context.source.warehouse_id,
+        lines=[{"product_id": context.source.rows[0]["product_id"], "quantity": "3.125"}],
+        idempotency_key="manual-unit",
+    )
+    response = await api.post("/api/v1/orders/drafts", json=command.model_dump(mode="json"))
+    assert response.status_code == 201
+    order = await context.service.create_supplier_draft(command, context.actor)
+    assert str(order.id) == response.json()["id"]
+    assert order.status == "draft" and order.lines[0].quantity == Decimal("3.125")
+    assert order.lines[0].recommended_quantity is None
+    assert order.lines[0].recommendation_id is None
+    with pytest.raises(DomainError) as error:
+        await context.service.delete(
+            order.id, DeleteOrder(expected_version=2, reason="Отмена"), context.actor
+        )
+    assert error.value.code == "version_conflict"
+    deleted = await api.request(
+        "DELETE", f"/api/v1/orders/{order.id}", json={"expected_version": 1, "reason": "Отмена"}
+    )
+    assert deleted.status_code == 204
+    assert await context.service.list() == []
+    assert (await api.get(f"/api/v1/orders/{order.id}")).status_code == 404
+    assert (
+        await api.post("/api/v1/orders/drafts", json=command.model_dump(mode="json"))
+    ).status_code == 409
+    assert (await context.service.audits(order.id))[-1].action == "deleted"
+
+
+async def test_whole_draft_deletion_releases_recommendations(context):
+    order = await create(context)
+    await context.service.delete(
+        order.id, DeleteOrder(expected_version=1, reason="Отмена"), context.actor
+    )
+    assert not context.repository.entities[OrderAllocation]
+    with pytest.raises(DomainError) as error:
+        await create(context)
+    assert error.value.code == "order_deleted"
+    replacement = await create(context, "replacement")
+    approved = await context.service.approve(
+        replacement.id, VersionCommand(expected_version=1), context.actor
+    )
+    with pytest.raises(DomainError) as error:
+        await context.service.delete(
+            approved.id,
+            DeleteOrder(expected_version=approved.version, reason="Отмена"),
+            context.actor,
+        )
+    assert error.value.code == "order_immutable"

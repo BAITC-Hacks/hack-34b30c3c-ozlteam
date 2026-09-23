@@ -1,4 +1,4 @@
-import { apiRequest } from "../../../shared/api/client";
+import { apiBlob, apiRequest } from "../../../shared/api/client";
 
 export type InventoryKind = "stocks" | "inbound" | "stockouts" | "sales" | "stock_history" | "growth";
 
@@ -54,6 +54,19 @@ export interface CatalogRow {
   name: string;
   sku?: string;
   unit?: string;
+}
+
+export async function downloadSaleDocument(saleId: string, signal?: AbortSignal): Promise<void> {
+  const blob = await apiBlob(`/v1/inventory/sales/${encodeURIComponent(saleId)}/document`, signal);
+  if (signal?.aborted) return;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `sales-document-${saleId}.xlsx`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function listInventory(kind: InventoryKind, filters: URLSearchParams, signal?: AbortSignal): Promise<StockRow[] | InboundRow[] | StockoutRow[] | SaleRow[] | GrowthRow[]> {

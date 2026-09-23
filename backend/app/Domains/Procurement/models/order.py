@@ -49,23 +49,33 @@ class Order(Base):
     approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     approved_snapshot: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class OrderLine(Base):
     __tablename__ = "procurement_order_lines"
     __table_args__ = (
-        CheckConstraint("quantity > 0 AND recommended_quantity > 0", name="ck_order_line_quantity"),
+        CheckConstraint(
+            "quantity > 0 AND (recommended_quantity IS NULL OR recommended_quantity > 0)",
+            name="ck_order_line_quantity",
+        ),
+        CheckConstraint(
+            "(recommendation_id IS NULL AND run_id IS NULL AND recommended_quantity IS NULL) "
+            "OR (recommendation_id IS NOT NULL AND run_id IS NOT NULL "
+            "AND recommended_quantity IS NOT NULL)",
+            name="ck_order_line_origin",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     order_id: Mapped[UUID] = mapped_column(ForeignKey("procurement_orders.id"), index=True)
-    recommendation_id: Mapped[UUID] = mapped_column(index=True)
-    run_id: Mapped[UUID] = mapped_column()
+    recommendation_id: Mapped[UUID | None] = mapped_column(index=True, nullable=True)
+    run_id: Mapped[UUID | None] = mapped_column(nullable=True)
     product_id: Mapped[UUID] = mapped_column()
     sku: Mapped[str] = mapped_column(String(200))
     name: Mapped[str] = mapped_column(String(1000))
     unit: Mapped[str] = mapped_column(String(100))
-    recommended_quantity: Mapped[Decimal] = mapped_column(Numeric(20, 6))
+    recommended_quantity: Mapped[Decimal | None] = mapped_column(Numeric(20, 6), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(20, 6))
     reason: Mapped[str] = mapped_column(Text, default="")
 

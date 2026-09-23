@@ -8,6 +8,7 @@ from app.Domains.Ai.contracts import LlmRequestFailed, LlmUnavailable
 from app.Domains.Ai.DTO.conversation import CreateConversation, ProposalDecision, SendMessage
 from app.Domains.Ai.repositories.conversation_repository import ConversationRepository
 from app.Domains.Ai.resources.conversation import ConversationOut, MessageOut, ProposalOut
+from app.Domains.Ai.services.test_order_context import test_order_offer
 
 
 class ConversationService:
@@ -75,13 +76,19 @@ class ConversationService:
                 "Не более 10 сообщений в минуту. Попробуйте позже.", 429, "assistant_rate_limit"
             )
         history = await self.repository.messages(conversation_id, 20)
-        # Re-fetch business facts with current permissions; never reuse previous private
-        # tool observations as a shortcut around a revoked right or consent.
-        turns = [
-            {"role": m.role, "content": m.content[:4000]}
-            for m in history
-            if m.role in {"user", "assistant"} and not m.business_context
-        ]
+        # Keep the user's own selections for a multi-turn order, only with current consent
+        # and catalog permission. Business replies/tool facts are always fetched anew.
+        preserve_user_intent = command.allow_business_data and self.tools.can_use_supplier_context()
+        turns = []
+        for m in history:
+            if m.role not in {"user", "assistant"}:
+                continue
+            if not m.business_context or (m.role == "user" and preserve_user_intent):
+                turns.append({"role": m.role, "content": m.content[:4000]})
+            elif m.role == "assistant" and preserve_user_intent:
+                offer = test_order_offer(m.content)
+                if offer:
+                    turns.append({"role": "assistant", "content": offer})
         await self.repository.limit_llm_transaction()
         try:
             async with asyncio.timeout(90):

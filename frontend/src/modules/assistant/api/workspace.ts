@@ -8,7 +8,7 @@ export interface Message {
   sources: Array<{ title: string; url: string }>;
 }
 export interface Proposal {
-  id: string; kind: "calculate" | "create_orders" | "apply_package"; status: "pending" | "confirmed" | "cancelled";
+  id: string; kind: "calculate" | "create_orders" | "create_supplier_draft" | "create_test_supplier_draft" | "apply_package"; status: "pending" | "confirmed" | "cancelled";
   title: string; summary: string; payload: Record<string, unknown>; preview: Record<string, unknown>;
   version: number; result: Record<string, unknown> | null; created_at: string;
 }

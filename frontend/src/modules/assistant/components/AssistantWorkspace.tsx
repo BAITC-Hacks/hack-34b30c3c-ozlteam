@@ -6,6 +6,7 @@ import { Alert, Button, Modal, Select } from "../../../shared/ui";
 import { getPackages, getWarehouses } from "../api/workspace";
 import type { AssistantContext, ContextKey } from "../api/workspace";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { toolLabel, toolStatusLabel } from "../lib/toolLabels";
 import { NovaOrb } from "./NovaOrb";
 import { AssistantAnswer } from "./AssistantAnswer";
 import { ProposalCard, safeSourceUrl } from "./ProposalCard";
@@ -13,16 +14,6 @@ import styles from "./Workspace.module.css";
 import hero from "../pages/AssistantPage.module.css";
 
 const contextLabels: Record<ContextKey, string> = { warehouse_id: "Склад", run_id: "Расчёт", recommendation_id: "Рекомендация", order_id: "Заказ", package_id: "Пакет" };
-const toolLabels: Record<string, string> = {
-  search_help: "Поиск по справке", search_catalog: "Поиск по справочнику", get_overview: "Обзор склада",
-  get_stock: "Остатки", get_inbound: "Поступления", list_runs: "Расчёты", get_run: "Расчёт",
-  list_recommendations: "Рекомендации", get_recommendation: "Рекомендация", list_orders: "Заказы",
-  get_order: "Заказ", list_packages: "Пакеты файлов", get_package: "Пакет файлов",
-  prepare_calculate: "Подготовка расчёта", prepare_create_orders: "Подготовка заказов",
-  prepare_apply_package: "Подготовка пакета", calculate: "Расчёт", create_orders: "Заказы",
-  apply_package: "Пакет файлов", plan: "План проверки",
-};
-const toolStatusLabels: Record<string, string> = { success: "выполнено", error: "не выполнено", confirmed: "подтверждено", cancelled: "отменено" };
 function toolSummary(name: string, summary: string) {
   return name === "search_help" && summary === "Найдено разделов справки: 0"
     ? "Подходящие разделы справки не найдены."
@@ -74,6 +65,9 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
     await workspace.send(text);
   }
   function setContext(key: ContextKey, value: string) { const context = { ...state.context }; if (value) context[key] = value; else delete context[key]; update({ context, allowData: false }); }
+  function setDataAccess(allowData: boolean) {
+    update({ allowData, ...(allowData && state.assistantId === "help" ? { assistantId: "auto" } : {}) });
+  }
   function contextName(key: ContextKey) {
     if (key === "warehouse_id") return warehouses.data?.find((item) => item.id === state.context[key])?.name ?? "Выбранный склад";
     if (key === "package_id") return packages.data?.items.find((item) => item.id === state.context[key])?.name ?? "Выбранный пакет";
@@ -121,7 +115,7 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
         {warehouses.isError || packages.isError ? <p className={styles.note}>Часть списка данных недоступна. <button type="button" onClick={() => { void warehouses.refetch(); void packages.refetch(); }}>Обновить списки</button></p> : null}
         {Object.keys(state.context).map((key) => <div className={styles.contextItem} key={key}><span>{contextName(key as ContextKey)}</span><button type="button" disabled={state.busy} aria-label={`Убрать: ${contextLabels[key as ContextKey]}`} onClick={() => setContext(key as ContextKey, "")}>Убрать</button></div>)}
         <Link to="/data" onClick={() => setContextOpen(false)}>Загрузить файлы в источниках данных</Link>
-        <label className={styles.permission}><input type="checkbox" checked={state.allowData} disabled={state.busy} onChange={(event) => update({ allowData: event.target.checked })} />Разрешить передачу учётных сводок AI-сервису</label>
+        <label className={styles.permission}><input type="checkbox" checked={state.allowData} disabled={state.busy} onChange={(event) => setDataAccess(event.target.checked)} />Разрешить передачу учётных сводок AI-сервису</label>
         <p className={styles.note}>Только краткие сводки в пределах ваших прав — без исходных файлов и строк продаж. Выбранный контекст уточняет вопрос, но не ограничивает доступ. Текст вопроса передаётся AI-сервису и без этого разрешения: не вставляйте секреты.</p>
         <details className={styles.advanced}>
           <summary>Дополнительные настройки</summary>
@@ -140,7 +134,7 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
       {initialLoading ? <Loading label="Загружаем сообщения" /> : conversation.isError && !pending ? <Alert tone="danger" action={<Button variant="secondary" size="sm" onClick={() => void conversation.refetch()}>Обновить диалог</Button>}>{conversation.error.message}</Alert> : empty ? <div className={compact ? styles.empty : hero.welcome}><div className={compact ? styles.smallOrb : hero.orbStage}><NovaOrb variant={compact ? "mini" : "hero"} /></div>{compact ? <p>Спросите о данных, расчёте или заказе.</p> : <><h2>Помощник по закупкам</h2><p>Спросите о данных, расчёте или заказе. История сохраняется на сервере.</p></>}<Button variant="secondary" disabled={state.busy} onClick={() => void send("Что проверить перед расчётом пополнения склада?")}>Что проверить перед расчётом?</Button></div> : <>
         {chat?.has_older_messages ? <Button variant="secondary" size="sm" disabled={state.busy} onClick={() => void workspace.older()}>Загрузить более ранние сообщения</Button> : null}
         {chat?.messages.map((message) => <article key={message.id} className={message.role === "user" ? styles.mine : styles.theirs}><small>{message.role === "user" ? "Вы" : message.role === "system" ? "Система" : assistants.data?.find((item) => item.id === message.assistant_id)?.title ?? "Помощник"}</small>{message.role === "assistant" ? <AssistantAnswer content={message.content} animate={state.freshAnswer?.id === message.id} receivedAt={state.freshAnswer?.receivedAt} /> : <p>{message.content}</p>}
-          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{toolLabels[tool.name] ?? "Проверка"}</b> · {toolStatusLabels[tool.status] ?? "статус неизвестен"}<p>{toolSummary(tool.name, tool.summary)}</p></li>)}</ul></details> : null}
+          {message.tool_calls.length ? <details><summary>Что проверено</summary><ul>{message.tool_calls.map((tool, index) => <li key={`${tool.name}-${index}`}><b>{toolLabel(tool.name)}</b> · {toolStatusLabel(tool.status)}<p>{tool.status === "error" ? "Не удалось выполнить действие. Уточните запрос или повторите попытку." : toolSummary(tool.name, tool.summary)}</p></li>)}</ul></details> : null}
           {message.sources.length ? <div className={styles.sources}><b>Источники</b>{message.sources.map((source, index) => { const url = safeSourceUrl(source.url); return url ? <Link key={index} to={url}>{source.title}</Link> : <span key={index}>{source.title} (ссылка недоступна)</span>; })}</div> : null}
         </article>)}
       </>}
@@ -151,6 +145,14 @@ export function AssistantWorkspace({ compact = false, onOpenFull }: { compact?: 
       <div ref={tail} />
     </div>
     {historyErrorVisible ? <Alert className={styles.statusNotice} tone="warning" onDismiss={() => setDismissedHistoryErrorAt(conversations.errorUpdatedAt)} dismissLabel="Закрыть сообщение об ошибке истории">История диалогов недоступна. <button className={styles.noticeAction} type="button" onClick={() => void conversations.refetch()}>Повторить</button></Alert> : resultErrorVisible ? <Alert className={styles.statusNotice} tone="danger" onDismiss={() => setDismissedError(state.error)} dismissLabel="Закрыть сообщение об ошибке диалога">Не удалось получить результат: {state.error} <button className={styles.noticeAction} type="button" disabled={state.busy} onClick={() => { if (state.retry) void workspace.send("", true); else void conversation.refetch(); }}>{state.retry ? "Повторить вопрос" : "Обновить диалог"}</button></Alert> : null}
+    {state.allowData ? <div className={styles.dataAccess}>
+      <span>Доступ к данным разрешён для этого диалога</span>
+      <Button variant="ghost" size="sm" disabled={state.busy} onClick={() => setDataAccess(false)}>Отозвать доступ</Button>
+    </div> : <Alert tone="info" title="Разрешите доступ, чтобы работать с заказами">
+      <p>Помощник сможет передавать поставщиков, товары и ограниченные учётные сводки настроенному ИИ-провайдеру в пределах ваших прав. Без доступа можно продолжить справочный диалог.</p>
+      <Button variant="secondary" size="sm" disabled={state.busy || !workspace.userId} onClick={() => setDataAccess(true)}>Разрешить доступ к данным</Button>
+      <p className={styles.note}>Затем отправьте запрос. Разрешение само не отправляет сообщения и не создаёт заказы.</p>
+    </Alert>}
     <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(question); }}>
       <textarea value={question} onChange={(event) => workspace.setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(question); } }} rows={compact ? 1 : 2} maxLength={4000} aria-label="Вопрос помощнику" placeholder="Спросите о выбранных данных…" />
       <button type="submit" disabled={state.busy || !question.trim() || !workspace.userId || conversation.isError} aria-label="Отправить вопрос"><ArrowUp size={18} /></button>

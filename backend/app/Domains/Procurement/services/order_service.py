@@ -2,6 +2,7 @@ import csv
 import json
 from collections import defaultdict
 from datetime import UTC, datetime
+from decimal import Decimal
 from hashlib import sha256
 from io import BytesIO, StringIO
 from typing import Protocol
@@ -10,6 +11,7 @@ from uuid import UUID
 from openpyxl import Workbook
 
 from app.core.errors import DomainError
+from app.Domains.Procurement.adapters.order_document import render_order_document
 from app.Domains.Procurement.contracts import OrderStore
 from app.Domains.Procurement.models.order import (
     Order,
@@ -32,6 +34,7 @@ class Source(Protocol):
     async def recommendations(self, ids): ...
     async def suppliers(self, ids): ...
     async def references(self, product_ids, supplier_id, warehouse_id): ...
+    async def manual_catalog(self, product_ids, supplier_id, warehouse_id): ...
 
 
 def conflict(detail, code="order_conflict"):
@@ -51,7 +54,7 @@ class OrderService:
         if existing:
             if existing.request_hash != digest:
                 raise conflict("Idempotency key already used for another request")
-            return [await self.get(UUID(identifier)) for identifier in existing.order_ids]
+            return await self._replay_creation(existing)
         for identifier in ids:
             await self.repository.lock("order-allocation:" + str(identifier))
         if await self.repository.allocations(ids):
@@ -126,9 +129,125 @@ class OrderService:
         )
         return orders
 
+    async def _replay_creation(self, creation):
+        orders = []
+        for identifier in creation.order_ids:
+            order = await self.repository.get(UUID(identifier))
+            if order is None or order.deleted_at is not None:
+                raise conflict(
+                    "Черновик по этому ключу уже удалён; для нового заказа нужен новый ключ",
+                    "order_deleted",
+                )
+            orders.append(await self._resource(order))
+        return orders
+
+    async def preview_supplier_draft(self, data):
+        """Validate explicit user choices without allocating recommendations or writing orders."""
+        ids = [line.product_id for line in data.lines]
+        catalog = await self.source.manual_catalog(ids, data.supplier_id, data.warehouse_id)
+        supplier, warehouse = catalog["supplier"], catalog["warehouse"]
+        if supplier is None or not supplier["active"]:
+            raise conflict("Поставщик не найден или неактивен", "supplier_unavailable")
+        if warehouse is None or not warehouse["active"]:
+            raise conflict("Склад не найден или неактивен", "warehouse_unavailable")
+        products = {UUID(str(row["id"])): row for row in catalog["products"]}
+        if set(ids) != set(products) or any(not row["active"] for row in products.values()):
+            raise conflict("Товар не найден или неактивен", "product_unavailable")
+        source_id = UUID(str(supplier["source_id"]))
+        if UUID(str(warehouse["source_id"])) != source_id or any(
+            UUID(str(row["source_id"])) != source_id for row in products.values()
+        ):
+            raise conflict(
+                "Поставщик, склад и товары должны относиться к одной базе 1С", "source_mismatch"
+            )
+        if any(str(row["supplier_id"]) != str(data.supplier_id) for row in products.values()):
+            raise conflict(
+                "Товар не относится к выбранному поставщику", "product_supplier_mismatch"
+            )
+
+        def identity(row):
+            return {key: str(row[key]) for key in ("id", "name", "source_id")}
+
+        return {
+            "supplier": identity(supplier),
+            "warehouse": identity(warehouse),
+            "lines": [
+                {
+                    "product_id": str(line.product_id),
+                    **{key: products[line.product_id][key] for key in ("sku", "name", "unit")},
+                    "code": products[line.product_id].get("code"),
+                    "quantity": str(line.quantity),
+                }
+                for line in data.lines
+            ],
+            "comment": data.comment,
+            "reason": data.reason,
+        }
+
+    async def create_supplier_draft(self, data, actor_id: UUID):
+        payload = data.model_dump(mode="json", exclude={"idempotency_key"})
+        # Product order and decimal scale do not change the requested purchase.
+        payload["lines"] = sorted(
+            [
+                {"product_id": str(line.product_id), "quantity": str(line.quantity.normalize())}
+                for line in data.lines
+            ],
+            key=lambda row: row["product_id"],
+        )
+        digest = sha256(
+            json.dumps({"supplier_draft": payload}, sort_keys=True).encode()
+        ).hexdigest()
+        await self.repository.lock("order-creation:" + data.idempotency_key)
+        existing = await self.repository.creation(data.idempotency_key)
+        if existing:
+            if existing.request_hash != digest:
+                raise conflict("Idempotency key already used for another request")
+            return (await self._replay_creation(existing))[0]
+        preview = await self.preview_supplier_draft(data)
+        references = ExternalReferences.model_validate(
+            await self.source.references(
+                [line.product_id for line in data.lines], data.supplier_id, data.warehouse_id
+            )
+        )
+        order = await self.repository.add(
+            Order(
+                supplier_id=data.supplier_id,
+                supplier_name=preview["supplier"]["name"],
+                warehouse_id=data.warehouse_id,
+                status="draft",
+                version=1,
+                revision=1,
+                comment=data.comment,
+                created_by=actor_id,
+                external_references=references.model_dump(mode="json"),
+            )
+        )
+        for row in preview["lines"]:
+            await self.repository.add(
+                OrderLine(
+                    order_id=order.id,
+                    product_id=UUID(row["product_id"]),
+                    sku=row["sku"],
+                    name=row["name"],
+                    unit=row["unit"],
+                    quantity=Decimal(row["quantity"]),
+                    recommendation_id=None,
+                    run_id=None,
+                    recommended_quantity=None,
+                    reason=data.reason,
+                )
+            )
+        await self._audit(order, actor_id, "created", {"origin": "manual", **preview})
+        await self.repository.add(
+            OrderCreation(
+                idempotency_key=data.idempotency_key, request_hash=digest, order_ids=[str(order.id)]
+            )
+        )
+        return await self._resource(order)
+
     async def _require(self, order_id, lock=False):
         order = await self.repository.get(order_id, lock)
-        if order is None:
+        if order is None or order.deleted_at is not None:
             raise DomainError("Order not found", status_code=404, code="not_found")
         return order
 
@@ -187,6 +306,18 @@ class OrderService:
         )
         return await self._resource(order)
 
+    async def delete(self, order_id, data, actor_id):
+        order = await self._draft(order_id, data.expected_version)
+        if order.supersedes_order_id is not None:
+            raise conflict(
+                "Редакцию отклонённого заказа нельзя удалить; исправьте её строки",
+                "revision_delete_forbidden",
+            )
+        order.deleted_at = datetime.now(UTC)
+        order.version += 1
+        await self.repository.release_allocations(order_id)
+        await self._audit(order, actor_id, "deleted", {"reason": data.reason})
+
     async def edit_line(self, order_id, line_id, data, actor_id, delete=False):
         order = await self._draft(order_id, data.expected_version)
         line = next(
@@ -240,7 +371,9 @@ class OrderService:
         return snapshot
 
     async def audits(self, order_id, limit=50, offset=0):
-        await self._require(order_id)
+        # Retain audit access after deliberate draft deletion.
+        if await self.repository.get(order_id) is None:
+            raise DomainError("Order not found", status_code=404, code="not_found")
         return await self.repository.audits(order_id, limit, offset)
 
     async def revise(self, order_id, data, actor_id):
@@ -254,6 +387,8 @@ class OrderService:
             raise conflict("Revision requires explicit 1C rejection", "revision_requires_rejection")
         successor = await self.repository.successor(order_id)
         if successor is not None:
+            if successor.deleted_at is not None:
+                raise conflict("Редакция заказа была удалена", "order_deleted")
             event = await self.repository.revision_event(successor.id)
             if event is None or event.data["reason"] != data.reason:
                 raise conflict("An order revision already exists", "revision_exists")
@@ -340,30 +475,34 @@ class OrderService:
         await self._audit(order, actor_id, "1c_acknowledged", data.model_dump(mode="json"))
         return DeliveryOut.model_validate(delivery)
 
-    async def export(self, order_id, format):
+    async def export(self, order_id, format, layout="exchange"):
         order = await self.get(order_id)
         if order.status != "approved":
             raise conflict("Only approved orders can be exported", "approval_required")
+        if layout == "document":
+            return render_order_document(order, format)
         rows = [
             [
-                "Поставщик",
-                "Склад",
-                "Артикул",
-                "Наименование товара",
-                "Ед. изм.",
-                "Количество",
-                "Редакция",
+                "order_id",
+                "revision",
+                "supplier_id",
+                "warehouse_id",
+                "sku",
+                "name",
+                "unit",
+                "quantity",
             ]
         ]
         rows.extend(
             [
-                order.supplier_name,
-                order.external_references.warehouse.name,
+                str(order.id),
+                str(order.revision),
+                str(order.supplier_id),
+                str(order.warehouse_id),
                 line.sku,
                 line.name,
                 line.unit,
                 format_quantity(line.quantity),
-                str(order.revision),
             ]
             for line in order.lines
         )
