@@ -11,7 +11,7 @@
 .pending { margin: 0; color: var(--mut); font-size: var(--fs-sm); }
 .error { display: grid; justify-items: start; gap: var(--sp-2); color: var(--er); font-size: var(--fs-sm); }
 .composer { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-3); border-top: 1px solid var(--hair); }
-.composer textarea { flex: 1; min-width: 0; max-height: 120px; padding: var(--sp-2); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-sm); resize: none; }
+.composer textarea { box-sizing: border-box; flex: 1; min-width: 0; height: var(--touch); padding: var(--sp-2); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; font-size: var(--fs-sm); resize: none; }
 .composer button { display: grid; place-items: center; flex: none; width: var(--touch); height: var(--touch); border: 0; border-radius: var(--r-s); color: #fff; background: var(--ac); cursor: pointer; }
 .composer button:disabled { color: var(--faint); background: var(--sunken); cursor: not-allowed; }
 .chat button:focus-visible, .composer textarea:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
