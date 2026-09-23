@@ -165,11 +165,6 @@
   margin-top: var(--sp-6);
 }
 
-.navSection:last-child {
-  margin-top: auto;
-  padding-top: var(--sp-6);
-}
-
 .group {
   margin-bottom: var(--sp-2);
   padding: 0 var(--sp-2);

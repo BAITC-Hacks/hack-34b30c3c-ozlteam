@@ -1,0 +1,41 @@
+.page { display: grid; gap: var(--gap-blocks); min-width: 0; }
+.controls { display: flex; align-items: end; flex-wrap: wrap; gap: var(--sp-3); }
+.controls label, .listControls label { display: grid; gap: var(--sp-1); color: var(--mut); font-size: var(--fs-xs); }
+.controls select, .controls input, .listControls select { height: var(--ctl); min-width: 160px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); font: inherit; }
+.controls select:focus-visible, .controls input:focus-visible, .listControls select:focus-visible { outline: 2px solid var(--ac); background: var(--panel); }
+.controls button { min-height: var(--ctl); }
+.note { margin-top: var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
+.runList { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.runItem { display: grid; gap: var(--sp-1); min-width: 200px; padding: var(--sp-3); border: 0; border-radius: var(--r-s); background: var(--sunken); color: var(--ink); text-align: left; cursor: pointer; }
+.runItem small { color: var(--mut); font-size: var(--fs-xs); }
+.runItem:hover { background: var(--ac-soft); }
+.runItem:focus-visible, .productLink:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
+.activeRun { background: var(--ac-soft); color: var(--ac-ink); }
+.steps { display: flex; flex-wrap: wrap; gap: var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
+.steps span { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.stepDone { color: var(--ok-ink); }
+.listControls { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.group + .group { margin-top: var(--sp-5); }
+.group h3 { margin-bottom: var(--sp-2); font-size: var(--fs-body); font-weight: 600; }
+.group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ac); }
+.productLink { display: block; padding: 0; border: 0; background: none; color: var(--ac-ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.sku { display: block; margin-top: var(--sp-1); color: var(--faint); font-size: var(--fs-xs); }
+.explanation { max-width: 42ch; color: var(--mut); font-size: var(--fs-xs); }
+.pagination { display: flex; align-items: center; justify-content: end; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-sm); }
+.detailHead { display: flex; justify-content: space-between; align-items: start; gap: var(--sp-3); }
+.detailHead p { max-width: 76ch; color: var(--mut); font-size: var(--fs-sm); }
+.detailBody { display: grid; gap: var(--sp-4); margin-top: var(--sp-4); }
+.breakdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-2); }
+.breakdown > div { min-width: 0; padding: var(--sp-3); border-radius: var(--r-s); background: var(--sunken); }
+.breakdown dt { color: var(--mut); font-size: var(--fs-xs); }
+.breakdown dd { margin-top: var(--sp-1); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; font-weight: 600; }
+.detailFacts { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); color: var(--mut); font-size: var(--fs-xs); }
+.skeleton { display: grid; gap: var(--gap-cards); }
+.skeletonCard { display: grid; gap: var(--sp-3); padding: var(--pad-card); min-height: 110px; border-radius: var(--r); box-shadow: var(--sh-1); background: var(--panel); }
+.skeletonCard i { display: block; width: 65%; height: var(--sp-3); border-radius: var(--r-xs); background: linear-gradient(100deg, var(--sunken), var(--panel), var(--sunken)); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+.skeletonCard i:first-child { width: 35%; }
+.skeletonCard i:last-child { width: 85%; }
+@keyframes shimmer { to { background-position-x: -200%; } }
+@media (max-width: 800px) { .breakdown { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .controls label, .controls select, .controls input, .controls button, .listControls label, .listControls select, .listControls button { width: 100%; } .breakdown { grid-template-columns: 1fr 1fr; } .runItem { flex: 1 1 100%; } .detailHead { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .skeletonCard i { animation: none; background: var(--sunken); } }

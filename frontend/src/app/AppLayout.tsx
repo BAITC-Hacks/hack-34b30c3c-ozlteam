@@ -1,23 +1,4 @@
-import {
-  BookOpen,
-  Boxes,
-  ClipboardList,
-  Container,
-  Building2,
-  Database,
-  FileText,
-  LayoutGrid,
-  LogOut,
-  PackageCheck,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Route,
-  ShoppingCart,
-  Sparkles,
-  StickyNote,
-  Truck,
-  Users,
-} from "lucide-react";
+import { ClipboardList, Container, LogOut, PanelLeftClose, PanelLeftOpen, ShoppingCart } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -36,31 +17,12 @@ interface NavItem {
 }
 
 const WORK: NavItem[] = [
-  { to: "/recommendations", label: "Рекомендации", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
+  { to: "/recommendations", label: "Расчёты", icon: <ClipboardList size={17} strokeWidth={1.8} /> },
   { to: "/orders", label: "Заказы поставщикам", mobileLabel: "Заказы", icon: <ShoppingCart size={17} strokeWidth={1.8} /> },
-  { to: "/inventory", label: "Запасы", icon: <Boxes size={17} strokeWidth={1.8} /> },
 ];
 
-const DATA: NavItem[] = [
-  { to: "/data", label: "Источники данных", icon: <Database size={17} strokeWidth={1.8} /> },
-  { to: "/data/catalogs", label: "Справочники", icon: <BookOpen size={17} strokeWidth={1.8} /> },
-];
-
-const INACTIVE: NavItem[] = [
-  { to: "/shipments", label: "Отправления", icon: <Truck size={17} strokeWidth={1.8} /> },
-  { to: "/documents", label: "Документы", icon: <FileText size={17} strokeWidth={1.8} /> },
-  { to: "/receiving", label: "Приёмка", icon: <PackageCheck size={17} strokeWidth={1.8} /> },
-  { to: "/routes", label: "Маршруты", icon: <Route size={17} strokeWidth={1.8} /> },
-  { to: "/assistant", label: "Логист ИИ", icon: <Sparkles size={17} strokeWidth={1.8} /> },
-  { to: "/notes", label: "Заметки", icon: <StickyNote size={17} strokeWidth={1.8} /> },
-  { to: "/clients", label: "Клиенты", icon: <Users size={17} strokeWidth={1.8} /> },
-  { to: "/carriers", label: "Перевозчики", icon: <Building2 size={17} strokeWidth={1.8} /> },
-  { to: "/ui-kit", label: "Компоненты", icon: <LayoutGrid size={17} strokeWidth={1.8} /> },
-];
-
-// Нижняя панель показывает только доступные разделы; остальные находятся в «Ещё».
 const MOBILE_PRIMARY = WORK;
-const MOBILE_REST = [...DATA, ...INACTIVE.map((item) => ({ ...item, disabled: true }))];
+const MOBILE_REST: NavItem[] = [];
 
 function initials(fullName: string): string {
   return fullName
@@ -164,8 +126,6 @@ export function AppLayout() {
               onScroll={updateNavigationFade}
             >
               <Section title="Работа" items={WORK} />
-              <Section title="Данные" items={DATA} />
-              <Section title="Недоступно" items={INACTIVE} disabled />
             </nav>
           </div>
 
