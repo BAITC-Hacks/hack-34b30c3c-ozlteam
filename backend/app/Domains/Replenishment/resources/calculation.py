@@ -116,10 +116,17 @@ class RecommendationOut(BaseModel):
     sku: str
     name: str
     unit: str
-    recommended_quantity: Decimal
+    recommended_quantity: Decimal = Field(
+        description="Сохранённый числовой результат. При status=blocked это только "
+        "промежуточная оценка, не допустимый заказ; интерфейс показывает «—»."
+    )
     status: Literal["ready", "blocked"]
     urgency: Literal["none", "normal", "high", "critical"]
-    explanation: str
+    explanation: str = Field(
+        description="Понятное обоснование из сохранённых чисел и ограничений. "
+        "Для blocked содержит причины и следующие действия, а не количество к заказу. "
+        "Знак ≈ означает округление только для отображения; исходные числа в details."
+    )
     order_id: UUID | None = Field(
         default=None,
         description="Заказ, которому уже распределена рекомендация; null — ещё не распределена. "

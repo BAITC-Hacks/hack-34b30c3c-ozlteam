@@ -37,7 +37,7 @@
 .orderLink:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
 .conflictLinks { display: grid; gap: var(--sp-1); margin-top: var(--sp-3); }
 .sku { display: block; margin-top: var(--sp-1); color: var(--faint); font-size: var(--fs-xs); }
-.explanation { max-width: 42ch; color: var(--mut); font-size: var(--fs-xs); }
+.group .explanation { max-width: 42ch; padding-block: var(--sp-2); color: var(--mut); font-size: var(--fs-xs); }
 .pagination { display: flex; align-items: center; justify-content: end; gap: var(--sp-3); margin-top: var(--sp-4); color: var(--mut); font-size: var(--fs-sm); }
 .detailHead { display: flex; justify-content: space-between; align-items: start; gap: var(--sp-3); }
 .detailHead p { max-width: 76ch; color: var(--mut); font-size: var(--fs-sm); }
