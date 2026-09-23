@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
+import { useI18n } from "../../../shared/i18n/I18nContext";
 
 import {
   ActionPreview,
@@ -65,6 +66,7 @@ export function RestReportPreview({
   error: string | null;
   onApply: (complete: boolean) => Promise<void>;
 }) {
+  const { locale, t } = useI18n();
   const [confirm, setConfirm] = useState(false);
   const [complete, setComplete] = useState(false);
   const allColumns = [
@@ -74,11 +76,11 @@ export function RestReportPreview({
     .filter((name) => allColumns.includes(name))
     .slice(0, 6);
   const applied = detail.status === "applied";
-  const applyError = error ? friendlyReportError(error) : null;
+  const applyError = error ? friendlyReportError(error, locale) : null;
   return (
     <Card
-      title={applied ? "Данные обновлены" : "Проверьте данные"}
-      subtitle={`${reportKindTitle(detail.kind)} — ${reportRowCount(detail.row_count)}`}
+      title={applied ? t("Данные обновлены", "Деректер жаңартылды", "Data updated") : t("Проверьте данные", "Деректерді тексеріңіз", "Review data")}
+      subtitle={`${reportKindTitle(detail.kind, locale)} — ${reportRowCount(detail.row_count, locale)}`}
     >
       <div className={styles.stack}>
         <div>
@@ -92,28 +94,27 @@ export function RestReportPreview({
             }
           >
             {applied
-              ? "Сохранено"
+              ? t("Сохранено", "Сақталды", "Saved")
               : detail.status === "invalid"
-                ? "Нужно исправить"
-                : "Можно сохранить"}
+                ? t("Нужно исправить", "Түзету қажет", "Needs correction")
+                : t("Можно сохранить", "Сақтауға болады", "Ready to save")}
           </Badge>
         </div>
         {detail.errors.length > 0 ? (
-          <Alert tone="danger" title="Некоторые данные нужно исправить">
+          <Alert tone="danger" title={t("Некоторые данные нужно исправить", "Кейбір деректерді түзету қажет", "Some data needs correction")}>
             <ul className={styles.errors}>
               {detail.errors.slice(0, 5).map((issue, index) => (
                 <li key={index}>
-                  {issue.row > 0 ? `Строка ${issue.row}` : "Отчёт"}
+                  {issue.row > 0 ? `${t("Строка", "Жол", "Row")} ${issue.row}` : t("Отчёт", "Есеп", "Report")}
                   {issue.column
-                    ? `, ${reportFieldLabel(issue.column)}`
-                    : ""}: {friendlyReportError(issue.message).message}
+                    ? `, ${reportFieldLabel(issue.column, locale)}`
+                    : ""}: {friendlyReportError(issue.message, locale).message}
                 </li>
               ))}
             </ul>
             {detail.errors.length > 5 ? (
               <p className={styles.hint}>
-                Показаны первые 5 ошибок из {detail.errors.length}. Все ошибки
-                доступны в технических сведениях ниже.
+                {t("Показаны первые 5 ошибок из", "Алғашқы 5 қате көрсетілді, барлығы", "Showing the first 5 errors of")} {detail.errors.length}. {t("Все ошибки доступны в технических сведениях ниже.", "Барлық қате төмендегі техникалық мәліметтерде қолжетімді.", "All errors are available in the technical details below.")}
               </p>
             ) : null}
           </Alert>
@@ -121,28 +122,25 @@ export function RestReportPreview({
         {detail.preview.length > 0 && columns.length > 0 ? (
           <div>
             <p className={styles.hint}>
-              Пример полученных данных: {reportRowCount(detail.preview.length)}.
-              Проверьте названия, даты и количество. Все колонки и связи с 1С
-              доступны в технических сведениях.
+              {t("Пример полученных данных", "Алынған деректер мысалы", "Sample received data")}: {reportRowCount(detail.preview.length, locale)}. {t("Проверьте названия, даты и количество. Все колонки и связи с 1С доступны в технических сведениях.", "Атауларды, күндерді және мөлшерлерді тексеріңіз. Барлық бағандар мен 1С байланыстары техникалық мәліметтерде қолжетімді.", "Check names, dates and quantities. All columns and 1C references are in the technical details.")}
             </p>
             {columns.some((column) => column.endsWith("_external_id")) ? (
               <p className={styles.hint}>
-                Связанные товары, категории, склады и поставщики указаны
-                идентификаторами из 1С: их названия в этом отчёте не переданы.
+                {t("Связанные товары, категории, склады и поставщики указаны идентификаторами из 1С: их названия в этом отчёте не переданы.", "Байланысты тауарлар, санаттар, қоймалар және жеткізушілер 1С идентификаторларымен көрсетілген: бұл есепте олардың атаулары берілмеген.", "Related products, categories, warehouses and suppliers are shown by 1C IDs; their names are not included in this report.")}
               </p>
             ) : null}
             <div
               className={styles.tableWrap}
               tabIndex={0}
               role="region"
-              aria-label="Пример полученных данных, таблицу можно прокручивать"
+              aria-label={t("Пример полученных данных, таблицу можно прокручивать", "Алынған деректер мысалы, кестені айналдыруға болады", "Sample received data, scrollable table")}
             >
               <Table>
                 <thead>
                   <Tr>
-                    <Th>№ в примере</Th>
+                    <Th>{t("№ в примере", "Мысалдағы №", "Sample #")}</Th>
                     {columns.map((column) => (
-                      <Th key={column}>{reportFieldLabel(column)}</Th>
+                      <Th key={column}>{reportFieldLabel(column, locale)}</Th>
                     ))}
                   </Tr>
                 </thead>
@@ -152,7 +150,7 @@ export function RestReportPreview({
                       <Td>{index + 1}</Td>
                       {columns.map((column) => (
                         <Td key={column}>
-                          {reportCellValue(row[column], column)}
+                          {reportCellValue(row[column], column, locale)}
                         </Td>
                       ))}
                     </Tr>
@@ -165,9 +163,7 @@ export function RestReportPreview({
         {detail.status === "validated" ? (
           <>
             <p className={styles.hint}>
-              Рабочие данные обновятся после вашего подтверждения. Товары,
-              склады и поставщики должны быть загружены до отгрузок, остатков и
-              поставок.
+              {t("Рабочие данные обновятся после вашего подтверждения. Товары, склады и поставщики должны быть загружены до отгрузок, остатков и поставок.", "Жұмыс деректері сіз растағаннан кейін жаңартылады. Тауарлар, қоймалар мен жеткізушілер жөнелтулерден, қорлардан және жеткізілімдерден бұрын жүктелуі керек.", "Working data updates after your confirmation. Import products, warehouses and suppliers before shipments, stock and deliveries.")}
             </p>
             <Button
               variant="dark"
@@ -178,42 +174,40 @@ export function RestReportPreview({
                 setConfirm(true);
               }}
             >
-              Сохранить данные
+              {t("Сохранить данные", "Деректерді сақтау", "Save data")}
             </Button>
             {!canApply ? (
               <p className={styles.hint}>
-                Для сохранения нужны права на изменение данных.
+                {t("Для сохранения нужны права на изменение данных.", "Сақтау үшін деректерді өзгерту құқығы қажет.", "Saving requires permission to change data.")}
               </p>
             ) : null}
           </>
         ) : null}
         {applied ? (
           <Alert tone="success">
-            Данные обновлены в сервисе. Можно перейти к следующему отчёту.
+            {t("Данные обновлены в сервисе. Можно перейти к следующему отчёту.", "Сервистегі деректер жаңартылды. Келесі есепке өтуге болады.", "Data updated in the service. You can continue to the next report.")}
           </Alert>
         ) : null}
         <details className={styles.technical}>
-          <summary>Технические сведения</summary>
+          <summary>{t("Технические сведения", "Техникалық мәліметтер", "Technical details")}</summary>
           <div className={styles.stack}>
             <p className={styles.hint}>
-              Номер загрузки: <code>{detail.id}</code>. Версия источника на
-              момент проверки: {detail.base_revision}. Ниже — все колонки и
-              исходные значения полученного примера.
+              {t("Номер загрузки", "Жүктеме нөмірі", "Import ID")}: <code>{detail.id}</code>. {t("Версия источника на момент проверки", "Тексеру кезіндегі дереккөз нұсқасы", "Source version at check time")}: {detail.base_revision}. {t("Ниже — все колонки и исходные значения полученного примера.", "Төменде алынған мысалдың барлық бағандары мен бастапқы мәндері көрсетілген.", "All columns and original sample values are shown below.")}
             </p>
             {allColumns.length > 0 ? (
               <div
                 className={styles.tableWrap}
                 tabIndex={0}
                 role="region"
-                aria-label="Все колонки примера, таблицу можно прокручивать"
+                aria-label={t("Все колонки примера, таблицу можно прокручивать", "Мысалдың барлық бағандары, кестені айналдыруға болады", "All sample columns, scrollable table")}
               >
                 <Table>
                   <thead>
                     <Tr>
-                      <Th>№ в примере</Th>
+                      <Th>{t("№ в примере", "Мысалдағы №", "Sample #")}</Th>
                       {allColumns.map((column) => (
                         <Th key={column}>
-                          {reportFieldLabel(column)}
+                          {reportFieldLabel(column, locale)}
                           <code className={styles.fieldKey}>{column}</code>
                         </Th>
                       ))}
@@ -242,11 +236,11 @@ export function RestReportPreview({
             ) : null}
             {detail.errors.length > 0 ? (
               <div>
-                <p className={styles.hint}>Все ошибки проверки</p>
+                <p className={styles.hint}>{t("Все ошибки проверки", "Барлық тексеру қателері", "All validation errors")}</p>
                 <ul className={styles.errors}>
                   {detail.errors.map((issue, index) => (
                     <li key={index}>
-                      {issue.row > 0 ? `Строка ${issue.row}` : "Отчёт"}
+                      {issue.row > 0 ? `${t("Строка", "Жол", "Row")} ${issue.row}` : t("Отчёт", "Есеп", "Report")}
                       {issue.column ? `, ${issue.column}` : ""}:{" "}
                       <code>{issue.message}</code>
                     </li>
@@ -259,7 +253,7 @@ export function RestReportPreview({
       </div>
       <Modal
         id="apply-rest-report"
-        title="Сохранить данные из 1С?"
+        title={t("Сохранить данные из 1С?", "1С деректерін сақтау керек пе?", "Save data from 1C?")}
         open={confirm && !applied}
         onOpenChange={(open) => {
           if (!busy) setConfirm(open);
@@ -274,25 +268,25 @@ export function RestReportPreview({
               disabled={busy}
               onClick={() => setConfirm(false)}
             >
-              Ещё раз проверить
+              {t("Ещё раз проверить", "Қайта тексеру", "Review again")}
             </Button>
             <Button
               loading={busy}
               disabled={!canApply}
               onClick={() => void onApply(complete)}
             >
-              Подтвердить сохранение
+              {t("Подтвердить сохранение", "Сақтауды растау", "Confirm save")}
             </Button>
           </>
         }
       >
         <div className={styles.stack}>
           {applyError ? (
-            <Alert tone="danger" title="Не удалось сохранить данные">
+            <Alert tone="danger" title={t("Не удалось сохранить данные", "Деректерді сақтау мүмкін болмады", "Could not save data")}>
               {applyError.message}
               {applyError.technical ? (
                 <details className={styles.technical}>
-                  <summary>Подробнее для специалиста</summary>
+                  <summary>{t("Подробнее для специалиста", "Маманға арналған мәлімет", "Details for specialist")}</summary>
                   <code>{applyError.technical}</code>
                 </details>
               ) : null}
@@ -300,14 +294,14 @@ export function RestReportPreview({
           ) : null}
           <ActionPreview
             items={[
-              `Сохранить в сервисе: ${reportKindTitle(detail.kind).toLocaleLowerCase("ru-RU")} — ${reportRowCount(detail.row_count)}`,
-              "Новые записи будут добавлены, существующие — обновлены при наличии изменений",
-              "Данные в самой 1С останутся без изменений",
+              `${t("Сохранить в сервисе", "Сервисте сақтау", "Save in service")}: ${reportKindTitle(detail.kind, locale).toLocaleLowerCase(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU")} — ${reportRowCount(detail.row_count, locale)}`,
+              t("Новые записи будут добавлены, существующие — обновлены при наличии изменений", "Жаңа жазбалар қосылады, бар жазбалар өзгерістер болса жаңартылады", "New records will be added; existing records will be updated if changed"),
+              t("Данные в самой 1С останутся без изменений", "1С ішіндегі деректер өзгермейді", "Data in 1C will remain unchanged"),
             ]}
           />
           <Checkbox
-            label="Все данные из 1С загружены"
-            description="Отметьте, только если товары, склады, поставщики, отгрузки, остатки и товары в пути уже загружены и проверены. Это разрешит расчёт пополнения. Пока отметки нет, расчёт по этой базе 1С недоступен."
+            label={t("Все данные из 1С загружены", "1С деректерінің бәрі жүктелді", "All 1C data imported")}
+            description={t("Отметьте, только если товары, склады, поставщики, отгрузки, остатки и товары в пути уже загружены и проверены. Это разрешит расчёт пополнения. Пока отметки нет, расчёт по этой базе 1С недоступен.", "Тауарлар, қоймалар, жеткізушілер, жөнелтулер, қорлар және жолдағы тауарлар жүктеліп, тексерілгенде ғана белгілеңіз. Бұл толықтыру есебіне рұқсат береді. Белгі болмаса, осы 1С базасы бойынша есептеу қолжетімсіз.", "Select only after products, warehouses, suppliers, shipments, stock and inbound goods have been imported and checked. This enables replenishment calculations. Until selected, calculations for this 1C database are unavailable.")}
             checked={complete}
             onChange={(event) => setComplete(event.target.checked)}
             disabled={busy}
