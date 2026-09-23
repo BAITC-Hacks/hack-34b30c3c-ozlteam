@@ -32,6 +32,7 @@
 .result > span { display: grid; gap: var(--sp-1); flex: 1; min-width: 0; }
 .result strong { overflow: hidden; color: var(--ink); font-size: var(--fs-sm); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .result small { color: var(--mut); font-size: var(--fs-xs); }
+.result .match { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .empty { margin: var(--sp-5) var(--sp-3); color: var(--mut); font-size: var(--fs-sm); }
 .error { margin-top: var(--sp-3); padding: var(--sp-3); border-radius: var(--r-s); background: var(--er-soft); color: var(--er-ink); font-size: var(--fs-sm); }
 .error p { margin: 0 0 var(--sp-1); }
